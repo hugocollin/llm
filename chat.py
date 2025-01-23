@@ -27,7 +27,7 @@ class Chat:
         # Avertissement si la clé API Mistral n'est pas présente
         if not self.API_KEY:
             st.error(
-                "**Application indisponible :** Votre clé d'API Mistral est introuvable.", icon="⚠️")
+                "**Conversation avec l'IA indisponible :** Votre clé d'API Mistral est introuvable.", icon=":material/error:")
             st.session_state['found_mistral_api'] = False
         else:
             st.session_state['found_mistral_api'] = True
@@ -111,3 +111,6 @@ class Chat:
                         "gwp": response["gwp"]
                     }
                 })
+    
+    # if st.button("", icon=":material/attach_file:"):
+    #     st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
