@@ -27,9 +27,7 @@ class Chat:
         # Avertissement si la clé API Mistral n'est pas présente
         if not self.API_KEY:
             st.error(
-                "**Application indisponible :** Vous n'avez pas rajouté votre clé API Mistral dans les fichiers de l'application. "
-                "Veuillez ajouter le fichier `.env` à la racine du projet puis redémarrer l'application.", icon="⚠️"
-            )
+                "**Application indisponible :** Votre clé d'API Mistral est introuvable.", icon="⚠️")
             st.session_state['found_mistral_api'] = False
         else:
             st.session_state['found_mistral_api'] = True
