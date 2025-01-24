@@ -39,7 +39,7 @@ def show_sidebar():
 
         header_cols = st.columns([3, 1])
 
-        # Titre de la section
+        # Section des conversations
         with header_cols[0]:
             st.header("Conversations")
 

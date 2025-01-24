@@ -39,7 +39,7 @@ class Chat:
         else:
             st.session_state.messages = st.session_state["chats"][self.selected_chat]
 
-        # Ajout de CSS pour rendre la hauteur du conteneur responsive
+        # Mise en page du chat
         st.markdown(
             """
             <style>
@@ -79,7 +79,7 @@ class Chat:
         # Choix du modèle [TEMP]
         with cols[0]:
             st.selectbox("", label_visibility="collapsed", options=["Option 1", "Option 2", "Option 3"], index=0)
-            
+
         # Zone de saisie pour le chat avec l'IA [TEMP]
         with cols[1]:
             if message := st.chat_input(

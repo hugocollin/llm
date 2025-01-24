@@ -6,10 +6,10 @@ from components import show_sidebar
 # Configuration de la page
 st.set_page_config(page_title="LLM", page_icon="✨", layout="wide")
 
-# Affichage de la barre latérale et sélection du chat
+# Affichage de la barre latérale
 selected_chat = show_sidebar()
 
-# Stocker le chat sélectionné dans session_state pour persistance
+# Stockage du chat sélectionné
 if selected_chat:
     st.session_state['selected_chat'] = selected_chat
 elif 'selected_chat' not in st.session_state and selected_chat:
