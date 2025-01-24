@@ -13,9 +13,6 @@ st.markdown("""
             padding-top: 50px;
             padding-bottom: 0px;
         }
-        div[data-testid="stVerticalBlock"] {
-            overflow-y: hidden;
-        }
     </style>
 """, unsafe_allow_html=True)
 
