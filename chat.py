@@ -47,46 +47,35 @@ class Chat:
         else:
             st.session_state['found_mistral_api'] = True
 
+        # Mise en page du chat avec l'IA
+        header_container = st.container()
+        chat_container = header_container.container(height=500)
+
         # Assignation des messages du chat sélectionné
         st.session_state.messages = st.session_state["chats"][self.selected_chat]
 
-        # Mise en page du chat
-        st.markdown(
-            """
-            <style>
-            .message-container {
-                height: 70vh; /* 70% de la hauteur de la fenêtre */
-                overflow-y: auto;
-                padding: 10px;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-
         # Affichage de l'historique de la conversation
-        with st.container():
-            st.markdown('<div class="message-container">', unsafe_allow_html=True)
-            for message in st.session_state.messages:
-                # Affichage des messages de l'utilisateur
-                if message["role"] == "User":
-                    with st.chat_message(message["role"], avatar="👤"):
-                        st.write(message["content"])
-                # Affichage des messages de l'IA
-                elif message["role"] == "assistant":
-                    with st.chat_message(message["role"], avatar="✨"):
-                        st.markdown(message["content"])
-                        metrics = message["metrics"]
-                        st.markdown(
-                            f"📶 *Latence : {metrics['latency']:.2f} secondes* | "
-                            f"💲 *Coût : {metrics['euro_cost']:.6f} €* | "
-                            f"⚡ *Utilisation énergétique : {metrics['energy_usage']} kWh* | "
-                            f"🌡️ *Potentiel de réchauffement global : {metrics['gwp']} kgCO2eq*"
-                        )
-            st.markdown('</div>', unsafe_allow_html=True)
+        for message in st.session_state.messages:
+            # Affichage des messages de l'utilisateur
+            if message["role"] == "User":
+                with chat_container.chat_message(message["role"], avatar="👤"):
+                    st.write(message["content"])
 
+            # Affichage des messages de l'IA
+            elif message["role"] == "assistant":
+                with chat_container.chat_message(message["role"], avatar="✨"):
+                    st.markdown(message["content"])
+                    metrics = message["metrics"]
+                    st.markdown(
+                        f"📶 *Latence : {metrics['latency']:.2f} secondes* | "
+                        f"💲 *Coût : {metrics['euro_cost']:.6f} €* | "
+                        f"⚡ *Utilisation énergétique : {metrics['energy_usage']} kWh* | "
+                        f"🌡️ *Potentiel de réchauffement global : {metrics['gwp']} kgCO2eq*"
+                    )
         
-        cols = st.columns([3, 10, 1])
+        # Mise en page de l'interraction avec l'IA
+        cols = header_container.columns([3, 10, 1])
+
         # Choix du modèle [TEMP]
         with cols[0]:
             st.selectbox("", label_visibility="collapsed", options=["Option 1", "Option 2", "Option 3"], index=0)
@@ -94,13 +83,11 @@ class Chat:
         # Zone de saisie pour le chat avec l'IA [TEMP]
         with cols[1]:
             if message := st.chat_input(
-                placeholder="Écrivez votre message", key=f"chat_input_{self.selected_chat}", 
-                disabled=not st.session_state.get('found_mistral_api', False)
-            ):
+                placeholder="Écrivez votre message", key=f"chat_input_{self.selected_chat}", disabled=not st.session_state.get('found_mistral_api', False)):
                 if message.strip():
 
                     # Affichage du nouveau message de l'utilisateur
-                    with st.chat_message("User", avatar="👤"):
+                    with chat_container.chat_message("User", avatar="👤"):
                         st.write(message)
 
                     # Ajout du message à l'historique de la conversation
@@ -138,7 +125,7 @@ class Chat:
                     }
 
                     # Affichage de la réponse de l'IA
-                    with st.chat_message("assistant", avatar="✨"):
+                    with chat_container.chat_message("assistant", avatar="✨"):
                         st.write_stream(stream_text(response["response"]))
                         st.markdown(
                             f"📶 *Latence : {response['latency']:.2f} secondes* | "
