@@ -78,7 +78,7 @@ class Chat:
 
         # Choix du modèle [TEMP]
         with cols[0]:
-            st.selectbox("", label_visibility="collapsed", options=["Option 1", "Option 2", "Option 3"], index=0)
+            st.selectbox("NULL", label_visibility="collapsed", options=["Option 1", "Option 2", "Option 3"], index=0)
 
         # Zone de saisie pour le chat avec l'IA [TEMP]
         with cols[1]:

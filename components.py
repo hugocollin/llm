@@ -37,7 +37,7 @@ def show_sidebar():
         # Bouton pour ajouter un chat
         with header_cols[1]:
             st.write("")
-            if st.button(":material/add_comment:"):
+            if st.button("", icon=":material/add_comment:"):
                 if len(st.session_state["chats"]) < 5:
                     new_chat_name = get_new_chat_name()
                     st.session_state["chats"][new_chat_name] = []
@@ -53,8 +53,10 @@ def show_sidebar():
                     if st.button(f":material/forum: {chat_name}"):
                         selected_chat = chat_name
                 with btn_cols[1]:
-                    if st.button(":material/delete:", key=f"del_chat_btn_{chat_name}"):
+                    if st.button("", icon=":material/delete:", key=f"del_chat_btn_{chat_name}"):
                         del st.session_state["chats"][chat_name]
+                        if st.session_state.get('selected_chat') == chat_name:
+                            st.session_state['selected_chat'] = next(iter(st.session_state["chats"]), None)
                         st.rerun()
             return selected_chat
         else:

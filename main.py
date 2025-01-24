@@ -26,7 +26,7 @@ elif 'selected_chat' not in st.session_state and selected_chat:
     st.session_state['selected_chat'] = selected_chat
 
 # Affichage du chat sélectionné
-if 'selected_chat' in st.session_state:
+if 'selected_chat' in st.session_state and st.session_state['selected_chat'] is not None:
     current_chat = st.session_state['selected_chat']
     st.subheader(f"{current_chat}")
     
@@ -42,3 +42,14 @@ if 'selected_chat' in st.session_state:
     
     # Sauvegarde des messages du chat sélectionné
     st.session_state["chats"][current_chat] = st.session_state.get("chats", {}).get(current_chat, [])
+else:
+    st.container(height=200, border=False)
+    with st.container():
+        # Question
+        st.title("Comment puis-je vous aider ?")
+
+        # Barre de saisie de question
+        question = st.chat_input("Écrivez votre message", key="new_chat_question")
+        
+        # Suggestions de questions
+        st.pills(label="NULL", options=["Suggestion question 1", "Suggestion question 2", "Suggestion question 3"], label_visibility="collapsed")
