@@ -25,7 +25,7 @@ def show_sidebar():
         # Message de bienvenue [TEMP]
         st.title("Bienvenue [utilisateur] !")
 
-        cols = st.columns([1, 1, 4])
+        cols = st.columns([1, 1, 3])
 
         # Bouton profil [TEMP]
         with cols[0]:

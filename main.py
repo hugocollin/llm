@@ -6,6 +6,19 @@ from components import show_sidebar
 # Configuration de la page
 st.set_page_config(page_title="LLM", page_icon="✨", layout="wide")
 
+# Mise en page personnalisée
+st.markdown("""
+    <style>
+        .block-container {
+            padding-top: 50px;
+            padding-bottom: 0px;
+        }
+        div[data-testid="stVerticalBlock"] {
+            overflow-y: hidden;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # Affichage de la barre latérale
 selected_chat = show_sidebar()
 
