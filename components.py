@@ -22,14 +22,17 @@ def show_sidebar():
         st.session_state["chats"] = {}
 
     with st.sidebar:
+        # Message de bienvenue [TEMP]
+        st.title("Bienvenue !")
+
         cols = st.columns([1, 1, 4])
 
-        # Bouton profil
+        # Bouton profil [TEMP]
         with cols[0]:
             if st.button("", icon=":material/manage_accounts:"):
                 st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
         
-        # Bouton statistiques
+        # Bouton statistiques [TEMP]
         with cols[1]:
             if st.button("", icon=":material/bar_chart:"):
                 st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
@@ -38,7 +41,7 @@ def show_sidebar():
 
         # Titre de la section
         with header_cols[0]:
-            st.title("Conversations")
+            st.header("Conversations")
 
         # Bouton pour ajouter un chat
         with header_cols[1]:
