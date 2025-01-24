@@ -4,7 +4,7 @@ from chat import Chat
 from components import show_sidebar
 
 # Configuration de la page
-st.set_page_config(page_title="LLM", page_icon="✨", layout="wide")
+st.set_page_config(page_title="SISE Classmate", page_icon="✨", layout="wide")
 
 # Mise en page personnalisée
 st.markdown("""
