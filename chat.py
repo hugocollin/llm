@@ -106,27 +106,36 @@ class Chat:
                     # Ajout du message à l'historique de la conversation
                     st.session_state.messages.append({"role": "User", "content": message})
 
-                    # Initialisation des connaissances de l'IA
-                    if 'bdd_chunks' not in st.session_state:
-                        with st.spinner("Démarrage de l'IA..."):
-                            st.session_state['bdd_chunks'] = instantiate_bdd()
+                    # # Initialisation des connaissances de l'IA
+                    # if 'bdd_chunks' not in st.session_state:
+                    #     with st.spinner("Démarrage de l'IA..."):
+                    #         st.session_state['bdd_chunks'] = instantiate_bdd()
 
-                    if 'llm' not in st.session_state:
-                        st.session_state['llm'] = AugmentedRAG(
-                            role_prompt=self.role_prompt,
-                            generation_model="mistral-large-latest",
-                            bdd_chunks=st.session_state['bdd_chunks'],
-                            top_n=3,
-                            max_tokens=3000,
-                            temperature=0.3,
-                        )
+                    # if 'llm' not in st.session_state:
+                    #     st.session_state['llm'] = AugmentedRAG(
+                    #         role_prompt=self.role_prompt,
+                    #         generation_model="mistral-large-latest",
+                    #         bdd_chunks=st.session_state['bdd_chunks'],
+                    #         top_n=3,
+                    #         max_tokens=3000,
+                    #         temperature=0.3,
+                    #     )
 
-                    # Récupération de la réponse de l'IA
-                    llm = st.session_state['llm']
-                    response = llm(
-                        query=message,
-                        history=st.session_state.messages,
-                    )
+                    # # Récupération de la réponse de l'IA
+                    # llm = st.session_state['llm']
+                    # response = llm(
+                    #     query=message,
+                    #     history=st.session_state.messages,
+                    # )
+
+                    # Affichage d'un faux message temporaire
+                    response = {
+                        "response": "Je ne suis pas encore prêt à répondre à vos questions, mais je le serai bientôt !",
+                        "latency": 0,
+                        "euro_cost": 0,
+                        "energy_usage": 0,
+                        "gwp": 0
+                    }
 
                     # Affichage de la réponse de l'IA
                     with st.chat_message("assistant", avatar="✨"):
