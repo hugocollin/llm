@@ -23,7 +23,7 @@ def show_sidebar():
 
     with st.sidebar:
         # Message de bienvenue [TEMP]
-        st.title("Bienvenue !")
+        st.title("Bienvenue [utilisateur] !")
 
         cols = st.columns([1, 1, 4])
 

@@ -8,14 +8,28 @@ class Chat:
     def __init__(self, selected_chat):
         """
         Initialise la classe Chat avec la clé API nécessaire pour utiliser le modèle Mistral.
+
+        Args:
+            selected_chat (str): Le chat sélectionné pour la conversation.
         """
-        self.selected_chat = selected_chat
+
         # Récupération de la clé API Mistral
         try:
             load_dotenv(find_dotenv())
             self.API_KEY = os.getenv("MISTRAL_API_KEY")
         except FileNotFoundError:
             self.API_KEY = st.secrets["MISTRAL_API_KEY"]
+        
+        # Récupération du chat sélectionné
+        self.selected_chat = selected_chat
+
+        # Initialisation des messages du chat
+        if "chats" not in st.session_state:
+            st.session_state["chats"] = {}
+
+        # Vérification si le chat sélectionné existe
+        if self.selected_chat not in st.session_state["chats"]:
+            st.session_state["chats"][self.selected_chat] = []
         
         # Définition du prompt de rôle pour l'IA [TEMP]
         self.role_prompt = ""
@@ -33,11 +47,8 @@ class Chat:
         else:
             st.session_state['found_mistral_api'] = True
 
-        # Vérification si l'historique de la conversation est initialisé pour le chat sélectionné
-        if self.selected_chat not in st.session_state.messages:
-            st.session_state.messages = st.session_state["chats"][self.selected_chat]
-        else:
-            st.session_state.messages = st.session_state["chats"][self.selected_chat]
+        # Assignation des messages du chat sélectionné
+        st.session_state.messages = st.session_state["chats"][self.selected_chat]
 
         # Mise en page du chat
         st.markdown(
@@ -139,10 +150,10 @@ class Chat:
                         }
                     })
 
-            # Bouton pour ajouter un fichier [TEMP]
-            with cols[2]:
-                if st.button("", icon=":material/attach_file:"):
-                    st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
+        # Bouton pour ajouter un fichier [TEMP]
+        with cols[2]:
+            if st.button("", icon=":material/attach_file:"):
+                st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
 
         # Sauvegarde des messages dans l'espace de discussion sélectionné
         st.session_state["chats"][self.selected_chat] = st.session_state.messages
