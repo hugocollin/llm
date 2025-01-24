@@ -23,19 +23,10 @@ def show_sidebar():
 
     with st.sidebar:
         # Message de bienvenue [TEMP]
-        st.title("Bienvenue [utilisateur] !")
-
-        cols = st.columns([1, 1, 3])
-
-        # Bouton profil [TEMP]
-        with cols[0]:
-            if st.button("", icon=":material/manage_accounts:"):
-                st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
+        st.title("✨ SISE Classmate")
         
-        # Bouton statistiques [TEMP]
-        with cols[1]:
-            if st.button("", icon=":material/bar_chart:"):
-                st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
+        if st.button("", icon=":material/bar_chart:"):
+            st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
 
         header_cols = st.columns([3, 1])
 
