@@ -22,20 +22,26 @@ def show_sidebar():
         st.session_state["chats"] = {}
 
     with st.sidebar:
-        # Message de bienvenue [TEMP]
+        # Titre de l'application
         st.title("✨ SISE Classmate")
-        
-        if st.button("", icon=":material/bar_chart:"):
-            st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
 
-        header_cols = st.columns([3, 1])
+        # Auteurs
+        st.write("*Cette application a été développée par [KPAMEGAN Falonne](https://github.com/marinaKpamegan), [KARAMOKO Awa](https://github.com/karamoko17), [CISSE Lansana](https://github.com/lansanacisse) et [COLLIN Hugo](https://github.com/hugocollin), dans le cadre du Master 2 SISE.*")
+
+        header_cols = st.columns([3, 1, 1])
 
         # Section des conversations
         with header_cols[0]:
             st.header("Conversations")
 
-        # Bouton pour ajouter un chat
+        # Bouton pour afficher les statistiques
         with header_cols[1]:
+            st.write("")
+            if st.button("", icon=":material/bar_chart:"):
+                st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
+
+        # Bouton pour ajouter un chat
+        with header_cols[2]:
             st.write("")
             if st.button("", icon=":material/add_comment:"):
                 if len(st.session_state["chats"]) < 5:
