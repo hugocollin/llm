@@ -56,11 +56,8 @@ class Chat:
         header_container = st.container()
         self.chat_container = header_container.container(height=500)
 
-        # Assignation des messages du chat sélectionné
-        st.session_state.messages = st.session_state["chats"][self.selected_chat]
-
         # Affichage de l'historique de la conversation
-        for message in st.session_state.messages:
+        for message in st.session_state["chats"][self.selected_chat]:
             # Affichage des messages de l'utilisateur
             if message["role"] == "User":
                 with self.chat_container.chat_message(message["role"], avatar="👤"):
@@ -78,7 +75,7 @@ class Chat:
                         f"🌡️ *Potentiel de réchauffement global : {metrics['gwp']} kgCO2eq*"
                     )
         # Si une question initiale est présente, l'envoyer automatiquement
-        if self.initial_question and not st.session_state.messages:
+        if self.initial_question and not st.session_state["chats"][self.selected_chat]:
             self.handle_user_message(self.initial_question)
 
         # Mise en page de l'interraction avec l'IA
@@ -100,9 +97,6 @@ class Chat:
             if st.button("", icon=":material/attach_file:"):
                 st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
 
-        # Sauvegarde des messages dans l'espace de discussion sélectionné
-        st.session_state["chats"][self.selected_chat] = st.session_state.messages
-
     def handle_user_message(self, message: str):
         """
         Gère le message de l'utilisateur et envoie une requête à l'IA Mistral.
@@ -116,7 +110,7 @@ class Chat:
             st.write(message)
 
         # Ajout du message à l'historique de la conversation
-        st.session_state.messages.append({"role": "User", "content": message})
+        st.session_state["chats"][self.selected_chat].append({"role": "User", "content": message})
 
         # # Initialisation des connaissances de l'IA
         # if 'bdd_chunks' not in st.session_state:
@@ -137,7 +131,7 @@ class Chat:
         # llm = st.session_state['llm']
         # response = llm(
         #     query=message,
-        #     history=st.session_state.messages,
+        #     history=st.session_state["chats"][self.selected_chat]
         # )
 
         # Affichage d'un faux message temporaire
@@ -160,7 +154,7 @@ class Chat:
             )
 
         # Ajout de la réponse de l'IA à l'historique de la conversation
-        st.session_state.messages.append({
+        st.session_state["chats"][self.selected_chat].append({
             "role": "AI",
             "content": response["response"],
             "metrics": {
