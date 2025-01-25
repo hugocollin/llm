@@ -1,6 +1,8 @@
 import numpy as np
 from typing import List
 from mistralai import Mistral
+from embedding_base import EmbeddingBase
+
 
 class MistralEmbedding:
     def __init__(self, api_key: str, model_name: str = "mistral-embed"):
