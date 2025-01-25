@@ -157,6 +157,7 @@ def show_stats_dialog():
                         total_energy += metrics.get("energy_usage", 0.0)
                         total_gwp += metrics.get("gwp", 0.0)
 
+            sent_messages = total_messages / 2
             average_latency = total_latency / (total_messages / 2 or 1)
 
             # Affichage des statistiques
@@ -164,7 +165,7 @@ def show_stats_dialog():
             with cols[0]:
                 with st.container(border=True):
                     st.write("**🗨️ Nombre total de messages envoyés**")
-                    st.title(total_messages)
+                    st.title(f"{sent_messages:.0f}")
             with cols[1]:
                 with st.container(border=True):
                     st.write("**📶 Latence moyenne des réponses**")

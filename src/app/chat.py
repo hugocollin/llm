@@ -140,7 +140,7 @@ class Chat:
         )
 
         # Récupération de la réponse de l'IA
-        response = asyncio.run(self.llm.generate(prompt=message))
+        response = asyncio.run(self.llm.generate(prompt=message, model="mistral-large-latest"))
 
         # Affichage de la réponse de l'IA
         with self.chat_container.chat_message("AI", avatar="✨"):
