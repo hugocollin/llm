@@ -1,7 +1,7 @@
 import streamlit as st
 
-from chat import Chat
-from components import show_sidebar
+from src.app.chat import Chat
+from src.app.components import show_sidebar
 
 # Configuration de la page
 st.set_page_config(page_title="SISE Classmate", page_icon="✨", layout="wide")

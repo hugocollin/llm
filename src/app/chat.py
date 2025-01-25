@@ -2,7 +2,7 @@ import streamlit as st
 import os
 from dotenv import find_dotenv, load_dotenv
 
-from components import stream_text
+from src.app.components import stream_text
 
 class Chat:
     def __init__(self, selected_chat):
