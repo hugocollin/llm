@@ -87,6 +87,12 @@ class Chat:
                         f"⚡ *Utilisation énergétique : {metrics['energy_usage']} kWh* | "
                         f"🌡️ *Potentiel de réchauffement global : {metrics['gwp']} kgCO2eq*"
                     )
+
+            # Affichage des messages de sécurité
+            elif message["role"] == "Guardian":
+                with self.chat_container.chat_message(message["role"], avatar="⛔"):
+                    st.write(message["content"])
+
         # Si une question initiale est présente, l'envoyer automatiquement
         if self.initial_question and not st.session_state["chats"][self.selected_chat]:
             self.handle_user_message(self.initial_question)
@@ -104,7 +110,7 @@ class Chat:
                 disabled=not st.session_state.get("found_api_keys", False),
             )
 
-        # Zone de saisie pour le chat avec l'IA [TEMP]
+        # Zone de saisie pour le chat avec l'IA
         with cols[1]:
             if message := st.chat_input(
                 placeholder="Écrivez votre message",
@@ -114,7 +120,7 @@ class Chat:
                 if message.strip():
                     self.handle_user_message(message)
 
-        # Bouton pour ajouter un fichier
+        # Bouton pour ajouter un fichier PDF [TEMP]
         with cols[2]:
             if st.button(
                 "",
@@ -140,35 +146,58 @@ class Chat:
             {"role": "User", "content": message}
         )
 
-        # Ajout du pipeline ici
+        # Initialisation du pipeline de sécurité
+        security_manager = EnhancedLLMSecurityManager(message)
 
+        # Validation du message de l'utilisateur
+        is_valid_message = security_manager.validate_input()
 
-        # Récupération de la réponse de l'IA
-        response = asyncio.run(self.llm.generate(prompt=message, model="mistral-large-latest"))
+        # Si le message de utilisateur est autorisé
+        if is_valid_message is True:
+            # Envoi du message et récupération de la réponse de l'IA
+            response = asyncio.run(self.llm.generate(prompt=message, model="mistral-large-latest"))
 
-        # Affichage de la réponse de l'IA
-        with self.chat_container.chat_message("AI", avatar="✨"):
-            st.write_stream(stream_text(response["response"]))
-            st.markdown(
-                f"📶 *Latence : {response['latency']:.2f} secondes* | "
-                f"💲 *Coût : {response['euro_cost']:.6f} €* | "
-                f"⚡ *Utilisation énergétique : {response['energy_usage']} kWh* | "
-                f"🌡️ *Potentiel de réchauffement global : {response['gwp']} kgCO2eq*"
+            # Affichage de la réponse de l'IA
+            with self.chat_container.chat_message("AI", avatar="✨"):
+                st.write_stream(stream_text(response["response"]))
+                st.markdown(
+                    f"📶 *Latence : {response['latency']:.2f} secondes* | "
+                    f"💲 *Coût : {response['euro_cost']:.6f} €* | "
+                    f"⚡ *Utilisation énergétique : {response['energy_usage']} kWh* | "
+                    f"🌡️ *Potentiel de réchauffement global : {response['gwp']} kgCO2eq*"
+                )
+
+            # Ajout de la réponse de l'IA à l'historique de la conversation
+            st.session_state["chats"][self.selected_chat].append(
+                {
+                    "role": "AI",
+                    "content": response["response"],
+                    "metrics": {
+                        "latency": response["latency"],
+                        "euro_cost": response["euro_cost"],
+                        "energy_usage": response["energy_usage"],
+                        "gwp": response["gwp"],
+                    },
+                }
+            )
+        else:
+            # Définition du message de sécurité
+            message = (
+                "Votre message n'a pas été traité pour des raisons de sécurité. "
+                "Veuillez reformuler votre message."
             )
 
-        # Ajout de la réponse de l'IA à l'historique de la conversation
-        st.session_state["chats"][self.selected_chat].append(
-            {
-                "role": "AI",
-                "content": response["response"],
-                "metrics": {
-                    "latency": response["latency"],
-                    "euro_cost": response["euro_cost"],
-                    "energy_usage": response["energy_usage"],
-                    "gwp": response["gwp"],
-                },
-            }
-        )
+            # Affichage du message de sécurité
+            with self.chat_container.chat_message("Guardian", avatar="⛔"):
+                st.write_stream(stream_text(message))
+
+            # Ajout du message de sécurité à l'historique de la conversation
+            st.session_state["chats"][self.selected_chat].append(
+                {
+                    "role": "Guardian",
+                    "content": message,
+                }
+            )
 
     @st.dialog("Ajouter des fichiers PDF")
     def upload_files_dialog(self):

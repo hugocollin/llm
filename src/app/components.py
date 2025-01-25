@@ -145,6 +145,7 @@ def show_stats_dialog():
             total_cost = 0.0
             total_energy = 0.0
             total_gwp = 0.0
+            total_blocked_messages = 0
 
             # Calcul des statistiques
             for chat in chats_to_analyze.values():
@@ -156,21 +157,27 @@ def show_stats_dialog():
                         total_cost += metrics.get("euro_cost", 0.0)
                         total_energy += metrics.get("energy_usage", 0.0)
                         total_gwp += metrics.get("gwp", 0.0)
+                    if message["role"] == "Guardian":
+                        total_blocked_messages += 1
 
             sent_messages = total_messages / 2
             average_latency = total_latency / (total_messages / 2 or 1)
 
             # Affichage des statistiques
-            cols = st.columns(3)
+            cols = st.columns(4)
             with cols[0]:
                 with st.container(border=True):
                     st.write("**🗨️ Nombre total de messages envoyés**")
                     st.title(f"{sent_messages:.0f}")
             with cols[1]:
                 with st.container(border=True):
+                    st.write("**🛡️ Nombre total de messages bloqués**")
+                    st.title(f"{total_blocked_messages:.0f}")
+            with cols[2]:
+                with st.container(border=True):
                     st.write("**📶 Latence moyenne des réponses**")
                     st.title(f"{average_latency:.2f} secondes")
-            with cols[2]:
+            with cols[3]:
                 with st.container(border=True):
                     st.write("**💲 Coût total**")
                     st.title(f"{total_cost:.2f} €")
