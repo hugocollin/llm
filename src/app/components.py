@@ -5,7 +5,6 @@ Ce fichier contient les fonctions nécessaires pour l'affichage de l'interface d
 import time
 import streamlit as st
 
-
 def stream_text(text: str):
     """
     Fonction pour afficher le texte progressivement.
@@ -16,7 +15,6 @@ def stream_text(text: str):
     for word in text.split(" "):
         yield word + " "
         time.sleep(0.03)
-
 
 def get_new_chat_name() -> str:
     """
@@ -35,7 +33,6 @@ def get_new_chat_name() -> str:
     while n in existing_numbers:
         n += 1
     return f"Chat {n}"
-
 
 def show_sidebar() -> str:
     """
@@ -116,7 +113,6 @@ def show_sidebar() -> str:
                 icon=":material/info:",
             )
             return None
-
 
 @st.dialog("Statistiques globales de conversation", width="large")
 def show_stats_dialog():
