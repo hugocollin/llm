@@ -1,8 +1,8 @@
 python-dotenv
 PyPDF2
 google-generativeai
-# sentences-transformers
-# torch
-# pandas
-# scikit-learn
-# datasets
+sentences-transformers
+torch
+pandas
+scikit-learn
+datasets
