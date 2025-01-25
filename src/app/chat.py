@@ -1,6 +1,5 @@
 import streamlit as st
-import os
-from dotenv import find_dotenv, load_dotenv
+import PyPDF2
 
 from src.app.components import stream_text
 
@@ -81,10 +80,10 @@ class Chat:
                 if message.strip():
                     self.handle_user_message(message)
 
-        # Bouton pour ajouter un fichier [TEMP]
+        # Bouton pour ajouter un fichier
         with cols[2]:
             if st.button("", icon=":material/attach_file:", disabled=not st.session_state.get('found_mistral_api', False)):
-                st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
+                self.upload_files_dialog()
 
     def handle_user_message(self, message: str):
         """
@@ -153,3 +152,26 @@ class Chat:
                 "gwp": response['gwp']
             }
         })
+
+    @st.dialog("Ajouter des fichiers PDF")
+    def upload_files_dialog(self):
+        """
+        Ouvre une boîte de dialogue pour ajouter des fichiers PDF.
+        """
+
+        # Affichage de l'espace pour ajouter des fichiers
+        uploaded_files = st.file_uploader("NULL", label_visibility="collapsed", type=['pdf'], accept_multiple_files=True)
+        
+        # Bouton pour ajouter et traiter les fichiers sélectionnés
+        if st.button("Ajouter les fichiers sélectionnés", icon=":material/upload_file:", disabled=not uploaded_files):
+            with st.status("**Ajout de(s) fichier(s) en cours... Ne fermez pas la fenêtre !**", expanded=True) as status:
+                # Lecture du contenu de chaque fichier PDF
+                documents = {}
+                for file in uploaded_files:
+                    st.write(f"Ajout du fichier {file.name}...")
+                    pdf_reader = PyPDF2.PdfReader(file)
+                    text = ""
+                    for page in pdf_reader.pages:
+                        text += page.extract_text()
+                    documents[file.name] = text
+                status.update(label="**Les fichiers ont été ajoutés avec succès ! Vous pouvez maintenant fermer la fenêtre.**", state="complete", expanded=False)
