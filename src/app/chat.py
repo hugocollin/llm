@@ -139,6 +139,8 @@ class Chat:
             {"role": "User", "content": message}
         )
 
+        # Ajout du pipeline ici
+
         # Récupération de la réponse de l'IA
         response = asyncio.run(self.llm.generate(prompt=message, model="mistral-large-latest"))
 
