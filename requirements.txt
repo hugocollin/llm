@@ -4,4 +4,4 @@ mistralai
 google-generativeai
 torch
 sentence-transformers
-sckit-learn
+scikit-learn
