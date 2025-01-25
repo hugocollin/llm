@@ -8,6 +8,7 @@ import streamlit as st
 import PyPDF2
 
 from src.app.components import stream_text
+from src.pipeline import EnhancedLLMSecurityManager
 from src.rag.model_api import MultiModelLLM
 
 class Chat:
@@ -140,6 +141,7 @@ class Chat:
         )
 
         # Ajout du pipeline ici
+
 
         # Récupération de la réponse de l'IA
         response = asyncio.run(self.llm.generate(prompt=message, model="mistral-large-latest"))

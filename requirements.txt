@@ -2,3 +2,6 @@ python-dotenv
 PyPDF2
 mistralai
 google-generativeai
+torch
+transformers
+sckit-learn
