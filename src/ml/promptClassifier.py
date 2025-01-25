@@ -10,6 +10,8 @@ import numpy as np
 from typing import List, Tuple, Dict
 import json
 import pickle
+import os
+from collections.abc import Iterable
 
 
 class PromptClassifier:
@@ -105,7 +107,10 @@ class PromptClassifier:
         if self.best_model is None:
             raise ValueError("Aucun modèle sélectionné. Appelez `get_best_model` d'abord.")
 
-        _, model = self.best_model
+        if isinstance(self.best_model, Iterable):
+            _, model = self.best_model
+        else:
+            model = self.best_model
 
         # Générer les embeddings pour les nouveaux prompts
         embeddings = [self.get_bert_embedding(prompt) for prompt in prompts]
@@ -126,6 +131,7 @@ class PromptClassifier:
         Returns:
             None
         """
+        print("Loading data...")
         # Charger les données d'entraînement
         with open(train_json_path, 'r', encoding='utf-8') as f_train:
             train_data = json.load(f_train)
@@ -166,6 +172,7 @@ class PromptClassifier:
         Returns:
             None
         """
+        print("Preparing data...")
         # Convertir en DataFrame
         data_train = pd.DataFrame({'prompt': X_train, 'label': y_train})
         data_test = pd.DataFrame({'prompt': X_test, 'label': y_test})
@@ -182,23 +189,38 @@ class PromptClassifier:
 
 
 
-    def export_best_model(self, output_path: str) -> None:
+    def export_best_model(self, output_name: str) -> None:
         # Exdef export_best_model(self, output_path: str) -> None:
         """
         Exporte le meilleur modèle en tant que fichier pickle.
 
         Args:
-            output_path (str): Chemin du fichier où sauvegarder le modèle (.pkl).
+            output_name (str): Nom du fichier où sauvegarder le modèle (.pkl).
 
         Returns:
             None
         """
         if self.best_model is None:
             raise ValueError("Aucun modèle n'a été entraîné ou sélectionné. Veuillez appeler `train_and_evaluate` et `get_best_model` d'abord.")
-
+        output_path = os.path.join(os.getcwd(),"src", "ml", output_name)
         # Sauvegarder le modèle avec pickle
         with open(output_path, 'wb') as f:
             _, model = self.best_model
             pickle.dump(model, f)
 
         print(f"Le meilleur modèle a été exporté avec succès vers {output_path}.")
+
+    
+    # load the model
+    def load_model(self) -> None:
+        """
+        Charge un modèle à partir d'un fichier pickle.
+
+        Returns:
+            None
+        """
+        model_name = "best_prompt_model.pkl"
+        model_path = os.path.join(os.getcwd(),"src", "ml", model_name)
+        with open(model_path, 'rb') as f:
+            self.best_model = pickle.load(f)
+        print(f"Modèle chargé avec succès depuis {model_path}.")
