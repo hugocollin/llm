@@ -39,6 +39,10 @@ class Chat:
         self.initial_question = initial_question
         st.session_state["initial_question"] = None
 
+        # Mise en page du chat avec l'IA
+        self.header_container = st.container()
+        self.chat_container = self.header_container.container(height=500)
+
     def run(self):
         """
         Lance l'affichage du chat avec l'IA Mistral.
@@ -52,10 +56,6 @@ class Chat:
                 "Votre clé d'API Mistral est introuvable.",
                 icon=":material/error:",
             )
-
-        # Mise en page du chat avec l'IA
-        header_container = st.container()
-        self.chat_container = header_container.container(height=500)
 
         # Affichage de l'historique de la conversation
         for message in st.session_state["chats"][self.selected_chat]:
@@ -80,7 +80,7 @@ class Chat:
             self.handle_user_message(self.initial_question)
 
         # Mise en page de l'interraction avec l'IA
-        cols = header_container.columns([3, 10, 1])
+        cols = self.header_container.columns([3, 10, 1])
 
         # Choix du modèle [TEMP]
         with cols[0]:
