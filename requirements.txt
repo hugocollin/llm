@@ -3,5 +3,5 @@ PyPDF2
 mistralai
 google-generativeai
 torch
-transformers
+sentence-transformers
 sckit-learn
