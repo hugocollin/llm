@@ -7,19 +7,12 @@ from src.app.components import stream_text
 class Chat:
     def __init__(self, selected_chat : str, initial_question : str = None):
         """
-        Initialise la classe Chat avec la clé API nécessaire pour utiliser le modèle Mistral.
+        Initialise la classe Chat avec le chat sélectionné et la question initiale si disponible.
 
         Args:
             selected_chat (str): Chat sélectionné pour la conversation.
             initial_question (str, optionnel): Question initiale à poser à l'IA. None par défaut.
         """
-
-        # Récupération de la clé API Mistral
-        try:
-            load_dotenv(find_dotenv())
-            self.API_KEY = os.getenv("MISTRAL_API_KEY")
-        except FileNotFoundError:
-            self.API_KEY = st.secrets["MISTRAL_API_KEY"]
         
         # Récupération du chat sélectionné
         self.selected_chat = selected_chat
@@ -45,12 +38,9 @@ class Chat:
         """
         
         # Avertissement si la clé API Mistral n'est pas présente
-        if not self.API_KEY:
-            st.error(
-                "**Conversation avec l'IA indisponible :** Votre clé d'API Mistral est introuvable.", icon=":material/error:")
-            st.session_state['found_mistral_api'] = False
-        else:
-            st.session_state['found_mistral_api'] = True
+        if st.session_state['found_mistral_api'] == False:
+            # Affichage d'un message d'erreur
+            st.error("**Conversation avec l'IA indisponible :** Votre clé d'API Mistral est introuvable.", icon=":material/error:")
 
         # Mise en page du chat avec l'IA
         header_container = st.container()
@@ -83,18 +73,17 @@ class Chat:
 
         # Choix du modèle [TEMP]
         with cols[0]:
-            st.selectbox("NULL", label_visibility="collapsed", options=["Option 1", "Option 2", "Option 3"], index=0)
+            st.selectbox("NULL", label_visibility="collapsed", options=["Option 1", "Option 2", "Option 3"], index=0, disabled=not st.session_state.get('found_mistral_api', False))
 
         # Zone de saisie pour le chat avec l'IA [TEMP]
         with cols[1]:
-            if message := st.chat_input(
-                placeholder="Écrivez votre message", key=f"chat_input_{self.selected_chat}", disabled=not st.session_state.get('found_mistral_api', False)):
+            if message := st.chat_input(placeholder="Écrivez votre message", key=f"chat_input_{self.selected_chat}", disabled=not st.session_state.get('found_mistral_api', False)):
                 if message.strip():
                     self.handle_user_message(message)
 
         # Bouton pour ajouter un fichier [TEMP]
         with cols[2]:
-            if st.button("", icon=":material/attach_file:"):
+            if st.button("", icon=":material/attach_file:", disabled=not st.session_state.get('found_mistral_api', False)):
                 st.toast("Fonctionnalité disponible ultérieurement", icon=":material/info:")
 
     def handle_user_message(self, message: str):
