@@ -8,6 +8,8 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import pandas as pd
 import numpy as np
 from typing import List, Tuple, Dict
+import json
+import pickle
 
 
 class PromptClassifier:
@@ -45,37 +47,6 @@ class PromptClassifier:
         last_hidden_states = outputs.last_hidden_state
         embedding_vector = last_hidden_states.mean(dim=1).squeeze().numpy()
         return embedding_vector
-
-    def prepare_data(self, 
-                     X_train: List[str], 
-                     y_train: List[int], 
-                     X_test: List[str], 
-                     y_test: List[int]) -> None:
-        """
-        Prépare les données d'entraînement et de test en calculant les embeddings.
-
-        Args:
-            X_train (List[str]): Liste des prompts pour l'entraînement.
-            y_train (List[int]): Liste des labels correspondants pour l'entraînement.
-            X_test (List[str]): Liste des prompts pour le test.
-            y_test (List[int]): Liste des labels correspondants pour le test.
-
-        Returns:
-            None
-        """
-        # Convertir en DataFrame
-        data_train = pd.DataFrame({'prompt': X_train, 'label': y_train})
-        data_test = pd.DataFrame({'prompt': X_test, 'label': y_test})
-
-        # Générer les embeddings
-        data_train['embedding'] = data_train['prompt'].apply(self.get_bert_embedding)
-        data_test['embedding'] = data_test['prompt'].apply(self.get_bert_embedding)
-
-        # Extraire les features et labels
-        self.X_train_emb = pd.DataFrame(data_train["embedding"].to_list())
-        self.y_train = data_train["label"]
-        self.X_test_emb = pd.DataFrame(data_test["embedding"].to_list())
-        self.y_test = data_test["label"]
 
     def train_and_evaluate(self) -> pd.DataFrame:
         """
@@ -143,3 +114,91 @@ class PromptClassifier:
         # Faire les prédictions
         predictions = model.predict(embeddings)
         return predictions
+
+    def load_train_and_test_data_from_json(self, train_json_path: str, test_json_path: str) -> None:
+        """
+        Charge les données d'entraînement et de test à partir de deux fichiers JSON distincts.
+
+        Args:
+            train_json_path (str): Chemin vers le fichier JSON contenant les données d'entraînement.
+            test_json_path (str): Chemin vers le fichier JSON contenant les données de test.
+
+        Returns:
+            None
+        """
+        # Charger les données d'entraînement
+        with open(train_json_path, 'r', encoding='utf-8') as f_train:
+            train_data = json.load(f_train)
+
+        # Charger les données de test
+        with open(test_json_path, 'r', encoding='utf-8') as f_test:
+            test_data = json.load(f_test)
+
+        # Vérifier que les clés "prompt" et "label" existent dans les deux fichiers
+        for data, dataset_name in zip([train_data, test_data], ["train", "test"]):
+            if not all(key in data[0] for key in ['query', 'label']):
+                raise ValueError(f"Le fichier JSON pour {dataset_name} doit contenir les clés 'query' et 'label'.")
+
+        # Extraire les querys et labels des ensembles d'entraînement et de test
+        X_train = [item['query'] for item in train_data]
+        y_train = [item['label'] for item in train_data]
+        X_test = [item['query'] for item in test_data]
+        y_test = [item['label'] for item in test_data]
+
+        # Préparer les données
+        self.prepare_data(X_train, y_train, X_test, y_test)
+
+
+    def prepare_data(self, 
+                     X_train: List[str], 
+                     y_train: List[int], 
+                     X_test: List[str], 
+                     y_test: List[int]) -> None:
+        """
+        Prépare les données d'entraînement et de test en calculant les embeddings.
+
+        Args:
+            X_train (List[str]): Liste des prompts pour l'entraînement.
+            y_train (List[int]): Liste des labels correspondants pour l'entraînement.
+            X_test (List[str]): Liste des prompts pour le test.
+            y_test (List[int]): Liste des labels correspondants pour le test.
+
+        Returns:
+            None
+        """
+        # Convertir en DataFrame
+        data_train = pd.DataFrame({'prompt': X_train, 'label': y_train})
+        data_test = pd.DataFrame({'prompt': X_test, 'label': y_test})
+
+        # Générer les embeddings
+        data_train['embedding'] = data_train['prompt'].apply(self.get_bert_embedding)
+        data_test['embedding'] = data_test['prompt'].apply(self.get_bert_embedding)
+
+        # Extraire les features et labels
+        self.X_train_emb = pd.DataFrame(data_train["embedding"].to_list())
+        self.y_train = data_train["label"]
+        self.X_test_emb = pd.DataFrame(data_test["embedding"].to_list())
+        self.y_test = data_test["label"]
+
+
+
+    def export_best_model(self, output_path: str) -> None:
+        # Exdef export_best_model(self, output_path: str) -> None:
+        """
+        Exporte le meilleur modèle en tant que fichier pickle.
+
+        Args:
+            output_path (str): Chemin du fichier où sauvegarder le modèle (.pkl).
+
+        Returns:
+            None
+        """
+        if self.best_model is None:
+            raise ValueError("Aucun modèle n'a été entraîné ou sélectionné. Veuillez appeler `train_and_evaluate` et `get_best_model` d'abord.")
+
+        # Sauvegarder le modèle avec pickle
+        with open(output_path, 'wb') as f:
+            _, model = self.best_model
+            pickle.dump(model, f)
+
+        print(f"Le meilleur modèle a été exporté avec succès vers {output_path}.")
