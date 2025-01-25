@@ -1,17 +1,14 @@
 import numpy as np
-import asyncio
 import os
 import sys
 import google.generativeai as genai
 from typing import List
-from abc import ABC, abstractmethod
 
 # Ajouter le chemin du répertoire parent au chemin système
 sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
 
 # Importer les classes de base
-from llm.embedding.embedding_base import EmbeddingBase
-
+from src.rag.embedding_base import EmbeddingBase
 
 class GoogleEmbedding(EmbeddingBase):
     def __init__(self, api_key: str, model_name: str = "models/embedding-001"):

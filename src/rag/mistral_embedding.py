@@ -2,7 +2,6 @@ import numpy as np
 from typing import List
 from mistralai import Mistral
 
-
 class MistralEmbedding:
     def __init__(self, api_key: str, model_name: str = "mistral-embed"):
         """Initialise le client Mistral avec la clé API et le modèle."""

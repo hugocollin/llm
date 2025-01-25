@@ -1,10 +1,9 @@
 from typing import List, Dict, Any
-import numpy as np
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
-from llm.database.vector_store import VectorStore
-from llm.embedding.embedding_base import EmbeddingBase
+from src.db.vector_store import VectorStore
+from src.rag.embedding_base import EmbeddingBase
 
 class RagRetriever:
     def __init__(
