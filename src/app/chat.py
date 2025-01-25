@@ -37,6 +37,7 @@ class Chat:
 
         # Stockage de la question initiale
         self.initial_question = initial_question
+        st.session_state['initial_question'] = None
 
     def run(self):
         """
@@ -66,7 +67,7 @@ class Chat:
                     st.write(message["content"])
 
             # Affichage des messages de l'IA
-            elif message["role"] == "assistant":
+            elif message["role"] == "AI":
                 with self.chat_container.chat_message(message["role"], avatar="✨"):
                     st.markdown(message["content"])
                     metrics = message["metrics"]
@@ -149,7 +150,7 @@ class Chat:
         }
 
         # Affichage de la réponse de l'IA
-        with self.chat_container.chat_message("assistant", avatar="✨"):
+        with self.chat_container.chat_message("AI", avatar="✨"):
             st.write_stream(stream_text(response["response"]))
             st.markdown(
                 f"📶 *Latence : {response['latency']:.2f} secondes* | "
@@ -160,7 +161,7 @@ class Chat:
 
         # Ajout de la réponse de l'IA à l'historique de la conversation
         st.session_state.messages.append({
-            "role": "assistant",
+            "role": "AI",
             "content": response["response"],
             "metrics": {
                 "latency": response['latency'],

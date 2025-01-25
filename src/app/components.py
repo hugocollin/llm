@@ -59,8 +59,9 @@ def show_sidebar():
                     if st.button(f":material/forum: {chat_name}"):
                         selected_chat = chat_name
                 with btn_cols[1]:
-                    if st.button("", icon=":material/delete:", key=f"del_chat_btn_{chat_name}"):
+                    if st.button("", icon=":material/delete:", key=f"delete_'{chat_name}'_button"):
                         del st.session_state["chats"][chat_name]
+                        del st.session_state[f"delete_'{chat_name}'_button"]
                         if st.session_state.get('selected_chat') == chat_name:
                             st.session_state['selected_chat'] = next(iter(st.session_state["chats"]), None)
                         st.rerun()
