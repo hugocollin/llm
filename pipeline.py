@@ -2,17 +2,20 @@ from src.security.securite import LLMSecurityManager
 from src.ml.promptClassifier import PromptClassifier
 import os
 
-class EnhancedLLMSecurityManager(LLMSecurityManager):
-    def __init__(self, role="educational assistant", train_json_path=None, test_json_path=None, train_model=False):
-        """
-        Initialise le gestionnaire de sécurité amélioré avec un classifieur.
 
+class EnhancedLLMSecurityManager(LLMSecurityManager):
+    def __init__(self, user_input, role="educational assistant", train_json_path=None, test_json_path=None, train_model=False):
+        """
+        Initialise le gestionnaire de sécurité amélioré avec un classifieur et un prompt utilisateur.
+
+        :param user_input: Entrée utilisateur à valider.
         :param role: Rôle du modèle.
         :param train_json_path: Chemin vers le fichier JSON d'entraînement.
         :param test_json_path: Chemin vers le fichier JSON de test.
         :param train_model: Booléen indiquant si le modèle doit être entraîné.
         """
         super().__init__(role)
+        self.user_input = user_input  # Enregistrer l'input utilisateur
         self.classifier = PromptClassifier()
 
         # Charger et entraîner le classifieur si demandé
@@ -26,27 +29,27 @@ class EnhancedLLMSecurityManager(LLMSecurityManager):
             print("Loading the model...")
             self.classifier.load_model()
 
-    def validate_input(self, user_input):
+    def validate_input(self):
         """
         Valide une entrée utilisateur en utilisant des règles et le classifieur ML.
 
-        :param user_input: Input de l'utilisateur.
         :return: Tuple (is_valid, message).
         """
         # Nettoyer l'entrée
-        cleaned_input = self.clean_input(user_input)
+        cleaned_input = self.clean_input(self.user_input)
 
         # Valider avec les règles
-        is_valid, message = super().validate_input(cleaned_input)
+        is_valid, _ = super().validate_input(cleaned_input)
         if not is_valid:
-            return is_valid, message
+            return is_valid
 
         # Valider avec le classifieur ML
         prediction = self.classifier.predict_with_best_model([cleaned_input])[0]
         if prediction == 1:  # 1 = malveillant
-            return False, "Requête bloquée : intention malveillante détectée par le modèle ML."
+            return False
 
-        return True, "Requête valide."
+        return True
+
 
 # Exemple d'utilisation
 if __name__ == "__main__":
@@ -55,15 +58,19 @@ if __name__ == "__main__":
     test_json = "guardrail_dataset_test.json"
     train_json_path = os.path.join("src", "ml", train_json)
     test_json_path = os.path.join("src", "ml", test_json)
+
+    # Prompt utilisateur
+    user_input = "SELECT * FROM users WHERE id=1;"
+
     # Initialisation du gestionnaire
     enhanced_security_manager = EnhancedLLMSecurityManager(
+        user_input=user_input,
         role="educational assistant",
         train_json_path=train_json_path,
         test_json_path=test_json_path,
-        train_model=False
+        train_model=False # Mettre à True pour ré-entraîner le modèle
     )
 
-    # Exemple de prompt utilisateur
-    user_input = "Cancer provision women Germany"
-    is_valid, message = enhanced_security_manager.validate_input(user_input)
-    print(message)
+    # Validation de l'entrée utilisateur
+    is_valid = enhanced_security_manager.validate_input()
+    print(is_valid)
