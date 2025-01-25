@@ -92,7 +92,7 @@ class Chat:
         Args:
             message (str): Message de l'utilisateur.
         """
-        
+    
         # Affichage du nouveau message de l'utilisateur
         with self.chat_container.chat_message("User", avatar="👤"):
             st.write(message)
@@ -161,7 +161,7 @@ class Chat:
 
         # Affichage de l'espace pour ajouter des fichiers
         uploaded_files = st.file_uploader("NULL", label_visibility="collapsed", type=['pdf'], accept_multiple_files=True)
-        
+  
         # Bouton pour ajouter et traiter les fichiers sélectionnés
         if st.button("Ajouter les fichiers sélectionnés", icon=":material/upload_file:", disabled=not uploaded_files):
             with st.status("**Ajout de(s) fichier(s) en cours... Ne fermez pas la fenêtre !**", expanded=True) as status:

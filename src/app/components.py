@@ -47,6 +47,7 @@ def show_sidebar():
                 if len(st.session_state["chats"]) < 5:
                     new_chat_name = get_new_chat_name()
                     st.session_state["chats"][new_chat_name] = []
+                    st.session_state['selected_chat'] = new_chat_name
                 else:
                     st.toast("Nombre maximal de conversations atteint, supprimez-en une pour en commencer une nouvelle", icon=":material/feedback:")
 
