@@ -5,6 +5,7 @@ Ce fichier contient les fonctions nécessaires pour l'affichage de l'interface d
 import time
 import streamlit as st
 
+
 def stream_text(text: str):
     """
     Fonction pour afficher le texte progressivement.
@@ -15,6 +16,7 @@ def stream_text(text: str):
     for word in text.split(" "):
         yield word + " "
         time.sleep(0.03)
+
 
 def get_new_chat_name() -> str:
     """
@@ -33,6 +35,7 @@ def get_new_chat_name() -> str:
     while n in existing_numbers:
         n += 1
     return f"Chat {n}"
+
 
 def show_sidebar() -> str:
     """
@@ -69,9 +72,7 @@ def show_sidebar() -> str:
         with header_cols[1]:
             st.write("")
             if st.button("", icon=":material/bar_chart:"):
-                st.toast(
-                    "Fonctionnalité disponible ultérieurement", icon=":material/info:"
-                )
+                show_stats_dialog()
 
         # Bouton pour ajouter un chat
         with header_cols[2]:
@@ -115,3 +116,59 @@ def show_sidebar() -> str:
                 icon=":material/info:",
             )
             return None
+
+
+@st.dialog("Statistiques globales de conversation", width="large")
+def show_stats_dialog():
+    """
+    Fonction pour afficher les statistiques globales de conversation.
+    """
+    total_messages = 0
+    total_latency = 0.0
+    total_cost = 0.0
+    total_energy = 0.0
+    total_gwp = 0.0
+
+    # Calcul des statistiques globales
+    for chat in st.session_state.get("chats", {}).values():
+        for message in chat:
+            total_messages += 1
+            if message["role"] == "AI":
+                metrics = message.get("metrics", {})
+                total_latency += metrics.get("latency", 0.0)
+                total_cost += metrics.get("euro_cost", 0.0)
+                total_energy += metrics.get("energy_usage", 0.0)
+                total_gwp += metrics.get("gwp", 0.0)
+
+    average_latency = total_latency / (total_messages / 2 or 1)
+
+    # Affichage d'une information sur les statistiques
+    st.info(
+        "Les statistiques affichées sont calculées sur l'ensemble "
+        "des messages des conversations présentes dans l'application.",
+        icon=":material/info:",
+    )
+
+    # Affichage des statistiques globales
+    cols = st.columns(3)
+    with cols[0]:
+        with st.container(border=True):
+            st.write("**🗨️ Nombre total de messages envoyés**")
+            st.title(total_messages)
+    with cols[1]:
+        with st.container(border=True):
+            st.write("**📶 Latence moyenne des réponses**")
+            st.title(f"{average_latency:.2f} secondes")
+    with cols[2]:
+        with st.container(border=True):
+            st.write("**💲 Coût total**")
+            st.title(f"{total_cost:.2f} €")
+    cols = st.columns(2)
+    with cols[0]:
+        with st.container(border=True):
+            st.write("**⚡ Utilisation énergétique totale**")
+            st.title(f"{total_energy:.2f} kWh")
+    with cols[1]:
+        with st.container(border=True):
+            st.write("**🌡️ Potentiel de réchauffement global total**")
+            st.title(f"{total_gwp:.2f} kgCO2eq")
