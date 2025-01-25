@@ -19,6 +19,8 @@ st.markdown("""
 # Affichage de la barre latérale
 selected_chat = show_sidebar()
 
+st.write(st.session_state)
+
 # Stockage du chat sélectionné
 if selected_chat:
     st.session_state['selected_chat'] = selected_chat
@@ -34,8 +36,9 @@ if 'selected_chat' in st.session_state and st.session_state['selected_chat'] is 
     if current_chat not in st.session_state["chats"]:
         st.session_state["chats"][current_chat] = []
     
-    # Création de l'instance du chat en passant le chat sélectionné
-    chat = Chat(selected_chat=current_chat)
+    # Création de l'instance du chat en passant le chat sélectionné et une question initiale si disponible
+    initial_question = st.session_state.get('initial_question', None)
+    chat = Chat(selected_chat=current_chat, initial_question=initial_question)
     
     # Affichage du chat sélectionné
     chat.run()
@@ -51,5 +54,19 @@ else:
         # Barre de saisie de question
         question = st.chat_input("Écrivez votre message", key="new_chat_question")
         
+        if question:
+            st.session_state['initial_question'] = question
+            new_chat = f"Chat {len(st.session_state['chats']) + 1}"
+            st.session_state['selected_chat'] = new_chat
+            st.session_state['chats'][new_chat] = []
+            st.rerun()
+
         # Suggestions de questions
-        st.pills(label="NULL", options=["Suggestion question 1", "Suggestion question 2", "Suggestion question 3"], label_visibility="collapsed")
+        suggestion = st.pills(label="NULL", options=["Suggestion question 1", "Suggestion question 2", "Suggestion question 3"], label_visibility="collapsed")
+        
+        if suggestion:
+            st.session_state['initial_question'] = suggestion
+            new_chat = f"Chat {len(st.session_state['chats']) + 1}"
+            st.session_state['selected_chat'] = new_chat
+            st.session_state['chats'][new_chat] = []
+            st.rerun()
