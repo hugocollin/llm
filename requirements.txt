@@ -1,2 +1,7 @@
 python-dotenv
 PyPDF2
+sentences-transformers
+torch
+pandas
+scikit-learn
+datasets
