@@ -19,8 +19,6 @@ st.markdown("""
 # Affichage de la barre latérale
 selected_chat = show_sidebar()
 
-st.write(st.session_state)
-
 # Stockage du chat sélectionné
 if selected_chat:
     st.session_state['selected_chat'] = selected_chat
