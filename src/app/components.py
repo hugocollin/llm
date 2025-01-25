@@ -133,7 +133,11 @@ def show_stats_dialog():
 
         # Récupération des conversations à analyser
         if selected_conversations:
-            chats_to_analyze = {k: v for k, v in st.session_state["chats"].items() if k in selected_conversations}
+            chats_to_analyze = {
+                k: v
+                for k, v in st.session_state["chats"].items()
+                if k in selected_conversations
+            }
 
             # Initialisation des variables pour les statistiques
             total_messages = 0
@@ -179,6 +183,12 @@ def show_stats_dialog():
                     st.write("**🌡️ Potentiel de réchauffement global total**")
                     st.title(f"{total_gwp:.2f} kgCO2eq")
         else:
-            st.info("Veuillez sélectionner au moins une conversation pour afficher les statistiques.", icon=":material/info:")
+            st.info(
+                "Veuillez sélectionner au moins une conversation pour afficher les statistiques.",
+                icon=":material/info:",
+            )
     else:
-        st.info("Veuillez commencer une conversation pour afficher les statistiques.", icon=":material/info:")
+        st.info(
+            "Veuillez commencer une conversation pour afficher les statistiques.",
+            icon=":material/info:",
+        )
