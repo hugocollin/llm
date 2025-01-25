@@ -91,7 +91,7 @@ class MultiModelLLM(LLMBase):
             **kwargs: Arguments additionnels spécifiques au fournisseur.
 
         Returns:
-            La réponse générée.
+            Dict[str, Any]: Inclut la réponse et les métriques associées.
         """
         current_provider = provider or self.current_provider
         current_model = model or self.default_model
@@ -103,14 +103,27 @@ class MultiModelLLM(LLMBase):
 
         try:
             if current_provider == "mistral":
-               return asyncio.run(self._generate_mistral(prompt, current_model, temperature, max_tokens, **kwargs))
+                response_text = await self._generate_mistral(prompt, current_model, temperature, max_tokens, **kwargs)
             elif current_provider == "gemini":
-                return self._generate_gemini(prompt, temperature, max_tokens, **kwargs)
+                response_text = self._generate_gemini(prompt, temperature, max_tokens, **kwargs)
             else:
                 raise ValueError(f"Provider not supported: {current_provider}")
+            
+            # [TEMP] Exemple de métriques fictives : À REMPLACER !
+            metrics = {
+                "latency": 0,
+                "euro_cost": 0,
+                "energy_usage": 0,
+                "gwp": 0,
+            }
+            
+            return {
+                "response": response_text,
+                **metrics
+            }
         except Exception as e:
             self.logger.error(f"Generation error: {e}")
-            return f"Error: {e}"
+            return {"response": f"Error: {e}", "latency": 0.0, "euro_cost": 0.0, "energy_usage": 0.0, "gwp": 0.0}
 
     async def _generate_mistral(self, prompt: str, model: str, temperature: float, max_tokens: int, **kwargs) -> str:
         """Génère une réponse avec Mistral.

@@ -12,17 +12,19 @@ from src.app.components import show_sidebar
 # Configuration de la page
 st.set_page_config(page_title="SISE Classmate", page_icon="✨", layout="wide")
 
-# Récupération de la clé API Mistral
+# Récupération des clés d'API
 try:
     load_dotenv(find_dotenv())
-    API_KEY = os.getenv("MISTRAL_API_KEY")
+    MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 except FileNotFoundError:
-    API_KEY = st.secrets["MISTRAL_API_KEY"]
+    MISTRAL_API_KEY = st.secrets["MISTRAL_API_KEY"]
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 
-if API_KEY:
-    st.session_state["found_mistral_api"] = True
+if MISTRAL_API_KEY and GEMINI_API_KEY:
+    st.session_state["found_api_keys"] = True
 else:
-    st.session_state["found_mistral_api"] = False
+    st.session_state["found_api_keys"] = False
 
 # Mise en page personnalisée
 st.markdown(
@@ -72,15 +74,15 @@ if (
 else:
     st.container(height=200, border=False)
     with st.container():
-        # Affichage si la clé API Mistral n'est pas présente
-        if st.session_state["found_mistral_api"] is False:
+        # Affichage si une ou plusieurs clés d'API sont introuvables
+        if st.session_state["found_api_keys"] is False:
             # Titre
             st.title("Je ne peux pas vous aider... 😢")
 
             # Message d'erreur
             st.error(
                 "**Conversation avec l'IA indisponible :** "
-                "Votre clé d'API Mistral est introuvable.",
+                "Une ou plusieurs clés d'API sont introuvables.",
                 icon=":material/error:",
             )
         else:

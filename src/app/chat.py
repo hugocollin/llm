@@ -1,15 +1,18 @@
 """
-Ce fichier définit la classe Chat pour gérer les conversations avec l'IA Mistral.
+Ce fichier définit la classe Chat pour gérer les conversations avec l'IA.
 """
 
+import os
+import asyncio
 import streamlit as st
 import PyPDF2
 
 from src.app.components import stream_text
+from src.rag.model_api import MultiModelLLM
 
 class Chat:
     """
-    Classe pour gérer les conversations avec l'IA Mistral.
+    Classe pour gérer les conversations avec l'IA.
     """
 
     def __init__(self, selected_chat: str, initial_question: str = None):
@@ -43,17 +46,25 @@ class Chat:
         self.header_container = st.container()
         self.chat_container = self.header_container.container(height=500)
 
+        # Initialisation du LLM
+        if "llm" not in st.session_state:
+            st.session_state["llm"] = MultiModelLLM(
+                api_key_mistral=os.getenv("MISTRAL_API_KEY"),
+                api_key_gemini=os.getenv("GEMINI_API_KEY")
+            )
+        self.llm = st.session_state["llm"]
+
     def run(self):
         """
-        Lance l'affichage du chat avec l'IA Mistral.
+        Lance l'affichage du chat avec l'IA.
         """
 
-        # Avertissement si la clé API Mistral n'est pas présente
-        if st.session_state["found_mistral_api"] is False:
+        # Avertissement si une ou plusieurs clés d'API sont introuvables
+        if st.session_state["found_api_keys"] is False:
             # Affichage d'un message d'erreur
             st.error(
                 "**Conversation avec l'IA indisponible :** "
-                "Votre clé d'API Mistral est introuvable.",
+                "Une ou plusieurs clés d'API sont introuvables.",
                 icon=":material/error:",
             )
 
@@ -89,7 +100,7 @@ class Chat:
                 label_visibility="collapsed",
                 options=["Option 1", "Option 2", "Option 3"],
                 index=0,
-                disabled=not st.session_state.get("found_mistral_api", False),
+                disabled=not st.session_state.get("found_api_keys", False),
             )
 
         # Zone de saisie pour le chat avec l'IA [TEMP]
@@ -97,7 +108,7 @@ class Chat:
             if message := st.chat_input(
                 placeholder="Écrivez votre message",
                 key=f"chat_input_{self.selected_chat}",
-                disabled=not st.session_state.get("found_mistral_api", False),
+                disabled=not st.session_state.get("found_api_keys", False),
             ):
                 if message.strip():
                     self.handle_user_message(message)
@@ -107,13 +118,13 @@ class Chat:
             if st.button(
                 "",
                 icon=":material/attach_file:",
-                disabled=not st.session_state.get("found_mistral_api", False),
+                disabled=not st.session_state.get("found_api_keys", False),
             ):
                 self.upload_files_dialog()
 
     def handle_user_message(self, message: str):
         """
-        Gère le message de l'utilisateur et envoie une requête à l'IA Mistral.
+        Gère le message de l'utilisateur et envoie une requête à l'IA.
 
         Args:
             message (str): Message de l'utilisateur.
@@ -128,37 +139,8 @@ class Chat:
             {"role": "User", "content": message}
         )
 
-        # # Initialisation des connaissances de l'IA
-        # if 'bdd_chunks' not in st.session_state:
-        #     with st.spinner("Démarrage de l'IA..."):
-        #         st.session_state['bdd_chunks'] = instantiate_bdd()
-
-        # if 'llm' not in st.session_state:
-        #     st.session_state['llm'] = AugmentedRAG(
-        #         role_prompt=self.role_prompt,
-        #         generation_model="mistral-large-latest",
-        #         bdd_chunks=st.session_state['bdd_chunks'],
-        #         top_n=3,
-        #         max_tokens=3000,
-        #         temperature=0.3
-        #     )
-
-        # # Récupération de la réponse de l'IA
-        # llm = st.session_state['llm']
-        # response = llm(
-        #     query=message,
-        #     history=st.session_state["chats"][self.selected_chat]
-        # )
-
-        # Affichage d'un faux message temporaire
-        response = {
-            "response": "Je ne suis pas encore prêt à répondre à vos questions, "
-            "mais je le serai bientôt !",
-            "latency": 0,
-            "euro_cost": 0,
-            "energy_usage": 0,
-            "gwp": 0
-        }
+        # Récupération de la réponse de l'IA
+        response = asyncio.run(self.llm.generate(prompt=message))
 
         # Affichage de la réponse de l'IA
         with self.chat_container.chat_message("AI", avatar="✨"):
