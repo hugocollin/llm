@@ -11,14 +11,17 @@ def load_api_keys():
     """
     Fonction pour charger et stocker les clés API.
     """
+    # Recherche des clés API si l'application est utilisé en local
     try:
         load_dotenv(find_dotenv())
         mistral_api_key = os.getenv("MISTRAL_API_KEY")
         gemini_api_key = os.getenv("GEMINI_API_KEY")
+    # Sinon recherche des clés API si l'application est utilisé en ligne
     except FileNotFoundError:
         mistral_api_key = st.secrets["MISTRAL_API_KEY"]
         gemini_api_key = st.secrets["GEMINI_API_KEY"]
 
+    # Stockage du statut de recherche des clés API
     if mistral_api_key and gemini_api_key:
         st.session_state["found_api_keys"] = True
     else:
