@@ -12,6 +12,8 @@ from src.app.components import show_sidebar
 # Configuration de la page
 st.set_page_config(page_title="SISE Classmate", page_icon="✨", layout="wide")
 
+st.write(st.session_state)
+
 # Récupération des clés d'API
 try:
     load_dotenv(find_dotenv())
@@ -94,7 +96,7 @@ else:
 
             if question:
                 st.session_state["initial_question"] = question
-                new_chat = f"Chat {len(st.session_state['chats']) + 1}"
+                new_chat = f"Conversation {len(st.session_state['chats']) + 1}"
                 st.session_state["selected_chat"] = new_chat
                 st.session_state["chats"][new_chat] = []
                 st.rerun()
@@ -115,7 +117,7 @@ else:
 
             if suggestions:
                 st.session_state["initial_question"] = suggestions
-                new_chat = f"Chat {len(st.session_state['chats']) + 1}"
+                new_chat = f"Conversation {len(st.session_state['chats']) + 1}"
                 st.session_state["selected_chat"] = new_chat
                 st.session_state["chats"][new_chat] = []
                 st.rerun()

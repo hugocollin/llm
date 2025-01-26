@@ -27,12 +27,12 @@ def get_new_chat_name() -> str:
     existing_numbers = [
         int(name.split(" ")[1])
         for name in st.session_state["chats"].keys()
-        if name.startswith("Chat ") and name.split(" ")[1].isdigit()
+        if name.startswith("Conversation ") and name.split(" ")[1].isdigit()
     ]
     n = 1
     while n in existing_numbers:
         n += 1
-    return f"Chat {n}"
+    return f"Conversation {n}"
 
 def show_sidebar() -> str:
     """
