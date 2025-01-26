@@ -16,23 +16,27 @@ def stream_text(text: str):
         yield word + " "
         time.sleep(0.03)
 
-def get_new_chat_name() -> str:
+def create_new_chat():
     """
-    Fonction pour obtenir le nom par défaut d'une nouvelle conversation.
-
-    Returns:
-        str: Nom par défaut de la nouvelle conversation.
+    Fonction pour créer une nouvelle conversation.
     """
 
+    # Récupération des numéros de conversation existants
     existing_numbers = [
         int(name.split(" ")[1])
         for name in st.session_state["chats"].keys()
         if name.startswith("Conversation ") and name.split(" ")[1].isdigit()
     ]
+
+    # Recherche du prochain numéro de conversation disponible
     n = 1
     while n in existing_numbers:
         n += 1
-    return f"Conversation {n}"
+
+    # Création de la nouvelle conversation
+    new_chat_name = f"Conversation {n}"
+    st.session_state["chats"][new_chat_name] = []
+    st.session_state["selected_chat"] = new_chat_name
 
 def show_sidebar() -> str:
     """
@@ -76,9 +80,7 @@ def show_sidebar() -> str:
             st.write("")
             if st.button("", icon=":material/add_comment:"):
                 if len(st.session_state["chats"]) < 5:
-                    new_chat_name = get_new_chat_name()
-                    st.session_state["chats"][new_chat_name] = []
-                    st.session_state["selected_chat"] = new_chat_name
+                    create_new_chat()
                 else:
                     st.toast(
                         "Nombre maximal de conversations atteint, "
