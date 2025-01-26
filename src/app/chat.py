@@ -89,10 +89,12 @@ class Chat:
         """
         for _ in range(5):
             prompt = (
-                "Tu es une intelligence artificielle spécialisée dans la création de nom de conversation. "
+                "Tu es une intelligence artificielle spécialisée "
+                "dans la création de nom de conversation. "
                 "En te basant sur le texte suivant, qui est le premier message de la conversation, "
                 "propose un nom d'un maximum de 30 caractères pour cette conversation. "
-                "Répond uniquement en donnant le nom de la conversation sans explication supplémentaire. "
+                "Répond uniquement en donnant le nom de la conversation "
+                "sans explication supplémentaire. "
                 f"Voici le texte : {initial_message}"
             )
             response = asyncio.run(self.llm.generate(prompt=prompt, model="mistral-large-latest"))
@@ -103,7 +105,9 @@ class Chat:
             if generated_name in st.session_state["chats"]:
                 continue
 
-            st.session_state["chats"][generated_name] = st.session_state["chats"].pop(self.selected_chat)
+            st.session_state["chats"][generated_name] = st.session_state["chats"].pop(
+                self.selected_chat
+            )
             st.session_state["selected_chat"] = generated_name
             self.selected_chat = generated_name
             st.rerun()
