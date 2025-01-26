@@ -65,7 +65,7 @@ def rename_chat(current_name: str):
     """
     Fonction pour renommer une conversation.
     """
-    # Initialisation de la variable d'état
+    # Réinitialisation de la variable d'état
     st.session_state["chat_renamed"] = False
 
     # Saisie du nouveau nom de la conversation
@@ -97,6 +97,9 @@ def show_sidebar() -> str:
     # Initialisation des conversations
     if "chats" not in st.session_state:
         st.session_state["chats"] = {}
+
+    # Initialisation de la variable d'état de renommage de conversation
+    st.session_state["chat_renamed"] = False
 
     with st.sidebar:
         # Titre de l'application
