@@ -65,7 +65,7 @@ def rename_chat(current_name: str):
     """
     Fonction pour renommer une conversation.
     """
-    
+
     # Saisie du nouveau nom de la conversation
     new_name = st.text_input(
         "Saisissez le nouveau nom de la conversation :",
