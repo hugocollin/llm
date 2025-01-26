@@ -1,0 +1,7 @@
+python-dotenv
+PyPDF2
+mistralai
+google-generativeai
+torch
+sentence-transformers
+scikit-learn
