@@ -18,10 +18,10 @@ def stream_text(text: str):
 
 def get_new_chat_name() -> str:
     """
-    Fonction pour obtenir le nom d'une nouvelle conversation.
+    Fonction pour obtenir le nom par défaut d'une nouvelle conversation.
 
     Returns:
-        str: Nom de la nouvelle conversation.
+        str: Nom par défaut de la nouvelle conversation.
     """
 
     existing_numbers = [
