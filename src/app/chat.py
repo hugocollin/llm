@@ -28,7 +28,7 @@ class Chat:
         # Récupération du chat sélectionné
         self.selected_chat = selected_chat
 
-        if selected_chat is not "suggestions":
+        if selected_chat != "suggestions":
             # Initialisation des messages du chat
             if "chats" not in st.session_state:
                 st.session_state["chats"] = {}
