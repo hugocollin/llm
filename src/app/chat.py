@@ -28,6 +28,7 @@ class Chat:
         # Récupération du chat sélectionné
         self.selected_chat = selected_chat
 
+        # Si ce ne sont pas les suggestions
         if selected_chat != "suggestions":
             # Initialisation des messages du chat
             if "chats" not in st.session_state:
@@ -45,13 +46,22 @@ class Chat:
             self.header_container = st.container()
             self.chat_container = self.header_container.container(height=500)
 
-        # Initialisation du LLM
-        if "llm" not in st.session_state:
-            st.session_state["llm"] = MultiModelLLM(
-                api_key_mistral=os.getenv("MISTRAL_API_KEY"),
-                api_key_gemini=os.getenv("GEMINI_API_KEY")
-            )
-        self.llm = st.session_state["llm"]
+        # Si les clés d'API sont trouvées
+        if st.session_state["found_api_keys"] is True:
+            # Initialisation du LLM
+            if "llm" not in st.session_state:
+                st.session_state["llm"] = MultiModelLLM(
+                    api_key_mistral=os.getenv("MISTRAL_API_KEY"),
+                    api_key_gemini=os.getenv("GEMINI_API_KEY")
+                )
+            self.llm = st.session_state["llm"]
+        # Si les clés d'API ne sont pas trouvées
+        else:
+            with self.chat_container.chat_message("", avatar="⚠️"):
+                st.write(
+                    "**Conversation avec l'IA indisponible :** "
+                    "Une ou plusieurs clés d'API sont introuvables."
+                )
 
     def get_suggested_questions(self) -> list:
         """
@@ -61,7 +71,7 @@ class Chat:
         """
         prompt = (
             "Tu es une intelligence artificielle spécialisée dans l'aide aux élèves à l'école. "
-            "Génère 5 questions courtes dans différentes matières "
+            "Génère 5 questions courtes dans différentes matières sans les préciser, "
             "qu'un élève pourrait te poser sur une notion de cours. "
             "Répond uniquement en donnant les 5 questions sous forme de liste de tirets, "
             "sans explication supplémentaire."
@@ -74,15 +84,6 @@ class Chat:
         """
         Lance l'affichage du chat avec l'IA.
         """
-
-        # Avertissement si une ou plusieurs clés d'API sont introuvables
-        if st.session_state["found_api_keys"] is False:
-            # Affichage d'un message d'erreur
-            st.error(
-                "**Conversation avec l'IA indisponible :** "
-                "Une ou plusieurs clés d'API sont introuvables.",
-                icon=":material/error:",
-            )
 
         # Affichage de l'historique de la conversation
         for message in st.session_state["chats"][self.selected_chat]:
