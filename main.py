@@ -7,12 +7,10 @@ import streamlit as st
 from dotenv import find_dotenv, load_dotenv
 
 from src.app.chat import Chat
-from src.app.components import show_sidebar
+from src.app.components import show_sidebar, get_new_chat_name
 
 # Configuration de la page
 st.set_page_config(page_title="SISE Classmate", page_icon="✨", layout="wide")
-
-st.write(st.session_state)
 
 # Récupération des clés d'API
 try:
@@ -96,9 +94,9 @@ else:
 
             if question:
                 st.session_state["initial_question"] = question
-                new_chat = f"Conversation {len(st.session_state['chats']) + 1}"
-                st.session_state["selected_chat"] = new_chat
-                st.session_state["chats"][new_chat] = []
+                new_chat_name = get_new_chat_name()
+                st.session_state["chats"][new_chat_name] = []
+                st.session_state["selected_chat"] = new_chat_name
                 st.rerun()
 
             # Génération de questions suggérées
@@ -117,7 +115,7 @@ else:
 
             if suggestions:
                 st.session_state["initial_question"] = suggestions
-                new_chat = f"Conversation {len(st.session_state['chats']) + 1}"
-                st.session_state["selected_chat"] = new_chat
-                st.session_state["chats"][new_chat] = []
+                new_chat_name = get_new_chat_name()
+                st.session_state["chats"][new_chat_name] = []
+                st.session_state["selected_chat"] = new_chat_name
                 st.rerun()
