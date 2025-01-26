@@ -2,29 +2,16 @@
 Ce fichier contient le code principal de l'application Streamlit.
 """
 
-import os
 import streamlit as st
-from dotenv import find_dotenv, load_dotenv
 
 from src.app.chat import Chat
-from src.app.components import show_sidebar, create_new_chat
+from src.app.components import load_api_keys, create_new_chat, show_sidebar
 
 # Configuration de la page
 st.set_page_config(page_title="SISE Classmate", page_icon="✨", layout="wide")
 
-# Récupération des clés d'API
-try:
-    load_dotenv(find_dotenv())
-    MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-except FileNotFoundError:
-    MISTRAL_API_KEY = st.secrets["MISTRAL_API_KEY"]
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-
-if MISTRAL_API_KEY and GEMINI_API_KEY:
-    st.session_state["found_api_keys"] = True
-else:
-    st.session_state["found_api_keys"] = False
+# Chargement des clés API
+load_api_keys()
 
 # Mise en page personnalisée
 st.markdown(

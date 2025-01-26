@@ -2,8 +2,27 @@
 Ce fichier contient les fonctions nécessaires pour l'affichage de l'interface de l'application.
 """
 
+import os
 import time
 import streamlit as st
+from dotenv import find_dotenv, load_dotenv
+
+def load_api_keys():
+    """
+    Fonction pour charger et stocker les clés API.
+    """
+    try:
+        load_dotenv(find_dotenv())
+        mistral_api_key = os.getenv("MISTRAL_API_KEY")
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+    except FileNotFoundError:
+        mistral_api_key = st.secrets["MISTRAL_API_KEY"]
+        gemini_api_key = st.secrets["GEMINI_API_KEY"]
+
+    if mistral_api_key and gemini_api_key:
+        st.session_state["found_api_keys"] = True
+    else:
+        st.session_state["found_api_keys"] = False
 
 def stream_text(text: str):
     """
