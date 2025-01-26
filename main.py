@@ -106,9 +106,11 @@ else:
 
             # Affichage des suggestions de questions dynamiques
             suggestions = st.pills(
-                label="NULL",
-                options=st.session_state["suggested_questions"],
-                label_visibility="collapsed",
+                label=(
+                    "Sinon voici quelques suggestions de questions que j'ai générées "
+                    "et que vous pouvez me poser :"
+                ),
+                options=st.session_state["suggested_questions"]
             )
 
             if suggestions:
