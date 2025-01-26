@@ -1,5 +1,5 @@
 """
-Ce fichier définit la classe Chat pour gérer les conversations avec l'IA.
+Ce fichier définit la classe Chat pour gérer les interractions avec l'IA.
 """
 
 import os
@@ -13,7 +13,7 @@ from src.rag.model_api import MultiModelLLM
 
 class Chat:
     """
-    Classe pour gérer les conversations avec l'IA.
+    Classe pour gérer les interractions avec l'IA.
     """
 
     def __init__(self, selected_chat: str, initial_question: str = None):
@@ -28,24 +28,22 @@ class Chat:
         # Récupération du chat sélectionné
         self.selected_chat = selected_chat
 
-        # Initialisation des messages du chat
-        if "chats" not in st.session_state:
-            st.session_state["chats"] = {}
+        if selected_chat is not "suggestions":
+            # Initialisation des messages du chat
+            if "chats" not in st.session_state:
+                st.session_state["chats"] = {}
 
-        # Vérification si le chat sélectionné existe
-        if self.selected_chat not in st.session_state["chats"]:
-            st.session_state["chats"][self.selected_chat] = []
+            # Vérification si le chat sélectionné existe
+            if self.selected_chat not in st.session_state["chats"]:
+                st.session_state["chats"][self.selected_chat] = []
 
-        # Définition du prompt de rôle pour l'IA [TEMP]
-        self.role_prompt = ""
+            # Stockage de la question initiale
+            self.initial_question = initial_question
+            st.session_state["initial_question"] = None
 
-        # Stockage de la question initiale
-        self.initial_question = initial_question
-        st.session_state["initial_question"] = None
-
-        # Mise en page du chat avec l'IA
-        self.header_container = st.container()
-        self.chat_container = self.header_container.container(height=500)
+            # Mise en page du chat avec l'IA
+            self.header_container = st.container()
+            self.chat_container = self.header_container.container(height=500)
 
         # Initialisation du LLM
         if "llm" not in st.session_state:
@@ -54,6 +52,23 @@ class Chat:
                 api_key_gemini=os.getenv("GEMINI_API_KEY")
             )
         self.llm = st.session_state["llm"]
+
+    def get_suggested_questions(self) -> list:
+        """
+        Génère 5 exemples de question avec l'IA.
+
+        Returns:
+        """
+        prompt = (
+            "Tu es une intelligence artificielle spécialisée dans l'aide aux élèves à l'école. "
+            "Génère 5 questions courtes dans différentes matières "
+            "qu'un élève pourrait te poser sur une notion de cours. "
+            "Répond uniquement en donnant les 5 questions sous forme de liste de tirets, "
+            "sans explication supplémentaire."
+        )
+        response = asyncio.run(self.llm.generate(prompt=prompt, model="mistral-large-latest"))
+        questions = response["response"].split('\n')
+        return [q.strip("- ").strip() for q in questions[:5]]
 
     def run(self):
         """

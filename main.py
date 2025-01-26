@@ -42,6 +42,11 @@ st.markdown(
 # Affichage de la barre latérale
 selected_chat = show_sidebar()
 
+# Génération de questions suggérées
+if "suggested_questions" not in st.session_state:
+    chat_instance = Chat(selected_chat="suggestions")
+    st.session_state["suggested_questions"] = chat_instance.get_suggested_questions()
+
 # Stockage du chat sélectionné
 if selected_chat:
     st.session_state["selected_chat"] = selected_chat
@@ -99,19 +104,15 @@ else:
                 st.session_state["chats"][new_chat] = []
                 st.rerun()
 
-            # Suggestions de questions
-            suggestion = st.pills(
+            # Affichage des suggestions de questions dynamiques
+            suggestions = st.pills(
                 label="NULL",
-                options=[
-                    "Suggestion question 1",
-                    "Suggestion question 2",
-                    "Suggestion question 3",
-                ],
+                options=st.session_state["suggested_questions"],
                 label_visibility="collapsed",
             )
 
-            if suggestion:
-                st.session_state["initial_question"] = suggestion
+            if suggestions:
+                st.session_state["initial_question"] = suggestions
                 new_chat = f"Chat {len(st.session_state['chats']) + 1}"
                 st.session_state["selected_chat"] = new_chat
                 st.session_state["chats"][new_chat] = []
