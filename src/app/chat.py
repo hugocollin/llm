@@ -221,7 +221,7 @@ class Chat:
         Ouvre une boîte de dialogue pour ajouter des fichiers PDF.
         """
 
-        # Affichage de l'espace pour ajouter des fichiers
+        # Espace pour ajouter des fichiers
         uploaded_files = st.file_uploader(
             "NULL",
             label_visibility="collapsed",

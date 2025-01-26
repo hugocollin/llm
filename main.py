@@ -89,7 +89,7 @@ else:
                 chat_instance = Chat(selected_chat="suggestions")
                 st.session_state["suggested_questions"] = chat_instance.get_suggested_questions()
 
-            # Affichage des suggestions de questions dynamiques
+            # Suggestions de questions dynamiques
             suggestions = st.pills(
                 label=(
                     "Sinon voici quelques suggestions de questions que j'ai générées "

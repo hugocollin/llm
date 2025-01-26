@@ -60,6 +60,32 @@ def create_new_chat():
     st.session_state["chats"][new_chat_name] = []
     st.session_state["selected_chat"] = new_chat_name
 
+@st.dialog("Renommer la conversation")
+def rename_chat(current_name: str):
+    """
+    Fonction pour renommer une conversation.
+    """
+    # Initialisation de la variable d'état
+    st.session_state["chat_renamed"] = False
+
+    # Saisie du nouveau nom de la conversation
+    new_name = st.text_input("Saisissez le nouveau nom de la conversation :", value=current_name)
+
+    if st.button("Enregistrer", icon=":material/save_as:"):
+        # Vérification de la conformité du nouveau nom
+        if new_name in st.session_state["chats"] and new_name != current_name:
+            st.error(
+                "Ce nom de conversation existe déjà, veuillez en choisir un autre.",
+                icon=":material/error:"
+            )
+        # Enregistrement du nouveau nom
+        else:
+            st.session_state["chats"][new_name] = st.session_state["chats"].pop(current_name)
+            st.session_state["selected_chat"] = new_name
+            if new_name != current_name:
+                st.session_state["chat_renamed"] = True
+            st.rerun()
+
 def show_sidebar() -> str:
     """
     Fonction pour afficher la barre latérale de l'application.
@@ -114,11 +140,27 @@ def show_sidebar() -> str:
         if st.session_state["chats"]:
             selected_chat = None
             for chat_name in list(st.session_state["chats"].keys()):
-                btn_cols = st.columns([3, 1])
+                btn_cols = st.columns([3, 1, 1])
+
+                # Bouton pour sélectionner le chat
                 with btn_cols[0]:
                     if st.button(f":material/forum: {chat_name}"):
                         selected_chat = chat_name
+
+                # Boutons pour renommer le chat
                 with btn_cols[1]:
+                    if st.button(
+                        "", icon=":material/edit:", key=f"rename_'{chat_name}'_button"
+                    ):
+                        rename_chat(chat_name)
+                    if st.session_state["chat_renamed"] is True:
+                        st.toast(
+                            "Conversation renommée avec succès !",
+                            icon=":material/check_circle:"
+                        )
+
+                # Bouton pour supprimer le chat
+                with btn_cols[2]:
                     if st.button(
                         "", icon=":material/delete:", key=f"delete_'{chat_name}'_button"
                     ):
@@ -131,6 +173,7 @@ def show_sidebar() -> str:
                         st.rerun()
             return selected_chat
         else:
+            # Message d'information si aucune conversation n'a été créée
             st.info(
                 "Pour commencer une nouvelle conversation, "
                 "cliquez sur le bouton :material/add_comment:",
@@ -215,11 +258,13 @@ def show_stats_dialog():
                     st.write("**🌡️ Potentiel de réchauffement global total**")
                     st.title(f"{total_gwp:.2f} kgCO2eq")
         else:
+            # Message d'information si aucune conversation n'a été sélectionnée
             st.info(
                 "Veuillez sélectionner au moins une conversation pour afficher les statistiques.",
                 icon=":material/info:",
             )
     else:
+        # Message d'information si aucune conversation n'a été créée
         st.info(
             "Veuillez commencer une conversation pour afficher les statistiques.",
             icon=":material/info:",
