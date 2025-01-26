@@ -65,11 +65,13 @@ def rename_chat(current_name: str):
     """
     Fonction pour renommer une conversation.
     """
-    # Réinitialisation de la variable d'état
-    st.session_state["chat_renamed"] = False
-
+    
     # Saisie du nouveau nom de la conversation
-    new_name = st.text_input("Saisissez le nouveau nom de la conversation :", value=current_name)
+    new_name = st.text_input(
+        "Saisissez le nouveau nom de la conversation :",
+        value=current_name,
+        max_chars=30
+    )
 
     if st.button("Enregistrer", icon=":material/save_as:"):
         # Vérification de la conformité du nouveau nom
@@ -99,7 +101,8 @@ def show_sidebar() -> str:
         st.session_state["chats"] = {}
 
     # Initialisation de la variable d'état de renommage de conversation
-    st.session_state["chat_renamed"] = False
+    if "chat_renamed" not in st.session_state:
+        st.session_state["chat_renamed"] = False
 
     with st.sidebar:
         # Titre de l'application
@@ -161,6 +164,7 @@ def show_sidebar() -> str:
                             "Conversation renommée avec succès !",
                             icon=":material/check_circle:"
                         )
+                        st.session_state["chat_renamed"] = False
 
                 # Bouton pour supprimer le chat
                 with btn_cols[2]:
