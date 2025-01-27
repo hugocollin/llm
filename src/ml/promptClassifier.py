@@ -204,7 +204,7 @@ class PromptClassifier:
             raise ValueError("Aucun modèle n'a été entraîné ou sélectionné. Veuillez appeler `train_and_evaluate` et `get_best_model` d'abord.")
         output_path = os.path.join(os.getcwd(),"src", "ml", output_name)
         # Sauvegarder le modèle avec pickle
-        with open(output_path, 'wb') as f:
+        with open(output_name, 'wb') as f:
             _, model = self.best_model
             pickle.dump(model, f)
 
@@ -221,6 +221,6 @@ class PromptClassifier:
         """
         model_name = "best_prompt_model.pkl"
         model_path = os.path.join(os.getcwd(),"src", "ml", model_name)
-        with open(model_path, 'rb') as f:
+        with open(model_name, 'rb') as f:
             self.best_model = pickle.load(f)
         print(f"Modèle chargé avec succès depuis {model_path}.")
