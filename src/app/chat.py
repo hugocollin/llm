@@ -144,6 +144,10 @@ class Chat:
         Lance l'affichage du chat avec l'IA.
         """
 
+        # Initialisation de la variable de modification des paramètres du modèle
+        if "modified_model_params" not in st.session_state:
+            st.session_state["modified_model_params"] = False
+
         # Initialisation de l'état de la recherche internet
         if "internet_search_active" not in st.session_state:
             st.session_state["internet_search_active"] = False
@@ -191,7 +195,13 @@ class Chat:
                 icon=":material/tune:",
                 disabled=not st.session_state.get("found_api_keys", False),
             ):
-                st.toast("Cette fonctionnalité sera disponible ultérieurement.", icon=":material/info:")
+                self.settings_dialog()
+            if st.session_state["modified_model_params"] is True:
+                st.toast(
+                    "Paramètres de l'IA modifiés avec succès !",
+                    icon=":material/check_circle:"
+                )
+                st.session_state["modified_model_params"] = False
 
         # Zone de saisie pour le chat avec l'IA
         with cols[1]:
@@ -288,12 +298,15 @@ class Chat:
                     f"Voici le message de l'utilisateur : {message}."
                 )
 
+            # Récupération des paramètres du modèle
+            model_params = self.llm.get_model_config()
+
             # Envoi du message et récupération de la réponse de l'IA
             response = asyncio.run(self.llm.generate(
                 prompt=message,
-                provider="mistral",
-                model="mistral-large-latest",
-                temperature=0.7,
+                provider=model_params["current_provider"],
+                model=model_params["current_model"],
+                temperature=model_params["current_temperature"],
                 max_tokens=10000
             ))
 
@@ -347,6 +360,84 @@ class Chat:
         if len(st.session_state["chats"][self.selected_chat]) == 2:
             print(self.selected_chat)
             self.generate_chat_name(st.session_state["chats"][self.selected_chat][0]["content"])
+
+    @st.dialog("Paramètres de l'IA")
+    def settings_dialog(self):
+        """
+        Ouvre une boîte de dialogue pour configurer les paramètres de l'IA.
+        """
+
+        # Récupération de la configuration actuelle
+        config = self.llm.get_model_config()
+        providers = config["providers"]
+        provider_options = list(providers.keys())
+
+        # Paramètrage du fournisseur
+        selected_provider = st.selectbox(
+            label="Fournisseur",
+            options=provider_options,
+            index=provider_options.index(config["current_provider"]),
+            help=(
+                "Chaque fournisseur propose des modèles avec des optimisations spécifiques, "
+                "des fonctionnalités uniques, ou des performances adaptées à certains cas d'usage."
+            )
+        )
+
+        # Personnalisation de l'aide en fonction du fournisseur
+        if selected_provider == "mistral":
+            models_help = (
+                "- **ministral-8b-latest :** modèle généraliste de taille moyenne, "
+                "équilibré pour des tâches variées avec des performances optimisées.\n"
+                "- **mistral-large-latest :** modèle de grande capacité, idéal pour des cas "
+                "d'usage nécessitant des réponses complexes et détaillées.\n"
+                "- **codestral-latest :** modèle spécialisé pour la génération de code "
+                "et les tâches techniques, parfait pour les développeurs."
+            )
+        elif selected_provider == "gemini":
+            models_help = (
+                "- **gemini-1.5-flash-8b :** modèle rapide et compact, conçu pour des "
+                "interactions rapides sans sacrifier la qualité des réponses.\n"
+                "- **gemini-1.5-flash :** modèle optimisé pour la vitesse, "
+                "offrant un bon compromis entre réactivité et précision.\n"
+                "- **gemini-1.5-pro :** modèle avancé avec des capacités professionnelles, "
+                "idéal pour les analyses approfondies et des applications exigeantes."
+            )
+        else:
+            models_help = "Aucune information sur les modèles est disponible."
+
+        # Paramètrage du modèle
+        models = providers[selected_provider]["models"]
+        selected_model = st.selectbox(
+            label="Modèle",
+            options=models,
+            index=(
+                models.index(config["current_model"])
+                if config["current_model"] in models else 0
+            ),
+            help=models_help
+        )
+
+        # Paramètrage de la température
+        selected_temperature = st.slider(
+            "Température (%)",
+            min_value=0.0,
+            max_value=100.0,
+            value=config["current_temperature"] * 100,
+            step=1.0,
+            help=(
+                "Contrôle la variabilité des réponses générées par le modèle. "
+                "Une **température basse** (proche de 0) rend les réponses plus "
+                "**cohérentes et déterministes**, tandis qu'une **température élevée** "
+                "(proche de 100) favorise des réponses plus **créatives et variées**."
+            )
+        )
+        selected_temperature /= 100.0
+
+        # Enregistrement des paramètres
+        if st.button("Enregistrer", icon=":material/save:"):
+            self.llm.switch_provider(selected_provider, selected_model, selected_temperature)
+            st.session_state["modified_model_params"] = True
+            st.rerun()
 
     @st.dialog("Ajouter des fichiers PDF")
     def upload_files_dialog(self):
