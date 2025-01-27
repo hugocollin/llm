@@ -5,6 +5,7 @@ Ce fichier contient les fonctions nécessaires pour l'affichage de l'interface d
 import os
 import time
 import streamlit as st
+import plotly.express as px
 from dotenv import find_dotenv, load_dotenv
 
 def load_api_keys():
@@ -237,33 +238,172 @@ def show_stats_dialog():
             sent_messages = total_messages / 2
             average_latency = total_latency / (total_messages / 2 or 1)
 
-            # Affichage des statistiques
-            cols = st.columns(4)
-            with cols[0]:
+            # Option pour afficher les graphiques
+            afficher_graphiques = st.toggle("Afficher les détails", False)
+            
+            # Affichage des graphiques
+            if afficher_graphiques:
                 with st.container(border=True):
-                    st.write("**🗨️ Nombre total de messages envoyés**")
-                    st.title(f"{sent_messages:.0f}")
-            with cols[1]:
+                    # Graphique de la répartition du nombre total de messages envoyés
+                    conversation_names = list(chats_to_analyze.keys())
+                    message_counts = [(len(chat) / 2) for chat in chats_to_analyze.values()]
+                    fig = px.pie(
+                        names=conversation_names,
+                        values=message_counts,
+                        color_discrete_sequence=px.colors.sequential.Blues[::-1]
+                    )
+                    fig.update_traces(
+                        textposition='inside',
+                        texttemplate='%{percent}<br>%{value}',
+                        hovertemplate='<b>%{label} :</b> %{value} messages (%{percent})<extra></extra>'
+                    )
+                    st.header(f"**🗨️ Nombre total de messages envoyés : {sent_messages:.0f}**")
+                    st.plotly_chart(fig, key="messages_chart")
+
                 with st.container(border=True):
-                    st.write("**🛡️ Nombre total de messages bloqués**")
-                    st.title(f"{total_blocked_messages:.0f}")
-            with cols[2]:
+                    # Graphique de la répartition du nombre total de messages bloqués
+                    blocked_message_counts = [0] * len(conversation_names)
+                    for i, chat in enumerate(chats_to_analyze.values()):
+                        for message in chat:
+                            if message["role"] == "Guardian":
+                                blocked_message_counts[i] += 1
+                    fig = px.pie(
+                        names=conversation_names,
+                        values=blocked_message_counts,
+                        color_discrete_sequence=px.colors.sequential.Purples[::-1]
+                    )
+                    fig.update_traces(
+                        textposition='inside',
+                        texttemplate='%{percent}<br>%{value}',
+                        hovertemplate='<b>%{label} :</b> %{value} messages bloqués (%{percent})<extra></extra>'
+                    )
+                    st.header(f"**🛡️ Nombre total de messages bloqués : {total_blocked_messages:.0f}**")
+                    st.plotly_chart(fig, key="blocked_messages_chart")
+
                 with st.container(border=True):
-                    st.write("**📶 Latence moyenne des réponses**")
-                    st.title(f"{average_latency:.2f} secondes")
-            with cols[3]:
+                    # Graphique de la latence moyenne
+                    latences = [
+                        message["metrics"]["latency"]
+                        for chat in chats_to_analyze.values()
+                        for message in chat
+                        if message["role"] == "AI" and "latency" in message.get("metrics", {})
+                    ]
+                    fig = px.histogram(
+                        latences,
+                        nbins=20,
+                        labels={"value": "Latence (secondes)"},
+                        color_discrete_sequence=px.colors.sequential.Bluered
+                    )
+                    fig.update_layout(
+                        xaxis_title="Latence (secondes)",
+                        yaxis_title="Nombre de réponses",
+                        title_font_size=20,
+                        legend_title_text="Latences (secondes)"
+                    )
+                    fig.update_traces(
+                        hovertemplate='<b>Latence :</b> %{x} secondes<br><b>Nombre de réponses :</b> %{y}<extra></extra>',
+                        marker=dict(opacity=0.7, line=dict(color='black', width=1))
+                    )
+                    st.header(f"**📶 Latence moyenne des réponses : {average_latency:.2f} secondes**")
+                    st.plotly_chart(fig, key="latency_chart")
+
                 with st.container(border=True):
-                    st.write("**💲 Coût total**")
-                    st.title(f"{total_cost:.6f} €")
-            cols = st.columns(2)
-            with cols[0]:
+                    # Graphique du coût total
+                    fig = px.pie(
+                        names=conversation_names,
+                        values=[
+                            sum(
+                                message["metrics"].get("euro_cost", 0.0)
+                                for message in chat
+                                if message["role"] == "AI"
+                            )
+                            for chat in chats_to_analyze.values()
+                        ],
+                        color_discrete_sequence=px.colors.sequential.Greens[::-1]
+                    )
+                    fig.update_traces(
+                        textposition='inside',
+                        texttemplate='%{percent}<br>%{value}',
+                        hovertemplate='<b>%{label} :</b> %{value} € (%{percent})<extra></extra>'
+                    )
+                    fig.update_traces(textposition='inside', texttemplate='%{percent}<br>%{value}')
+                    st.header(f"**💲 Coût total : {total_cost:.6f} €**")
+                    st.plotly_chart(fig, key="cost_chart")
+
                 with st.container(border=True):
-                    st.write("**⚡ Utilisation énergétique totale**")
-                    st.title(f"{total_energy} kWh")
-            with cols[1]:
+                    # Graphique de l'utilisation énergétique totale
+                    fig = px.pie(
+                        names=conversation_names,
+                        values=[
+                            sum(
+                                message["metrics"].get("energy_usage", 0.0)
+                                for message in chat
+                                if message["role"] == "AI"
+                            )
+                            for chat in chats_to_analyze.values()
+                        ],
+                        color_discrete_sequence=px.colors.sequential.Electric[::-1]
+                    )
+                    fig.update_traces(
+                        textposition='inside',
+                        texttemplate='%{percent}<br>%{value}',
+                        hovertemplate='<b>%{label} :</b> %{value} kWh (%{percent})<extra></extra>'
+                    )
+                    fig.update_traces(textposition='inside', texttemplate='%{percent}<br>%{value}')
+                    st.header(f"**⚡ Utilisation énergétique totale : {total_energy} kWh**")
+                    st.plotly_chart(fig, key="energy_chart")
+
                 with st.container(border=True):
-                    st.write("**🌡️ Potentiel de réchauffement global total**")
-                    st.title(f"{total_gwp} kgCO2eq")
+                    # Graphique du potentiel de réchauffement global total
+                    fig = px.pie(
+                        names=conversation_names,
+                        values=[
+                            sum(
+                                message["metrics"].get("gwp", 0.0)
+                                for message in chat
+                                if message["role"] == "AI"
+                            )
+                            for chat in chats_to_analyze.values()
+                        ],
+                        color_discrete_sequence=px.colors.sequential.Reds[::-1]
+                    )
+                    fig.update_traces(
+                        textposition='inside',
+                        texttemplate='%{percent}<br>%{value}',
+                        hovertemplate='<b>%{label} :</b> %{value} kgCO2eq (%{percent})<extra></extra>'
+                    )
+                    st.header(f"**🌡️ Potentiel de réchauffement global total : {total_gwp} kgCO2eq**")
+                    st.plotly_chart(fig, key="gwp_chart")
+                    
+            # Affichage des KPIs
+            else:
+                # Affichage des statistiques
+                cols = st.columns(4)
+                with cols[0]:
+                    with st.container(border=True):
+                        st.write("**🗨️ Nombre total de messages envoyés**")
+                        st.title(f"{sent_messages:.0f}")
+                with cols[1]:
+                    with st.container(border=True):
+                        st.write("**🛡️ Nombre total de messages bloqués**")
+                        st.title(f"{total_blocked_messages:.0f}")
+                with cols[2]:
+                    with st.container(border=True):
+                        st.write("**📶 Latence moyenne des réponses**")
+                        st.title(f"{average_latency:.2f} secondes")
+                with cols[3]:
+                    with st.container(border=True):
+                        st.write("**💲 Coût total**")
+                        st.title(f"{total_cost:.6f} €")
+                cols = st.columns(2)
+                with cols[0]:
+                    with st.container(border=True):
+                        st.write("**⚡ Utilisation énergétique totale**")
+                        st.title(f"{total_energy} kWh")
+                with cols[1]:
+                    with st.container(border=True):
+                        st.write("**🌡️ Potentiel de réchauffement global total**")
+                        st.title(f"{total_gwp} kgCO2eq")
         else:
             # Message d'information si aucune conversation n'a été sélectionnée
             st.info(
