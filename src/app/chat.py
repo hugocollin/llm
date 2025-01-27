@@ -117,6 +117,10 @@ class Chat:
         Lance l'affichage du chat avec l'IA.
         """
 
+        # Initialisation de l'état de la recherche internet
+        if "internet_search_active" not in st.session_state:
+            st.session_state["internet_search_active"] = False
+
         # Affichage de l'historique de la conversation
         for message in st.session_state["chats"][self.selected_chat]:
             # Affichage des messages de l'utilisateur
@@ -172,7 +176,10 @@ class Chat:
             if st.button(
                 "",
                 icon=":material/attach_file:",
-                disabled=not st.session_state.get("found_api_keys", False),
+                disabled=(
+                    not st.session_state.get("found_api_keys", False) or
+                    st.session_state.get("internet_search_active", False)
+                ),
             ):
                 self.upload_files_dialog()
 
@@ -182,8 +189,13 @@ class Chat:
                 "",
                 icon=":material/language:",
                 disabled=not st.session_state.get("found_api_keys", False),
+                type="primary" if st.session_state["internet_search_active"] else "secondary"
             ):
-                st.toast("Cette fonctionnalité sera disponible ultérieurement.", icon=":material/info:")
+                if st.session_state["internet_search_active"] is True:
+                    st.session_state["internet_search_active"] = False
+                else:
+                    st.session_state["internet_search_active"] = True
+                st.rerun()
 
         # Message d'avertissement
         st.write(
