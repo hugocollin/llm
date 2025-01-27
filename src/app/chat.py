@@ -191,7 +191,7 @@ class Chat:
                 icon=":material/tune:",
                 disabled=not st.session_state.get("found_api_keys", False),
             ):
-                st.toast("Cette fonctionnalité sera disponible ultérieurement.", icon=":material/info:")
+                self.settings_dialog()
 
         # Zone de saisie pour le chat avec l'IA
         with cols[1]:
@@ -288,12 +288,15 @@ class Chat:
                     f"Voici le message de l'utilisateur : {message}."
                 )
 
+            # Récupération des paramètres du modèle
+            model_params = self.llm.get_model_config()
+
             # Envoi du message et récupération de la réponse de l'IA
             response = asyncio.run(self.llm.generate(
                 prompt=message,
-                provider="mistral",
-                model="mistral-large-latest",
-                temperature=0.7,
+                provider=model_params["current_provider"],
+                model=model_params["current_model"],
+                temperature=model_params["current_temperature"],
                 max_tokens=10000
             ))
 
@@ -347,6 +350,50 @@ class Chat:
         if len(st.session_state["chats"][self.selected_chat]) == 2:
             print(self.selected_chat)
             self.generate_chat_name(st.session_state["chats"][self.selected_chat][0]["content"])
+
+    @st.dialog("Paramètres de l'IA")
+    def settings_dialog(self):
+        """
+        Ouvre une boîte de dialogue pour configurer les paramètres de l'IA.
+        """
+
+        # Récupération de la configuration actuelle
+        config = self.llm.get_model_config()
+        providers = config["providers"]
+        provider_options = list(providers.keys())
+
+        # Paramètrage du fournisseur
+        selected_provider = st.selectbox(
+            label="Fournisseur",
+            options=provider_options,
+            index=provider_options.index(config["current_provider"])
+        )
+
+        # Paramètrage du modèle
+        models = providers[selected_provider]["models"]
+        selected_model = st.selectbox(
+            label="Modèle",
+            options=models,
+            index=(
+                models.index(config["current_model"])
+                if config["current_model"] in models else 0
+            )
+        )
+
+        # Paramètrage de la température
+        selected_temperature = st.slider(
+            "Température (%)",
+            min_value=0.0,
+            max_value=100.0,
+            value=config["current_temperature"] * 100,
+            step=1.0
+        )
+        selected_temperature /= 100.0
+
+        # Enregistrement des paramètres
+        if st.button("Enregistrer", icon=":material/save:"):
+            self.llm.switch_provider(selected_provider, selected_model, selected_temperature)
+            st.rerun()
 
     @st.dialog("Ajouter des fichiers PDF")
     def upload_files_dialog(self):

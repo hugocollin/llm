@@ -41,8 +41,9 @@ class MultiModelLLM(LLMBase):
         self,
         api_key_mistral: Optional[str] = None,
         api_key_gemini: Optional[str] = None,
-        default_model: str = "large",
+        default_model: str = "ministral-8b-latest",
         default_provider: str = "mistral",
+        default_temperature: float = 0.7,
     ):
         """
         Initialise le gestionnaire multi-modèles.
@@ -52,6 +53,7 @@ class MultiModelLLM(LLMBase):
             api_key_gemini: Clé API pour Gemini.
             default_model: Modèle par défaut.
             default_provider: Fournisseur par défaut.
+            default_temperature: Température par défaut pour la génération.
         """
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
@@ -69,6 +71,7 @@ class MultiModelLLM(LLMBase):
 
         self.default_model = default_model
         self.current_provider = default_provider
+        self.default_temperature = default_temperature
 
     async def generate(
         self,
@@ -95,6 +98,7 @@ class MultiModelLLM(LLMBase):
         """
         current_provider = provider or self.current_provider
         current_model = model or self.default_model
+        temperature = temperature or self.default_temperature
 
         if not (0.0 <= temperature <= 1.0):
             raise ValueError("Temperature must be between 0.0 and 1.0")
@@ -196,7 +200,6 @@ class MultiModelLLM(LLMBase):
                     "ministral-8b-latest",
                     "mistral-large-latest",
                     "codestral-latest"
-
                 ]
             },
             "gemini": {
@@ -210,11 +213,12 @@ class MultiModelLLM(LLMBase):
         return {
             "current_provider": self.current_provider,
             "current_model": self.default_model,
+            "current_temperature": self.default_temperature,
             "providers": providers,
             "capabilities": ["text-generation", "multi-turn conversation"]
         }
 
-    def switch_provider(self, provider: str, model: str):
+    def switch_provider(self, provider: str, model: str, temperature: float):
         """
         Change le fournisseur et le modèle sélectionnés.
 
@@ -223,7 +227,7 @@ class MultiModelLLM(LLMBase):
             model (str): Le modèle choisi.
 
         Raises:
-            ValueError: Si le fournisseur ou le modèle est invalide.
+            ValueError: Si le fournisseur, le modèle ou la température est invalide.
         """
         config = self.get_model_config()
         providers = config["providers"]
@@ -233,6 +237,10 @@ class MultiModelLLM(LLMBase):
 
         if model not in providers[provider]["models"]:
             raise ValueError(f"Modèle non supporté pour le fournisseur {provider} : {model}")
+        
+        if not (0.0 <= temperature <= 1.0):
+            raise ValueError("La température doit être comprise entre 0.0 et 1.0")
 
         self.current_provider = provider
         self.default_model = model
+        self.default_temperature = temperature
