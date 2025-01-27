@@ -193,13 +193,15 @@ class MultiModelLLM(LLMBase):
         providers = {
             "mistral": {
                 "models": [
-                    "Mistral-Large-Instruct-2411",
-                    "Mistral-Small-Instruct-2409"
+                    "ministral-8b-latest",
+                    "mistral-large-latest",
+                    "codestral-latest"
+
                 ]
             },
             "gemini": {
                 "models": [
-                    "gemini-1.5-flash",
+                    "gemini-1.5-flash-8b",
                     "gemini-1.5-pro"
                 ]
             }
