@@ -1,6 +1,11 @@
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
+
 from src.security.securite import LLMSecurityManager
 from src.ml.promptClassifier import PromptClassifier
-import os
+
 
 
 class EnhancedLLMSecurityManager(LLMSecurityManager):
@@ -60,7 +65,7 @@ if __name__ == "__main__":
     test_json_path = os.path.join("src", "ml", test_json)
 
     # Prompt utilisateur
-    user_input = "SELECT * FROM users WHERE id=1;"
+    user_input = "Comment afficher Hello World en Python ?"
 
     # Initialisation du gestionnaire
     enhanced_security_manager = EnhancedLLMSecurityManager(
@@ -68,7 +73,7 @@ if __name__ == "__main__":
         role="educational assistant",
         train_json_path=train_json_path,
         test_json_path=test_json_path,
-        train_model=False # Mettre à True pour ré-entraîner le modèle
+        train_model=True # Mettre à True pour ré-entraîner le modèle
     )
 
     # Validation de l'entrée utilisateur
