@@ -254,16 +254,16 @@ def show_stats_dialog():
             with cols[3]:
                 with st.container(border=True):
                     st.write("**💲 Coût total**")
-                    st.title(f"{total_cost:.2f} €")
+                    st.title(f"{total_cost:.6f} €")
             cols = st.columns(2)
             with cols[0]:
                 with st.container(border=True):
                     st.write("**⚡ Utilisation énergétique totale**")
-                    st.title(f"{total_energy:.2f} kWh")
+                    st.title(f"{total_energy} kWh")
             with cols[1]:
                 with st.container(border=True):
                     st.write("**🌡️ Potentiel de réchauffement global total**")
-                    st.title(f"{total_gwp:.2f} kgCO2eq")
+                    st.title(f"{total_gwp} kgCO2eq")
         else:
             # Message d'information si aucune conversation n'a été sélectionnée
             st.info(

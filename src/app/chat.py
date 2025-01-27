@@ -149,7 +149,7 @@ class Chat:
             st.session_state["internet_search_active"] = False
 
         # Affichage de l'historique de la conversation
-        for message in st.session_state["chats"][self.selected_chat]:
+        for idx, message in enumerate(st.session_state["chats"][self.selected_chat]):
             # Affichage des messages de l'utilisateur
             if message["role"] == "User":
                 with self.chat_container.chat_message(message["role"], avatar="👤"):
@@ -158,13 +158,18 @@ class Chat:
             # Affichage des messages de l'IA
             elif message["role"] == "AI":
                 with self.chat_container.chat_message(message["role"], avatar="✨"):
-                    st.markdown(message["content"])
+                    st.write(message["content"])
                     metrics = message["metrics"]
-                    st.markdown(
-                        f"📶 *Latence : {metrics['latency']:.2f} secondes* | "
-                        f"💲 *Coût : {metrics['euro_cost']:.6f} €* | "
-                        f"⚡ *Utilisation énergétique : {metrics['energy_usage']} kWh* | "
-                        f"🌡️ *Potentiel de réchauffement global : {metrics['gwp']} kgCO2eq*"
+                    st.pills(
+                        label="NULL",
+                        options=[
+                            f"📶 {metrics['latency']:.2f} secondes",
+                            f"💲 {metrics['euro_cost']:.6f} €",
+                            f"⚡ {metrics['energy_usage']} kWh",
+                            f"🌡️ {metrics['gwp']} kgCO2eq",
+                        ],
+                        label_visibility="collapsed",
+                        key=idx
                     )
 
             # Affichage des messages de sécurité
@@ -295,11 +300,15 @@ class Chat:
             # Affichage de la réponse de l'IA
             with self.chat_container.chat_message("AI", avatar="✨"):
                 st.write_stream(stream_text(response["response"]))
-                st.markdown(
-                    f"📶 *Latence : {response['latency']:.2f} secondes* | "
-                    f"💲 *Coût : {response['euro_cost']:.6f} €* | "
-                    f"⚡ *Utilisation énergétique : {response['energy_usage']} kWh* | "
-                    f"🌡️ *Potentiel de réchauffement global : {response['gwp']} kgCO2eq*"
+                st.pills(
+                    label="NULL",
+                    options=[
+                        f"📶 {response['latency']:.2f} secondes",
+                        f"💲 {response['euro_cost']:.6f} €",
+                        f"⚡ {response['energy_usage']} kWh",
+                        f"🌡️ {response['gwp']} kgCO2eq",
+                    ],
+                    label_visibility="collapsed"
                 )
 
             # Ajout de la réponse de l'IA à l'historique de la conversation
