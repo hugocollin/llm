@@ -397,6 +397,8 @@ class Chat:
             models_help = (
                 "- **gemini-1.5-flash-8b :** modèle rapide et compact, conçu pour des "
                 "interactions rapides sans sacrifier la qualité des réponses.\n"
+                "- **gemini-1.5-flash :** modèle optimisé pour la vitesse, "
+                "offrant un bon compromis entre réactivité et précision.\n"
                 "- **gemini-1.5-pro :** modèle avancé avec des capacités professionnelles, "
                 "idéal pour les analyses approfondies et des applications exigeantes."
             )
