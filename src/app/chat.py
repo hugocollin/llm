@@ -80,6 +80,38 @@ class Chat:
         questions = response["response"].split('\n')
         return [q.strip("- ").strip() for q in questions[:5]]
 
+    def generate_chat_name(self, initial_message: str):
+        """
+        Génère un nom pour la conversation en fonction du premier message avec l'IA.
+
+        Args:
+            initial_message (str): Message initial de la conversation.
+        """
+        for _ in range(5):
+            prompt = (
+                "Tu es une intelligence artificielle spécialisée "
+                "dans la création de nom de conversation. "
+                "En te basant sur le texte suivant, qui est le premier message de la conversation, "
+                "propose un nom d'un maximum de 30 caractères pour cette conversation. "
+                "Répond uniquement en donnant le nom de la conversation "
+                "sans explication supplémentaire. "
+                f"Voici le texte : {initial_message}"
+            )
+            response = asyncio.run(self.llm.generate(prompt=prompt, model="mistral-large-latest"))
+            generated_name = response["response"].strip()
+
+            if len(generated_name) > 30:
+                continue
+            if generated_name in st.session_state["chats"]:
+                continue
+
+            st.session_state["chats"][generated_name] = st.session_state["chats"].pop(
+                self.selected_chat
+            )
+            st.session_state["selected_chat"] = generated_name
+            self.selected_chat = generated_name
+            st.rerun()
+
     def run(self):
         """
         Lance l'affichage du chat avec l'IA.
@@ -144,6 +176,13 @@ class Chat:
                 disabled=not st.session_state.get("found_api_keys", False),
             ):
                 self.upload_files_dialog()
+
+        # Message d'avertissement
+        st.write(
+            ":grey[*SISE Classmate peut faire des erreurs. "
+            "Envisagez de vérifier les informations importantes "
+            "et n'envoyez pas d'informations confidentielles.*]"
+        )
 
     def handle_user_message(self, message: str):
         """
@@ -214,6 +253,11 @@ class Chat:
                     "content": message,
                 }
             )
+
+        # Si c'est le premier message envoyé, alors génération du nom de la conversation
+        if len(st.session_state["chats"][self.selected_chat]) == 2:
+            print(self.selected_chat)
+            self.generate_chat_name(message)
 
     @st.dialog("Ajouter des fichiers PDF")
     def upload_files_dialog(self):

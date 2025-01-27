@@ -76,7 +76,7 @@ class MultiModelLLM(LLMBase):
         model: Optional[str] = None,
         provider: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 150,
+        max_tokens: int = 3000,
         **kwargs,
     ) -> str:
         """
@@ -155,7 +155,6 @@ class MultiModelLLM(LLMBase):
             self.logger.error(f"Mistral API error: {e}")
             return f"Mistral API Error: {e}"
 
-
     def _generate_gemini(self, prompt: str, temperature: float, max_tokens: int, **kwargs) -> str:
         """
         Génère une réponse avec Gemini.
@@ -189,42 +188,49 @@ class MultiModelLLM(LLMBase):
         Récupère la configuration détaillée du modèle.
 
         Returns:
-            Dict[str, Any]: Configuration avec modèles et capacités
+            Dict[str, Any]: Configuration avec modèles, providers et capacités
         """
+        providers = {
+            "mistral": {
+                "models": [
+                    "Mistral-Large-Instruct-2411",
+                    "Mistral-Small-Instruct-2409"
+                ]
+            },
+            "gemini": {
+                "models": [
+                    "gemini-1.5-flash",
+                    "gemini-1.5-pro"
+                ]
+            }
+        }
+
         return {
             "current_provider": self.current_provider,
             "current_model": self.default_model,
-            "providers": {
-                "mistral": {
-                    "models": [
-                        "Mistral-Large-Instruct-2411",
-                        "Mistral-Small-Instruct-2409"
-                    ]
-                },
-                "gemini": {
-                    "models": [
-                        "gemini-1.5-flash",
-                        "gemini-1.5-pro"
-                    ]
-                }
-            },
+            "providers": providers,
             "capabilities": ["text-generation", "multi-turn conversation"]
         }
 
-
-    def switch_provider(self, new_provider: str, new_model_name: Optional[str] = None):
+    def switch_provider(self, provider: str, model: str):
         """
-        Dynamically switch model provider with optional model name update.
+        Change le fournisseur et le modèle sélectionnés.
 
         Args:
-            new_provider (str): Target provider.
-            new_model_name (str, optional): Specific model variant.
-        """
-        supported_providers = ["mistral", "gemini"]
-        if new_provider not in supported_providers:
-            raise ValueError(f"Provider must be one of {supported_providers}")
+            provider (str): Le fournisseur choisi.
+            model (str): Le modèle choisi.
 
-        self.logger.info(f"Switching provider to {new_provider} with model {new_model_name or self.default_model}")
-        self.current_provider = new_provider
-        if new_model_name:
-            self.default_model = new_model_name
+        Raises:
+            ValueError: Si le fournisseur ou le modèle est invalide.
+        """
+        config = self.get_model_config()
+        providers = config["providers"]
+
+        if provider not in providers:
+            raise ValueError(f"Fournisseur non supporté : {provider}")
+
+        if model not in providers[provider]["models"]:
+            raise ValueError(f"Modèle non supporté pour le fournisseur {provider} : {model}")
+
+        self.current_provider = provider
+        self.default_model = model
