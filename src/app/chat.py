@@ -69,6 +69,8 @@ class Chat:
 
         Returns:
         """
+
+        # Définition du prompt
         prompt = (
             "Tu es une intelligence artificielle spécialisée dans l'aide aux élèves à l'école. "
             "Génère 5 questions courtes dans différentes matières sans les préciser, "
@@ -76,7 +78,17 @@ class Chat:
             "Répond uniquement en donnant les 5 questions sous forme de liste de tirets, "
             "sans explication supplémentaire."
         )
-        response = asyncio.run(self.llm.generate(prompt=prompt, model="mistral-large-latest"))
+
+        # Génération des questions
+        response = asyncio.run(self.llm.generate(
+            prompt=prompt,
+            provider="mistral",
+            model="mistral-large-latest",
+            temperature=0.7,
+            max_tokens=1000
+        ))
+
+        # Récupération des questions
         questions = response["response"].split('\n')
         return [q.strip("- ").strip() for q in questions[:5]]
 
@@ -87,7 +99,10 @@ class Chat:
         Args:
             initial_message (str): Message initial de la conversation.
         """
+
+        # 5 tentatives pour générer un nom de conversation
         for _ in range(5):
+            # Définition du prompt
             prompt = (
                 "Tu es une intelligence artificielle spécialisée "
                 "dans la création de nom de conversation. "
@@ -97,14 +112,26 @@ class Chat:
                 "sans explication supplémentaire. "
                 f"Voici le texte : {initial_message}"
             )
-            response = asyncio.run(self.llm.generate(prompt=prompt, model="mistral-large-latest"))
+
+            # Génération du nom de la conversation
+            response = asyncio.run(self.llm.generate(
+                prompt=prompt,
+                provider="mistral",
+                model="mistral-large-latest",
+                temperature=0.7,
+                max_tokens=100
+            ))
+
+            # Récupération du nom de la conversation
             generated_name = response["response"].strip()
 
+            # Vérification de la conformité du nom de la conversation
             if len(generated_name) > 30:
                 continue
             if generated_name in st.session_state["chats"]:
                 continue
 
+            # Changement du nom de la conversation
             st.session_state["chats"][generated_name] = st.session_state["chats"].pop(
                 self.selected_chat
             )
@@ -183,7 +210,7 @@ class Chat:
             ):
                 self.upload_files_dialog()
 
-        # Mode recherche internet [TEMP]
+        # Mode recherche internet
         with cols[3]:
             if st.button(
                 "",
@@ -229,8 +256,41 @@ class Chat:
 
         # Si le message de utilisateur est autorisé
         if is_valid_message is True:
+            # Si le mode recherche internet est activé
+            if st.session_state["internet_search_active"] is True:
+                # Récupération du code HTML pour la recherche internet [TEMP]
+                html_code = ""
+
+                # Enrichissement du message
+                message = (
+                    "Tu es une intelligence artificielle spécialisée dans "
+                    "l'aide aux élèves à l'école, si le message ne concerne pas "
+                    "une question de cours, alors tu réponds en expliquant que "
+                    "tu ne peux pas répondre à la question. "
+                    f"Voici le message de l'utilisateur : {message}."
+                    "Pour répondre au message suivant, nous te fournissons le code HTML "
+                    "de la recherche correspondante sur Google "
+                    f"afin de te donner des informations sur le sujet : {html_code}."
+                )
+            # Si le mode recherche internet n'est pas activé
+            else:
+                # Enrichissement du message
+                message = (
+                    "Tu es une intelligence artificielle spécialisée dans "
+                    "l'aide aux élèves à l'école, si le message ne concerne pas "
+                    "une question de cours, alors tu réponds en expliquant que "
+                    "tu ne peux pas répondre à la question. "
+                    f"Voici le message de l'utilisateur : {message}."
+                )
+
             # Envoi du message et récupération de la réponse de l'IA
-            response = asyncio.run(self.llm.generate(prompt=message, model="mistral-large-latest"))
+            response = asyncio.run(self.llm.generate(
+                prompt=message,
+                provider="mistral",
+                model="mistral-large-latest",
+                temperature=0.7,
+                max_tokens=10000
+            ))
 
             # Affichage de la réponse de l'IA
             with self.chat_container.chat_message("AI", avatar="✨"):
@@ -277,7 +337,7 @@ class Chat:
         # Si c'est le premier message envoyé, alors génération du nom de la conversation
         if len(st.session_state["chats"][self.selected_chat]) == 2:
             print(self.selected_chat)
-            self.generate_chat_name(message)
+            self.generate_chat_name(st.session_state["chats"][self.selected_chat][0]["content"])
 
     @st.dialog("Ajouter des fichiers PDF")
     def upload_files_dialog(self):

@@ -76,7 +76,7 @@ class MultiModelLLM(LLMBase):
         model: Optional[str] = None,
         provider: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 3000,
+        max_tokens: int = 1000,
         **kwargs,
     ) -> str:
         """
