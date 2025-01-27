@@ -1,6 +1,0 @@
-datasets
-numpy
-typing
-pandas
-pytorch
-sentence-transformers
