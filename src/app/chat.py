@@ -146,17 +146,16 @@ class Chat:
             self.handle_user_message(self.initial_question)
 
         # Mise en page de l'interraction avec l'IA
-        cols = self.header_container.columns([3, 10, 1])
+        cols = self.header_container.columns([1, 13, 1, 1])
 
         # Choix du modèle [TEMP]
         with cols[0]:
-            st.selectbox(
-                "NULL",
-                label_visibility="collapsed",
-                options=["Option 1", "Option 2", "Option 3"],
-                index=0,
+            if st.button(
+                "",
+                icon=":material/tune:",
                 disabled=not st.session_state.get("found_api_keys", False),
-            )
+            ):
+                st.toast("Cette fonctionnalité sera disponible ultérieurement.", icon=":material/info:")
 
         # Zone de saisie pour le chat avec l'IA
         with cols[1]:
@@ -176,6 +175,15 @@ class Chat:
                 disabled=not st.session_state.get("found_api_keys", False),
             ):
                 self.upload_files_dialog()
+
+        # Mode recherche internet [TEMP]
+        with cols[3]:
+            if st.button(
+                "",
+                icon=":material/language:",
+                disabled=not st.session_state.get("found_api_keys", False),
+            ):
+                st.toast("Cette fonctionnalité sera disponible ultérieurement.", icon=":material/info:")
 
         # Message d'avertissement
         st.write(
