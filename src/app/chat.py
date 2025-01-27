@@ -177,6 +177,9 @@ class Chat:
             ):
                 self.upload_files_dialog()
 
+        # Message d'avertissement
+        st.write(":grey[*SISE Classmate peut faire des erreurs. Envisagez de vérifier les informations importantes et n'envoyez pas d'informations confidentielles.*]")
+
     def handle_user_message(self, message: str):
         """
         Gère le message de l'utilisateur et envoie une requête à l'IA.
