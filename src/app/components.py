@@ -240,7 +240,7 @@ def show_stats_dialog():
 
             # Option pour afficher les graphiques
             afficher_graphiques = st.toggle("Afficher les détails", False)
-            
+
             # Affichage des graphiques
             if afficher_graphiques:
                 with st.container(border=True):
@@ -255,7 +255,10 @@ def show_stats_dialog():
                     fig.update_traces(
                         textposition='inside',
                         texttemplate='%{percent}<br>%{value}',
-                        hovertemplate='<b>%{label} :</b> %{value} messages (%{percent})<extra></extra>'
+                        hovertemplate=(
+                            '<b>%{label} :</b> %{value} '
+                            'messages (%{percent})<extra></extra>'
+                        )
                     )
                     st.header(f"**🗨️ Nombre total de messages envoyés : {sent_messages:.0f}**")
                     st.plotly_chart(fig, key="messages_chart")
@@ -275,9 +278,15 @@ def show_stats_dialog():
                     fig.update_traces(
                         textposition='inside',
                         texttemplate='%{percent}<br>%{value}',
-                        hovertemplate='<b>%{label} :</b> %{value} messages bloqués (%{percent})<extra></extra>'
+                        hovertemplate=(
+                            '<b>%{label} :</b> %{value} '
+                            'messages bloqués (%{percent})<extra></extra>'
+                        )
                     )
-                    st.header(f"**🛡️ Nombre total de messages bloqués : {total_blocked_messages:.0f}**")
+                    st.header(
+                        "**🛡️ Nombre total de messages bloqués : "
+                        f"{total_blocked_messages:.0f}**"
+                    )
                     st.plotly_chart(fig, key="blocked_messages_chart")
 
                 with st.container(border=True):
@@ -301,10 +310,16 @@ def show_stats_dialog():
                         legend_title_text="Latences (secondes)"
                     )
                     fig.update_traces(
-                        hovertemplate='<b>Latence :</b> %{x} secondes<br><b>Nombre de réponses :</b> %{y}<extra></extra>',
+                        hovertemplate=(
+                            '<b>Latence :</b> %{x} '
+                            'secondes<br><b>Nombre de réponses :</b> %{y}<extra></extra>'
+                        ),
                         marker=dict(opacity=0.7, line=dict(color='black', width=1))
                     )
-                    st.header(f"**📶 Latence moyenne des réponses : {average_latency:.2f} secondes**")
+                    st.header(
+                        "**📶 Latence moyenne des réponses : "
+                        f"{average_latency:.2f} secondes**"
+                    )
                     st.plotly_chart(fig, key="latency_chart")
 
                 with st.container(border=True):
@@ -370,11 +385,16 @@ def show_stats_dialog():
                     fig.update_traces(
                         textposition='inside',
                         texttemplate='%{percent}<br>%{value}',
-                        hovertemplate='<b>%{label} :</b> %{value} kgCO2eq (%{percent})<extra></extra>'
+                        hovertemplate=(
+                            '<b>%{label} :</b> %{value} '
+                            'kgCO2eq (%{percent})<extra></extra>'
+                        )
                     )
-                    st.header(f"**🌡️ Potentiel de réchauffement global total : {total_gwp} kgCO2eq**")
+                    st.header(
+                        f"**🌡️ Potentiel de réchauffement global total : {total_gwp} kgCO2eq**"
+                    )
                     st.plotly_chart(fig, key="gwp_chart")
-                    
+
             # Affichage des KPIs
             else:
                 # Affichage des statistiques
