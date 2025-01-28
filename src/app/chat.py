@@ -6,6 +6,7 @@ import os
 import asyncio
 import streamlit as st
 import PyPDF2
+import wikipedia
 
 from src.app.components import stream_text
 from src.pipeline import EnhancedLLMSecurityManager
@@ -273,8 +274,8 @@ class Chat:
         if is_valid_message is True:
             # Si le mode recherche internet est activé
             if st.session_state["internet_search_active"] is True:
-                # Récupération du code HTML pour la recherche internet [TEMP]
-                html_code = ""
+                # Recherche sur Wikipedia
+                wiki_summary = self.fetch_wikipedia_data(message)
 
                 # Enrichissement du message
                 message = (
@@ -283,9 +284,9 @@ class Chat:
                     "une question de cours, alors tu réponds en expliquant que "
                     "tu ne peux pas répondre à la question. "
                     f"Voici le message de l'utilisateur : {message}."
-                    "Pour répondre au message suivant, nous te fournissons le code HTML "
-                    "de la recherche correspondante sur Google "
-                    f"afin de te donner des informations sur le sujet : {html_code}."
+                    "Pour répondre au message suivant, nous te fournissons du contenu "
+                    "provenant d'un recherche sur Wikipedia "
+                    f"afin de te donner des informations sur le sujet : {wiki_summary}."
                 )
             # Si le mode recherche internet n'est pas activé
             else:
@@ -493,3 +494,23 @@ class Chat:
                     state="complete",
                     expanded=False,
                 )
+
+    def fetch_wikipedia_data(self, query: str) -> str:
+        """
+        Recherche des informations sur Wikipedia pour la requête donnée.
+
+        Args:
+            query (str): La requête de recherche.
+
+        Returns:
+            str: Résumé des informations trouvées.
+        """
+        try:
+            # Récupération des informations sur Wikipedia en français
+            wikipedia.set_lang("fr")
+            summary = wikipedia.summary(query)
+            return summary
+        except wikipedia.exceptions.DisambiguationError as e:
+            return f"Le message est ambigu, voici les suggestions de Wikipedia : {e.options[:5]}"
+        except wikipedia.exceptions.PageError:
+            return "Wikipedia n'a pas trouvé d'informations correspondant au message"
