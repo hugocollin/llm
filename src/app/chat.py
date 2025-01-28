@@ -10,7 +10,7 @@ import wikipedia
 
 from src.app.components import stream_text
 from src.pipeline import EnhancedLLMSecurityManager
-from src.rag.model_api import MultiModelLLM
+from src.rag.model_api2 import MultiModelLLM
 
 class Chat:
     """

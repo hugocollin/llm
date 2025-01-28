@@ -73,6 +73,7 @@ class MultiModelLLM(LLMBase):
         genai.configure(api_key=self.api_key_gemini)
 
         self.default_model = default_model
+        self.default_provider = default_provider
         self.current_provider = default_provider
         self.default_temperature = default_temperature
         self.embedding_model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
