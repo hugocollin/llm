@@ -262,7 +262,9 @@ def show_stats_dialog():
                             'messages (%{percent})<extra></extra>'
                         )
                     )
-                    st.header(f"**🗨️ Nombre total de messages envoyés : {total_user_messages:.0f}**")
+                    st.header(
+                        f"**🗨️ Nombre total de messages envoyés : {total_user_messages:.0f}**"
+                    )
                     st.plotly_chart(fig, key="messages_chart")
 
                 with st.container(border=True):
