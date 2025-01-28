@@ -222,6 +222,7 @@ def show_stats_dialog():
             total_cost = 0.0
             total_energy = 0.0
             total_gwp = 0.0
+            total_internet_search = 0
 
             # Calcul des statistiques
             for chat in chats_to_analyze.values():
@@ -235,6 +236,7 @@ def show_stats_dialog():
                         total_cost += metrics.get("euro_cost", 0.0)
                         total_energy += metrics.get("energy_usage", 0.0)
                         total_gwp += metrics.get("gwp", 0.0)
+                        total_internet_search += 1 if message.get("internet_search") else 0
                     if message["role"] == "Guardian":
                         total_blocked_messages += 1
 
@@ -413,18 +415,26 @@ def show_stats_dialog():
                         st.title(f"{total_blocked_messages:.0f}")
                 with cols[2]:
                     with st.container(border=True):
+                        st.write("**🌐 Nombre total d'utilisation du mode internet**")
+                        st.title(f"{total_internet_search:.0f}")
+                with cols[3]:
+                    with st.container(border=True):
+                        st.write("**📄 Nombre total de documents importés**")
+                        st.write("*Statistique disponible ultérieurement*")
+                cols = st.columns(4)
+                with cols[0]:
+                    with st.container(border=True):
                         st.write("**📶 Latence moyenne des réponses**")
                         st.title(f"{average_latency:.2f} secondes")
-                with cols[3]:
+                with cols[1]:
                     with st.container(border=True):
                         st.write("**💲 Coût total**")
                         st.title(f"{total_cost:.6f} €")
-                cols = st.columns(2)
-                with cols[0]:
+                with cols[2]:
                     with st.container(border=True):
                         st.write("**⚡ Utilisation énergétique totale**")
                         st.title(f"{total_energy} kWh")
-                with cols[1]:
+                with cols[3]:
                     with st.container(border=True):
                         st.write("**🌡️ Potentiel de réchauffement global total**")
                         st.title(f"{total_gwp} kgCO2eq")

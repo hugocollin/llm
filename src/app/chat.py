@@ -9,7 +9,7 @@ import wikipedia
 
 from src.app.components import stream_text
 from src.pipeline import EnhancedLLMSecurityManager
-from src.rag.model_api2 import MultiModelLLM
+from src.rag.model_api import MultiModelLLM
 
 class Chat:
     """
@@ -178,7 +178,7 @@ class Chat:
 
             # Affichage des messages de sécurité
             elif message["role"] == "Guardian":
-                with self.chat_container.chat_message(message["role"], avatar="⛔"):
+                with self.chat_container.chat_message(message["role"], avatar="🛡️"):
                     st.write(message["content"])
 
         # Si une question initiale est présente, l'envoyer automatiquement
@@ -335,6 +335,8 @@ class Chat:
                         "energy_usage": response["energy_usage"],
                         "gwp": response["gwp"],
                     },
+                    "internet_search": st.session_state["internet_search_active"],
+                    "model_used": model_params["current_model"]
                 }
             )
         else:
@@ -345,7 +347,7 @@ class Chat:
             )
 
             # Affichage du message de sécurité
-            with self.chat_container.chat_message("Guardian", avatar="⛔"):
+            with self.chat_container.chat_message("Guardian", avatar="🛡️"):
                 st.write_stream(stream_text(message))
 
             # Ajout du message de sécurité à l'historique de la conversation
