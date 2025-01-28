@@ -281,10 +281,10 @@ class Chat:
 
                 # Enrichissement du message
                 message = (
-                    "Tu es une intelligence artificielle spécialisée dans "
-                    "l'aide aux élèves à l'école, si le message ne concerne pas "
-                    "une question de cours, alors tu renvoi "
-                    "seulement et uniquement le mot 'Guardian'. "
+                    "Tu es une intelligence artificielle spécialisée dans l'aide "
+                    "et les réponses aux questions liées à l'éducation, l'école, "
+                    "les cours et la culture générale. Si un message reçu sort de ce cadre, "
+                    "tu réponds uniquement et strictement par le mot 'Guardian'. "
                     f"Voici le message de l'utilisateur : {message}."
                     "Pour répondre au message suivant, nous te fournissons du contenu "
                     "provenant d'un recherche sur Wikipedia "
@@ -294,10 +294,10 @@ class Chat:
             else:
                 # Enrichissement du message
                 message = (
-                    "Tu es une intelligence artificielle spécialisée dans "
-                    "l'aide aux élèves à l'école, si le message ne concerne pas "
-                    "une question de cours, alors tu renvoi "
-                    "seulement et uniquement le mot 'Guardian'. "
+                    "Tu es une intelligence artificielle spécialisée dans l'aide "
+                    "et les réponses aux questions liées à l'éducation, l'école, "
+                    "les cours et la culture générale. Si un message reçu sort de ce cadre, "
+                    "tu réponds uniquement et strictement par le mot 'Guardian'. "
                     f"Voici le message de l'utilisateur : {message}."
                 )
 
