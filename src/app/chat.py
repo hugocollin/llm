@@ -386,24 +386,39 @@ class Chat:
         # Personnalisation de l'aide en fonction du fournisseur
         if selected_provider == "mistral":
             models_help = (
-                "- **ministral-8b-latest :** modèle généraliste de taille moyenne, "
+                "- :material/energy_savings_leaf: **ministral-8b-latest :** "
+                "modèle généraliste de taille moyenne, "
                 "équilibré pour des tâches variées avec des performances optimisées.\n"
-                "- **mistral-large-latest :** modèle de grande capacité, idéal pour des cas "
+                "- :material/energy_savings_leaf::material/energy_savings_leaf: "
+                "**mistral-large-latest :** modèle de grande capacité, idéal pour des cas "
                 "d'usage nécessitant des réponses complexes et détaillées.\n"
-                "- **codestral-latest :** modèle spécialisé pour la génération de code "
+                "- :material/energy_savings_leaf::material/energy_savings_leaf:"
+                ":material/energy_savings_leaf: **codestral-latest :** "
+                "modèle spécialisé pour la génération de code "
                 "et les tâches techniques, parfait pour les développeurs."
             )
         elif selected_provider == "gemini":
             models_help = (
-                "- **gemini-1.5-flash-8b :** modèle rapide et compact, conçu pour des "
+                "- :material/energy_savings_leaf: **gemini-1.5-flash-8b :** "
+                "modèle rapide et compact, conçu pour des "
                 "interactions rapides sans sacrifier la qualité des réponses.\n"
-                "- **gemini-1.5-flash :** modèle optimisé pour la vitesse, "
+                "- :material/energy_savings_leaf::material/energy_savings_leaf: "
+                "**gemini-1.5-flash :** modèle optimisé pour la vitesse, "
                 "offrant un bon compromis entre réactivité et précision.\n"
-                "- **gemini-1.5-pro :** modèle avancé avec des capacités professionnelles, "
+                "- :material/energy_savings_leaf::material/energy_savings_leaf:"
+                ":material/energy_savings_leaf: **gemini-1.5-pro :** "
+                "modèle avancé avec des capacités professionnelles, "
                 "idéal pour les analyses approfondies et des applications exigeantes."
             )
         else:
             models_help = "Aucune information sur les modèles est disponible."
+
+        # Explication de l'indicateur d'impact énergétique et écologique
+        models_help = models_help + (
+            "\n\n :material/energy_savings_leaf: *indique l'impact énergétique "
+            "et écologique du modèle : moins il y a de symboles, plus le modèle "
+            "est respectueux de l'environnement et économe en énergie.*"
+        )
 
         # Paramètrage du modèle
         models = providers[selected_provider]["models"]
