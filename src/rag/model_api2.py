@@ -63,8 +63,10 @@ class MultiModelLLM(LLMBase):
         self.api_key_gemini = api_key_gemini or os.environ.get("GEMINI_API_KEY")
 
         if not self.api_key_mistral:
+            self.logger.error("MISTRAL_API_KEY is missing. Please set it in the environment or pass it explicitly.")
             raise ValueError("MISTRAL_API_KEY is missing")
         if not self.api_key_gemini:
+            self.logger.error("GEMINI_API_KEY is missing. Please set it in the environment or pass it explicitly.")
             raise ValueError("GEMINI_API_KEY is missing")
 
         self.mistral_client = Mistral(api_key=self.api_key_mistral)
@@ -74,6 +76,12 @@ class MultiModelLLM(LLMBase):
         self.current_provider = default_provider
         self.default_temperature = default_temperature
         self.embedding_model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+        # Validate default provider and model
+        if self.default_provider not in self.get_model_config()["providers"]:
+            raise ValueError(f"Default provider '{self.default_provider}' is not supported.")
+        if self.default_model not in self.get_model_config()["providers"][self.default_provider]["models"]:
+            raise ValueError(f"Default model '{self.default_model}' is not supported for provider '{self.default_provider}'.")
 
     def generate(
         self,
@@ -115,7 +123,6 @@ class MultiModelLLM(LLMBase):
             else:
                 raise ValueError(f"Provider not supported: {current_provider}")
 
-            # [TEMP] Exemple de métriques fictives : À REMPLACER !
             metrics = {
                 "latency": 0,
                 "euro_cost": 0,
@@ -153,8 +160,8 @@ class MultiModelLLM(LLMBase):
                 **kwargs
             )
             if chat_response.choices:
-                energy_usage = getattr(chat_response.impacts.energy.value, "min", chat_response.impacts.energy.value)
-                gwp = getattr(chat_response.impacts.gwp.value, "min", chat_response.impacts.gwp.value)
+                energy_usage = getattr(chat_response, 'impacts', {}).get('energy', {}).get('value', 0.0)
+                gwp = getattr(chat_response, 'impacts', {}).get('gwp', {}).get('value', 0.0)
                 return chat_response.choices[0].message.content, energy_usage, gwp
             else:
                 self.logger.warning("No choices returned by Mistral API.")
@@ -186,8 +193,8 @@ class MultiModelLLM(LLMBase):
                     **kwargs,
                 ),
             )
-            energy_usage = getattr(response.impacts.energy.value, "min", response.impacts.energy.value)
-            gwp = getattr(response.impacts.gwp.value, "min", response.impacts.gwp.value)
+            energy_usage = getattr(response, 'impacts', {}).get('energy', {}).get('value', 0.0)
+            gwp = getattr(response, 'impacts', {}).get('gwp', {}).get('value', 0.0)
             return response.text, energy_usage, gwp
         except Exception as e:
             self.logger.error(f"Gemini API error: {e}")
@@ -251,3 +258,4 @@ class MultiModelLLM(LLMBase):
         self.current_provider = provider
         self.default_model = model
         self.default_temperature = temperature
+
