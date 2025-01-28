@@ -3,14 +3,13 @@ Ce fichier définit la classe Chat pour gérer les interractions avec l'IA.
 """
 
 import os
-import asyncio
 import streamlit as st
 import PyPDF2
 import wikipedia
 
 from src.app.components import stream_text
 from src.pipeline import EnhancedLLMSecurityManager
-from src.rag.model_api2 import MultiModelLLM
+from src.rag.model_api import MultiModelLLM
 
 class Chat:
     """
@@ -81,13 +80,13 @@ class Chat:
         )
 
         # Génération des questions
-        response = asyncio.run(self.llm.generate(
+        response = self.llm.generate(
             prompt=prompt,
             provider="mistral",
             model="mistral-large-latest",
             temperature=0.7,
             max_tokens=1000
-        ))
+        )
 
         # Récupération des questions
         questions = response["response"].split('\n')
@@ -115,13 +114,13 @@ class Chat:
             )
 
             # Génération du nom de la conversation
-            response = asyncio.run(self.llm.generate(
+            response = self.llm.generate(
                 prompt=prompt,
                 provider="mistral",
                 model="mistral-large-latest",
                 temperature=0.7,
                 max_tokens=100
-            ))
+            )
 
             # Récupération du nom de la conversation
             generated_name = response["response"].strip()
@@ -303,13 +302,13 @@ class Chat:
             model_params = self.llm.get_model_config()
 
             # Envoi du message et récupération de la réponse de l'IA
-            response = asyncio.run(self.llm.generate(
+            response = self.llm.generate(
                 prompt=message,
                 provider=model_params["current_provider"],
                 model=model_params["current_model"],
                 temperature=model_params["current_temperature"],
                 max_tokens=10000
-            ))
+            )
 
             # Affichage de la réponse de l'IA
             with self.chat_container.chat_message("AI", avatar="✨"):

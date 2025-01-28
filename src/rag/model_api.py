@@ -1,11 +1,12 @@
 import os
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
-import asyncio
+from typing import Any, Dict, Optional, List, Tuple
 
 import google.generativeai as genai
 from mistralai import Mistral
+import numpy as np
+from sentence_transformers import SentenceTransformer
 
 
 class LLMBase(ABC):
@@ -62,18 +63,28 @@ class MultiModelLLM(LLMBase):
         self.api_key_gemini = api_key_gemini or os.environ.get("GEMINI_API_KEY")
 
         if not self.api_key_mistral:
+            self.logger.error("MISTRAL_API_KEY is missing. Please set it in the environment or pass it explicitly.")
             raise ValueError("MISTRAL_API_KEY is missing")
         if not self.api_key_gemini:
+            self.logger.error("GEMINI_API_KEY is missing. Please set it in the environment or pass it explicitly.")
             raise ValueError("GEMINI_API_KEY is missing")
 
         self.mistral_client = Mistral(api_key=self.api_key_mistral)
         genai.configure(api_key=self.api_key_gemini)
 
         self.default_model = default_model
+        self.default_provider = default_provider
         self.current_provider = default_provider
         self.default_temperature = default_temperature
+        self.embedding_model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
-    async def generate(
+        # Validate default provider and model
+        if self.default_provider not in self.get_model_config()["providers"]:
+            raise ValueError(f"Default provider '{self.default_provider}' is not supported.")
+        if self.default_model not in self.get_model_config()["providers"][self.default_provider]["models"]:
+            raise ValueError(f"Default model '{self.default_model}' is not supported for provider '{self.default_provider}'.")
+
+    def generate(
         self,
         prompt: str,
         model: Optional[str] = None,
@@ -81,7 +92,7 @@ class MultiModelLLM(LLMBase):
         temperature: float = 0.7,
         max_tokens: int = 1000,
         **kwargs,
-    ) -> str:
+    ) -> Dict[str, Any]:
         """
         Génère une réponse.
 
@@ -107,20 +118,19 @@ class MultiModelLLM(LLMBase):
 
         try:
             if current_provider == "mistral":
-                response_text = await self._generate_mistral(prompt, current_model, temperature, max_tokens, **kwargs)
+                response_text, energy_usage, gwp = self._generate_mistral(prompt, current_model, temperature, max_tokens, **kwargs)
             elif current_provider == "gemini":
-                response_text = self._generate_gemini(prompt, temperature, max_tokens, **kwargs)
+                response_text, energy_usage, gwp = self._generate_gemini(prompt, temperature, max_tokens, **kwargs)
             else:
                 raise ValueError(f"Provider not supported: {current_provider}")
-            
-            # [TEMP] Exemple de métriques fictives : À REMPLACER !
+
             metrics = {
                 "latency": 0,
                 "euro_cost": 0,
-                "energy_usage": 0,
-                "gwp": 0,
+                "energy_usage": energy_usage,
+                "gwp": gwp,
             }
-            
+
             return {
                 "response": response_text,
                 **metrics
@@ -129,8 +139,8 @@ class MultiModelLLM(LLMBase):
             self.logger.error(f"Generation error: {e}")
             return {"response": f"Error: {e}", "latency": 0.0, "euro_cost": 0.0, "energy_usage": 0.0, "gwp": 0.0}
 
-    async def _generate_mistral(self, prompt: str, model: str, temperature: float, max_tokens: int, **kwargs) -> str:
-        """Génère une réponse avec Mistral.
+    def _generate_mistral(self, prompt: str, model: str, temperature: float, max_tokens: int, **kwargs) -> Tuple[str, float, float]:
+        """Génère une réponse avec Mistral et calcule les métriques d'écologie.
 
         Args:
             prompt: Le prompt.
@@ -140,10 +150,10 @@ class MultiModelLLM(LLMBase):
             **kwargs: Arguments additionnels pour l'API Mistral (ex: top_p).
 
         Returns:
-            La réponse générée.
+            La réponse générée, l'utilisation énergétique et le GWP.
         """
         try:
-            chat_response = await self.mistral_client.chat.complete_async(
+            chat_response = self.mistral_client.chat.complete(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=temperature,
@@ -151,17 +161,19 @@ class MultiModelLLM(LLMBase):
                 **kwargs
             )
             if chat_response.choices:
-                return chat_response.choices[0].message.content
+                energy_usage = getattr(chat_response, 'impacts', {}).get('energy', {}).get('value', 0.0)
+                gwp = getattr(chat_response, 'impacts', {}).get('gwp', {}).get('value', 0.0)
+                return chat_response.choices[0].message.content, energy_usage, gwp
             else:
                 self.logger.warning("No choices returned by Mistral API.")
-                return ""
+                return "", 0.0, 0.0
         except Exception as e:
             self.logger.error(f"Mistral API error: {e}")
-            return f"Mistral API Error: {e}"
+            return f"Mistral API Error: {e}", 0.0, 0.0
 
-    def _generate_gemini(self, prompt: str, temperature: float, max_tokens: int, **kwargs) -> str:
+    def _generate_gemini(self, prompt: str, temperature: float, max_tokens: int, **kwargs) -> Tuple[str, float, float]:
         """
-        Génère une réponse avec Gemini.
+        Génère une réponse avec Gemini et calcule les métriques d'écologie.
 
         Args:
             prompt: Le prompt.
@@ -170,7 +182,7 @@ class MultiModelLLM(LLMBase):
             **kwargs: Arguments additionnels pour l'API Gemini.
 
         Returns:
-            La réponse générée.
+            La réponse générée, l'utilisation énergétique et le GWP.
         """
         try:
             model = genai.GenerativeModel("gemini-1.5-flash")
@@ -182,10 +194,12 @@ class MultiModelLLM(LLMBase):
                     **kwargs,
                 ),
             )
-            return response.text
+            energy_usage = getattr(response, 'impacts', {}).get('energy', {}).get('value', 0.0)
+            gwp = getattr(response, 'impacts', {}).get('gwp', {}).get('value', 0.0)
+            return response.text, energy_usage, gwp
         except Exception as e:
             self.logger.error(f"Gemini API error: {e}")
-            return f"Gemini API Error: {e}"
+            return f"Gemini API Error: {e}", 0.0, 0.0
 
     def get_model_config(self) -> Dict[str, Any]:
         """
@@ -238,10 +252,11 @@ class MultiModelLLM(LLMBase):
 
         if model not in providers[provider]["models"]:
             raise ValueError(f"Modèle non supporté pour le fournisseur {provider} : {model}")
-        
+
         if not (0.0 <= temperature <= 1.0):
             raise ValueError("La température doit être comprise entre 0.0 et 1.0")
 
         self.current_provider = provider
         self.default_model = model
         self.default_temperature = temperature
+
