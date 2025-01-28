@@ -219,8 +219,7 @@ class PromptClassifier:
         Returns:
             None
         """
-        model_name = "best_prompt_model.pkl"
-        model_path = os.path.join(os.getcwd(),"src", "ml", model_name)
-        with open(model_name, 'rb') as f:
+        model_path = os.path.join(os.path.dirname(__file__), 'best_prompt_model.pkl')
+        with open(model_path, 'rb') as f:
             self.best_model = pickle.load(f)
         print(f"Modèle chargé avec succès depuis {model_path}.")
