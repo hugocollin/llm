@@ -283,7 +283,8 @@ class Chat:
                 message = (
                     "Tu es une intelligence artificielle spécialisée dans "
                     "l'aide aux élèves à l'école, si le message ne concerne pas "
-                    "une question de cours, alors tu renvoi seulement et uniquement le mot 'Guardian'. "
+                    "une question de cours, alors tu renvoi "
+                    "seulement et uniquement le mot 'Guardian'. "
                     f"Voici le message de l'utilisateur : {message}."
                     "Pour répondre au message suivant, nous te fournissons du contenu "
                     "provenant d'un recherche sur Wikipedia "
@@ -295,7 +296,8 @@ class Chat:
                 message = (
                     "Tu es une intelligence artificielle spécialisée dans "
                     "l'aide aux élèves à l'école, si le message ne concerne pas "
-                    "une question de cours, alors tu renvoi seulement et uniquement le mot 'Guardian'. "
+                    "une question de cours, alors tu renvoi "
+                    "seulement et uniquement le mot 'Guardian'. "
                     f"Voici le message de l'utilisateur : {message}."
                 )
 
