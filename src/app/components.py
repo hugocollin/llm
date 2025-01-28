@@ -238,7 +238,7 @@ def show_stats_dialog():
                     if message["role"] == "Guardian":
                         total_blocked_messages += 1
 
-            average_latency = total_latency / total_ai_messages
+            average_latency = total_latency / total_ai_messages if total_ai_messages > 0 else 0
 
             # Option pour afficher les graphiques
             afficher_graphiques = st.toggle("Afficher les détails", False)
