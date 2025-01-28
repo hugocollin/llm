@@ -11,7 +11,7 @@ from mistralai import Mistral
 from ecologits import EcoLogits
 
 # Initialize EcoLogits for environmental impact tracking
-EcoLogits.init()
+EcoLogits.init(providers="litellm", electricity_mix_zone="FRA")
 
 # Decorator to measure latency
 def measure_latency(func):

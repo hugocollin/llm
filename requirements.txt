@@ -7,3 +7,5 @@ sentence-transformers
 scikit-learn
 plotly
 wikipedia
+ecologits
+tiktoken
