@@ -8,6 +8,10 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 import google.generativeai as genai
 from mistralai import Mistral
+from ecologits import EcoLogits
+
+# Initialize EcoLogits for environmental impact tracking
+EcoLogits.init()
 
 # Decorator to measure latency
 def measure_latency(func):
@@ -105,11 +109,13 @@ class MultiModelLLM(LLMBase):
                 max_tokens=max_tokens,
                 **kwargs
             )
-            energy_usage, gwp = self._get_energy_usage(chat_response)
-            return chat_response.choices[0].message.content, energy_usage, gwp
+            impacts = self._get_energy_usage(chat_response)
+            input_tokens = chat_response.usage.prompt_tokens
+            output_tokens = chat_response.usage.completion_tokens
+            return chat_response.choices[0].message.content, impacts, input_tokens, output_tokens
         except Exception as e:
             self.logger.error(f"Mistral API error: {e}")
-            return f"Mistral API Error: {e}", 0.0, 0.0
+            return f"Mistral API Error: {e}", {}, 0, 0
 
     @measure_latency
     def _generate_gemini(self, prompt, temperature, max_tokens, **kwargs):
@@ -121,16 +127,21 @@ class MultiModelLLM(LLMBase):
                     temperature=temperature, max_output_tokens=max_tokens, **kwargs
                 )
             )
-            energy_usage, gwp = self._get_energy_usage(response)
-            return response.text, energy_usage, gwp
+            impacts = self._get_energy_usage(response)
+            input_tokens = response.usage.prompt_tokens
+            output_tokens = response.usage.completion_tokens
+            return response.text, impacts, input_tokens, output_tokens
         except Exception as e:
             self.logger.error(f"Gemini API error: {e}")
-            return f"Gemini API Error: {e}", 0.0, 0.0
+            return f"Gemini API Error: {e}", {}, 0, 0
 
-    def _get_energy_usage(self, response: Any) -> Tuple[float, float]:
-        energy_usage = getattr(response, "impacts", {}).get("energy", {}).get("value", 0.0)
-        gwp = getattr(response, "impacts", {}).get("gwp", {}).get("value", 0.0)
-        return energy_usage, gwp
+    def _get_energy_usage(self, response: Any) -> Dict[str, float]:
+        return {
+            "energy_kWh": getattr(response, "impacts", {}).get("energy", {}).get("value", 0.0),
+            "gwp_kgCO2eq": getattr(response, "impacts", {}).get("gwp", {}).get("value", 0.0),
+            "adpe_kgSbeq": getattr(response, "impacts", {}).get("adpe", {}).get("value", 0.0),
+            "pe_MJ": getattr(response, "impacts", {}).get("pe", {}).get("value", 0.0),
+        }
 
     def _get_price_query(self, llm_name: str, input_tokens: int, output_tokens: int) -> float:
         pricing = {
@@ -154,24 +165,23 @@ class MultiModelLLM(LLMBase):
 
         try:
             if current_provider == "mistral":
-                response_text, energy_usage, gwp = self._generate_mistral(prompt, current_model, temperature, max_tokens, **kwargs)
+                response_text, impacts, input_tokens, output_tokens = self._generate_mistral(prompt, current_model, temperature, max_tokens, **kwargs)
             elif current_provider == "gemini":
-                response_text, energy_usage, gwp = self._generate_gemini(prompt, temperature, max_tokens, **kwargs)
+                response_text, impacts, input_tokens, output_tokens = self._generate_gemini(prompt, temperature, max_tokens, **kwargs)
             else:
                 raise ValueError(f"Provider not supported: {current_provider}")
 
-            cost = self._get_price_query(current_model, input_tokens=100, output_tokens=500)  # Replace with actual token counts
+            cost = self._get_price_query(current_model, input_tokens=input_tokens, output_tokens=output_tokens)
 
             return {
                 "response": response_text,
                 "latency": self.last_latency,
                 "euro_cost": cost,
-                "energy_usage": energy_usage,
-                "gwp": gwp,
+                **impacts,
             }
         except Exception as e:
             self.logger.error(f"Generation error: {e}")
-            return {"response": f"Error: {e}", "latency": 0.0, "euro_cost": 0.0, "energy_usage": 0.0, "gwp": 0.0}
+            return {"response": f"Error: {e}", "latency": 0.0, "euro_cost": 0.0, "energy_kWh": 0.0, "gwp_kgCO2eq": 0.0, "adpe_kgSbeq": 0.0, "pe_MJ": 0.0}
 
     def get_model_config(self) -> Dict[str, Any]:
         return {
