@@ -134,8 +134,12 @@ class MultiModelLLM(LLMBase):
 
     def _get_price_query(self, llm_name: str, input_tokens: int, output_tokens: int) -> float:
         pricing = {
-            "ministral-8b-latest": {"input": 1.95, "output": 5.85},
-            "gemini-1.5-flash": {"input": 2.5, "output": 6.0}
+            "ministral-8b-latest": {"input": 0.095, "output": 0.095},
+            "mistral-large-latest": {"input": 1.92, "output": 5.75},
+            "codestral-latest": {"input": 0.30, "output": 0.85},
+            "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
+            "gemini-1.5-flash-8b": {"input": 0.0375, "output": 0.15},
+            "gemini-1.5-pro": {"input": 1.20, "output": 4.80}
         }
         if llm_name not in pricing:
             raise ValueError(f"LLM {llm_name} not found in pricing database.")
