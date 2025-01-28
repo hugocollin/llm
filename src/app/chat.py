@@ -265,6 +265,9 @@ class Chat:
 
         # Initialisation du pipeline de sécurité
         security_manager = EnhancedLLMSecurityManager(message)
+        security_message = (
+            "Votre message a été bloqué car il ne respecte pas nos conditions d'utilisation."
+        )
 
         # Validation du message de l'utilisateur
         is_valid_message = security_manager.validate_input()
@@ -280,8 +283,7 @@ class Chat:
                 message = (
                     "Tu es une intelligence artificielle spécialisée dans "
                     "l'aide aux élèves à l'école, si le message ne concerne pas "
-                    "une question de cours, alors tu réponds en expliquant que "
-                    "tu ne peux pas répondre à la question. "
+                    "une question de cours, alors tu renvoi seulement et uniquement le mot 'Guardian'. "
                     f"Voici le message de l'utilisateur : {message}."
                     "Pour répondre au message suivant, nous te fournissons du contenu "
                     "provenant d'un recherche sur Wikipedia "
@@ -293,8 +295,7 @@ class Chat:
                 message = (
                     "Tu es une intelligence artificielle spécialisée dans "
                     "l'aide aux élèves à l'école, si le message ne concerne pas "
-                    "une question de cours, alors tu réponds en expliquant que "
-                    "tu ne peux pas répondre à la question. "
+                    "une question de cours, alors tu renvoi seulement et uniquement le mot 'Guardian'. "
                     f"Voici le message de l'utilisateur : {message}."
                 )
 
@@ -309,6 +310,21 @@ class Chat:
                 temperature=model_params["current_temperature"],
                 max_tokens=10000
             )
+
+            # Si l'IA a renvoyé le mot "Guardian"
+            if response["response"].strip() == "Guardian":
+                # Affichage du message de sécurité
+                with self.chat_container.chat_message("Guardian", avatar="🛡️"):
+                    st.write_stream(stream_text(security_message))
+
+                # Ajout du message de sécurité à l'historique de la conversation
+                st.session_state["chats"][self.selected_chat].append(
+                    {
+                        "role": "Guardian",
+                        "content": security_message,
+                    }
+                )
+                return
 
             # Affichage de la réponse de l'IA
             with self.chat_container.chat_message("AI", avatar="✨"):
@@ -340,21 +356,15 @@ class Chat:
                 }
             )
         else:
-            # Définition du message de sécurité
-            message = (
-                "Votre message n'a pas été traité pour des raisons de sécurité. "
-                "Veuillez reformuler votre message."
-            )
-
             # Affichage du message de sécurité
             with self.chat_container.chat_message("Guardian", avatar="🛡️"):
-                st.write_stream(stream_text(message))
+                st.write_stream(stream_text(security_message))
 
             # Ajout du message de sécurité à l'historique de la conversation
             st.session_state["chats"][self.selected_chat].append(
                 {
                     "role": "Guardian",
-                    "content": message,
+                    "content": security_message,
                 }
             )
 
