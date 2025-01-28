@@ -215,18 +215,21 @@ def show_stats_dialog():
             }
 
             # Initialisation des variables pour les statistiques
-            total_messages = 0
+            total_user_messages = 0
+            total_ai_messages = 0
+            total_blocked_messages = 0
             total_latency = 0.0
             total_cost = 0.0
             total_energy = 0.0
             total_gwp = 0.0
-            total_blocked_messages = 0
 
             # Calcul des statistiques
             for chat in chats_to_analyze.values():
                 for message in chat:
-                    total_messages += 1
+                    if message["role"] == "User":
+                        total_user_messages += 1
                     if message["role"] == "AI":
+                        total_ai_messages += 1
                         metrics = message.get("metrics", {})
                         total_latency += metrics.get("latency", 0.0)
                         total_cost += metrics.get("euro_cost", 0.0)
@@ -235,8 +238,7 @@ def show_stats_dialog():
                     if message["role"] == "Guardian":
                         total_blocked_messages += 1
 
-            sent_messages = total_messages / 2
-            average_latency = total_latency / (total_messages / 2 or 1)
+            average_latency = total_latency / total_ai_messages
 
             # Option pour afficher les graphiques
             afficher_graphiques = st.toggle("Afficher les détails", False)
@@ -260,7 +262,7 @@ def show_stats_dialog():
                             'messages (%{percent})<extra></extra>'
                         )
                     )
-                    st.header(f"**🗨️ Nombre total de messages envoyés : {sent_messages:.0f}**")
+                    st.header(f"**🗨️ Nombre total de messages envoyés : {total_user_messages:.0f}**")
                     st.plotly_chart(fig, key="messages_chart")
 
                 with st.container(border=True):
@@ -402,7 +404,7 @@ def show_stats_dialog():
                 with cols[0]:
                     with st.container(border=True):
                         st.write("**🗨️ Nombre total de messages envoyés**")
-                        st.title(f"{sent_messages:.0f}")
+                        st.title(f"{total_user_messages:.0f}")
                 with cols[1]:
                     with st.container(border=True):
                         st.write("**🛡️ Nombre total de messages bloqués**")

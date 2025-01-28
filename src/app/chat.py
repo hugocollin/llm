@@ -189,7 +189,7 @@ class Chat:
         # Mise en page de l'interraction avec l'IA
         cols = self.header_container.columns([1, 13, 1, 1])
 
-        # Choix du modèle [TEMP]
+        # Paramètres du modèle
         with cols[0]:
             if st.button(
                 "",
