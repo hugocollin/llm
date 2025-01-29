@@ -3,17 +3,16 @@ import sys
 import sqlite3
 import uuid
 import torch
-from typing import List, Dict, Optional, Any, Union
-from transformers import AutoTokenizer, AutoModel
 import pdfplumber
 import chromadb
-from chromadb.config import Settings
 import tiktoken
+from typing import List, Dict, Union
+from transformers import AutoTokenizer, AutoModel
+from chromadb.config import Settings
+
 from src.security.securite import LLMSecurityManager
 from src.ml.promptClassifier import PromptClassifier
-# from rag.embedding_base import EmbeddingBase
-# from rag.mistral_embedding import MistralEmbedding
-# from rag.gemini_embedding import GoogleEmbedding
+from src.llm.embeddings import Embeddings
 
 # Path adjustments for module imports
 sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
@@ -110,16 +109,8 @@ class VectorStore:
         os.makedirs(chemin_persistance, exist_ok=True)
         self.encodeur = tiktoken.get_encoding("cl100k_base")
         self.client = chromadb.PersistentClient(path=chemin_persistance, settings=Settings(anonymized_telemetry=False))
-        self.fonction_embedding = self._get_embedding_function(modele_embedding)
+        self.fonction_embedding = Embeddings()
         self.collection = self._creer_collection(nom_collection)
-
-    def _get_embedding_function(self, model_name: str):
-        if model_name.startswith("gemini"):
-            return GoogleEmbedding(api_key=self.gemini_api_key)
-        elif model_name.startswith("mistral"):
-            return MistralEmbedding(api_key=self.mistral_api_key)
-        else:
-            raise ValueError(f"Modèle d'embedding non pris en charge : {model_name}")
 
     def _creer_collection(self, nom: str) -> chromadb.Collection:
         nom = "a" + nom[:50].strip().replace(" ", "_") + "a"
