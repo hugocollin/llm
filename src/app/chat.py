@@ -2,14 +2,12 @@
 Ce fichier définit la classe Chat pour gérer les interractions avec l'IA.
 """
 
-import os
 import streamlit as st
 import PyPDF2
-import wikipedia
 
 from src.app.components import stream_text
-from src.pipeline import EnhancedLLMSecurityManager
-from src.rag.model_api import MultiModelLLM
+from src.pipelines import EnhancedLLMSecurityManager
+from src.llm.rag import RAG
 
 class Chat:
     """
@@ -24,6 +22,20 @@ class Chat:
             selected_chat (str): Chat sélectionné pour la conversation.
             initial_question (str, optionnel): Question initiale à poser à l'IA. None par défaut.
         """
+        # Initialisation du fournisseur d'IA
+        if "AI_provider" not in st.session_state:
+            st.session_state["AI_provider"] = "mistral"
+
+        # Initialisation du modèle d'IA
+        if "AI_model" not in st.session_state:
+            st.session_state["AI_model"] = "ministral-8b-latest"
+
+        # Initialisation de la température du modèle d'IA
+        if "AI_temperature" not in st.session_state:
+            st.session_state["AI_temperature"] = 0.7
+
+        # Initialisation du pipeline de sécurité
+        self.security_manager = EnhancedLLMSecurityManager(allowed_words=[])
 
         # Récupération du chat sélectionné
         self.selected_chat = selected_chat
@@ -49,12 +61,11 @@ class Chat:
         # Si les clés d'API sont trouvées
         if st.session_state["found_api_keys"] is True:
             # Initialisation du LLM
-            if "llm" not in st.session_state:
-                st.session_state["llm"] = MultiModelLLM(
-                    api_key_mistral=os.getenv("MISTRAL_API_KEY"),
-                    api_key_gemini=os.getenv("GEMINI_API_KEY")
+            if "LLM" not in st.session_state:
+                st.session_state["LLM"] = RAG(
+                    max_tokens=7000,
+                    top_n=3
                 )
-            self.llm = st.session_state["llm"]
         # Si les clés d'API ne sont pas trouvées
         else:
             with self.chat_container.chat_message("", avatar="⚠️"):
@@ -70,22 +81,12 @@ class Chat:
         Returns:
         """
 
-        # Définition du prompt
-        prompt = (
-            "Tu es une intelligence artificielle spécialisée dans l'aide aux élèves à l'école. "
-            "Génère 5 questions courtes dans différentes matières sans les préciser, "
-            "qu'un élève pourrait te poser sur une notion de cours. "
-            "Répond uniquement en donnant les 5 questions sous forme de liste de tirets, "
-            "sans explication supplémentaire."
-        )
-
         # Génération des questions
-        response = self.llm.generate(
-            prompt=prompt,
-            provider="mistral",
-            model="mistral-large-latest",
-            temperature=0.7,
-            max_tokens=1000
+        response = st.session_state["LLM"](
+            provider=st.session_state["AI_provider"],
+            model=st.session_state["AI_model"],
+            temperature=st.session_state["AI_temperature"],
+            type="suggestions"
         )
 
         # Récupération des questions
@@ -102,24 +103,13 @@ class Chat:
 
         # 5 tentatives pour générer un nom de conversation
         for _ in range(5):
-            # Définition du prompt
-            prompt = (
-                "Tu es une intelligence artificielle spécialisée "
-                "dans la création de nom de conversation. "
-                "En te basant sur le texte suivant, qui est le premier message de la conversation, "
-                "propose un nom d'un maximum de 30 caractères pour cette conversation. "
-                "Répond uniquement en donnant le nom de la conversation "
-                "sans explication supplémentaire. "
-                f"Voici le texte : {initial_message}"
-            )
-
             # Génération du nom de la conversation
-            response = self.llm.generate(
-                prompt=prompt,
-                provider="mistral",
-                model="mistral-large-latest",
-                temperature=0.7,
-                max_tokens=100
+            response = st.session_state["LLM"](
+                provider=st.session_state["AI_provider"],
+                model=st.session_state["AI_model"],
+                temperature=st.session_state["AI_temperature"],
+                type="chat_name",
+                message=initial_message
             )
 
             # Récupération du nom de la conversation
@@ -186,7 +176,7 @@ class Chat:
             self.handle_user_message(self.initial_question)
 
         # Mise en page de l'interraction avec l'IA
-        cols = self.header_container.columns([1, 13, 1, 1])
+        cols = self.header_container.columns([1, 12, 1, 1, 1])
 
         # Paramètres du modèle
         with cols[0]:
@@ -238,6 +228,15 @@ class Chat:
                 else:
                     st.session_state["internet_search_active"] = True
                 st.rerun()
+        
+        # Mode quizz
+        with cols[4]:
+            if st.button(
+                "",
+                icon=":material/check_box:",
+                disabled=not st.session_state.get("found_api_keys", False)
+            ):
+                st.toast("À remplacer par l'affichage du quizz", icon=":material/check_box:") # [TEMP] : à changer par l'appel du st.dialog
 
         # Message d'avertissement
         st.write(
@@ -263,52 +262,46 @@ class Chat:
             {"role": "User", "content": message}
         )
 
-        # Initialisation du pipeline de sécurité
-        security_manager = EnhancedLLMSecurityManager(message)
+        # Définition du message de sécurité
+        security_message = (
+            "Votre message a été bloqué car il ne respecte pas nos conditions d'utilisation."
+        )
 
         # Validation du message de l'utilisateur
-        is_valid_message = security_manager.validate_input()
+        is_valid_message = self.security_manager.is_valid_prompt(message)
+        is_valid_message = True # [TEMP]
 
         # Si le message de utilisateur est autorisé
         if is_valid_message is True:
-            # Si le mode recherche internet est activé
+            # Définition du type de génération
             if st.session_state["internet_search_active"] is True:
-                # Recherche sur Wikipedia
-                wiki_summary = self.fetch_wikipedia_data(message)
-
-                # Enrichissement du message
-                message = (
-                    "Tu es une intelligence artificielle spécialisée dans "
-                    "l'aide aux élèves à l'école, si le message ne concerne pas "
-                    "une question de cours, alors tu réponds en expliquant que "
-                    "tu ne peux pas répondre à la question. "
-                    f"Voici le message de l'utilisateur : {message}."
-                    "Pour répondre au message suivant, nous te fournissons du contenu "
-                    "provenant d'un recherche sur Wikipedia "
-                    f"afin de te donner des informations sur le sujet : {wiki_summary}."
-                )
-            # Si le mode recherche internet n'est pas activé
+                type = "internet_chat"
             else:
-                # Enrichissement du message
-                message = (
-                    "Tu es une intelligence artificielle spécialisée dans "
-                    "l'aide aux élèves à l'école, si le message ne concerne pas "
-                    "une question de cours, alors tu réponds en expliquant que "
-                    "tu ne peux pas répondre à la question. "
-                    f"Voici le message de l'utilisateur : {message}."
-                )
-
-            # Récupération des paramètres du modèle
-            model_params = self.llm.get_model_config()
+                type = "chat"
 
             # Envoi du message et récupération de la réponse de l'IA
-            response = self.llm.generate(
-                prompt=message,
-                provider=model_params["current_provider"],
-                model=model_params["current_model"],
-                temperature=model_params["current_temperature"],
-                max_tokens=10000
+            response = st.session_state["LLM"](
+                provider=st.session_state["AI_provider"],
+                model=st.session_state["AI_model"],
+                temperature=st.session_state["AI_temperature"],
+                type=type,
+                message=message
             )
+
+            # Si l'IA a renvoyé le mot "Guardian"
+            if response["response"].strip() == "Guardian":
+                # Affichage du message de sécurité
+                with self.chat_container.chat_message("Guardian", avatar="🛡️"):
+                    st.write_stream(stream_text(security_message))
+
+                # Ajout du message de sécurité à l'historique de la conversation
+                st.session_state["chats"][self.selected_chat].append(
+                    {
+                        "role": "Guardian",
+                        "content": security_message,
+                    }
+                )
+                return
 
             # Affichage de la réponse de l'IA
             with self.chat_container.chat_message("AI", avatar="✨"):
@@ -336,31 +329,24 @@ class Chat:
                         "gwp": response["gwp"],
                     },
                     "internet_search": st.session_state["internet_search_active"],
-                    "model_used": model_params["current_model"]
+                    "model_used": st.session_state["AI_model"]
                 }
             )
         else:
-            # Définition du message de sécurité
-            message = (
-                "Votre message n'a pas été traité pour des raisons de sécurité. "
-                "Veuillez reformuler votre message."
-            )
-
             # Affichage du message de sécurité
             with self.chat_container.chat_message("Guardian", avatar="🛡️"):
-                st.write_stream(stream_text(message))
+                st.write_stream(stream_text(security_message))
 
             # Ajout du message de sécurité à l'historique de la conversation
             st.session_state["chats"][self.selected_chat].append(
                 {
                     "role": "Guardian",
-                    "content": message,
+                    "content": security_message,
                 }
             )
 
         # Si c'est le premier message envoyé, alors génération du nom de la conversation
         if len(st.session_state["chats"][self.selected_chat]) == 2:
-            print(self.selected_chat)
             self.generate_chat_name(st.session_state["chats"][self.selected_chat][0]["content"])
 
     @st.dialog("Paramètres de l'IA")
@@ -370,15 +356,15 @@ class Chat:
         """
 
         # Récupération de la configuration actuelle
-        config = self.llm.get_model_config()
-        providers = config["providers"]
-        provider_options = list(providers.keys())
+        current_provider = st.session_state["AI_provider"]
+        current_model = st.session_state["AI_model"]
+        current_temperature = st.session_state["AI_temperature"]
 
         # Paramètrage du fournisseur
         selected_provider = st.selectbox(
             label="Fournisseur",
-            options=provider_options,
-            index=provider_options.index(config["current_provider"]),
+            options=["mistral", "gemini"],
+            index=["mistral", "gemini"].index(current_provider),
             help=(
                 "Chaque fournisseur propose des modèles avec des optimisations spécifiques, "
                 "des fonctionnalités uniques, ou des performances adaptées à certains cas d'usage."
@@ -399,7 +385,7 @@ class Chat:
                 "modèle spécialisé pour la génération de code "
                 "et les tâches techniques, parfait pour les développeurs."
             )
-        elif selected_provider == "gemini":
+        else:
             models_help = (
                 "- :material/energy_savings_leaf: **gemini-1.5-flash-8b :** "
                 "modèle rapide et compact, conçu pour des "
@@ -412,8 +398,6 @@ class Chat:
                 "modèle avancé avec des capacités professionnelles, "
                 "idéal pour les analyses approfondies et des applications exigeantes."
             )
-        else:
-            models_help = "Aucune information sur les modèles est disponible."
 
         # Explication de l'indicateur d'impact énergétique et écologique
         models_help = models_help + (
@@ -423,14 +407,21 @@ class Chat:
         )
 
         # Paramètrage du modèle
-        models = providers[selected_provider]["models"]
+        if selected_provider == "mistral":
+            models = ["ministral-8b-latest", "mistral-large-latest", "codestral-latest"]
+        else:
+            models = ["gemini-1.5-flash-8b", "gemini-1.5-flash", "gemini-1.5-pro"]
+
+        # Assurer que current_model est dans models
+        if current_model in models:
+            default_index = models.index(current_model)
+        else:
+            default_index = 0
+
         selected_model = st.selectbox(
             label="Modèle",
             options=models,
-            index=(
-                models.index(config["current_model"])
-                if config["current_model"] in models else 0
-            ),
+            index=default_index,
             help=models_help
         )
 
@@ -439,7 +430,7 @@ class Chat:
             "Température (%)",
             min_value=0.0,
             max_value=100.0,
-            value=config["current_temperature"] * 100,
+            value=current_temperature * 100,
             step=1.0,
             help=(
                 "Contrôle la variabilité des réponses générées par le modèle. "
@@ -452,7 +443,9 @@ class Chat:
 
         # Enregistrement des paramètres
         if st.button("Enregistrer", icon=":material/save:"):
-            self.llm.switch_provider(selected_provider, selected_model, selected_temperature)
+            st.session_state["AI_provider"] = selected_provider
+            st.session_state["AI_model"] = selected_model
+            st.session_state["AI_temperature"] = selected_temperature
             st.session_state["modified_model_params"] = True
             st.rerun()
 
@@ -495,23 +488,3 @@ class Chat:
                     state="complete",
                     expanded=False,
                 )
-
-    def fetch_wikipedia_data(self, query: str) -> str:
-        """
-        Recherche des informations sur Wikipedia pour la requête donnée.
-
-        Args:
-            query (str): La requête de recherche.
-
-        Returns:
-            str: Résumé des informations trouvées.
-        """
-        try:
-            # Récupération des informations sur Wikipedia en français
-            wikipedia.set_lang("fr")
-            summary = wikipedia.summary(query)
-            return summary
-        except wikipedia.exceptions.DisambiguationError as e:
-            return f"Le message est ambigu, voici les suggestions de Wikipedia : {e.options[:5]}"
-        except wikipedia.exceptions.PageError:
-            return "Wikipedia n'a pas trouvé d'informations correspondant au message"
