@@ -13,4 +13,5 @@ langchain_openai
 langchain_community
 rapidfuzz
 pdfplumber
-chromadb>=0.4.0
+chromadb
+pysqlite3
