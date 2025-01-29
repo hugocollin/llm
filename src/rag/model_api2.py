@@ -163,6 +163,7 @@ class MultiModelLLM(LLMBase):
         current_provider = provider or self.current_provider
         current_model = model or self.default_model
 
+
         try:
             if current_provider == "mistral":
                 response_text, impacts, input_tokens, output_tokens = self._generate_mistral(prompt, current_model, temperature, max_tokens, **kwargs)
@@ -184,15 +185,35 @@ class MultiModelLLM(LLMBase):
             return {"response": f"Error: {e}", "latency": 0.0, "euro_cost": 0.0, "energy_kWh": 0.0, "gwp_kgCO2eq": 0.0, "adpe_kgSbeq": 0.0, "pe_MJ": 0.0}
 
     def get_model_config(self) -> Dict[str, Any]:
-        return {
-            "providers": {
-                "mistral": {
-                    "models": ["ministral-8b-latest", "mistral-large-latest", "codestral-latest"]
-                },
-                "gemini": {
-                    "models": ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"]
-                }
+        """
+        Récupère la configuration détaillée du modèle.
+
+        Returns:
+            Dict[str, Any]: Configuration avec modèles, providers et capacités
+        """
+        providers = {
+            "mistral": {
+                "models": [
+                    "ministral-8b-latest",
+                    "mistral-large-latest",
+                    "codestral-latest"
+                ]
+            },
+            "gemini": {
+                "models": [
+                    "gemini-1.5-flash-8b",
+                    "gemini-1.5-flash",
+                    "gemini-1.5-pro"
+                ]
             }
+        }
+
+        return {
+            "current_provider": self.current_provider,
+            "current_model": self.default_model,
+            "current_temperature": self.default_temperature,
+            "providers": providers,
+            "capabilities": ["text-generation", "multi-turn conversation"]
         }
 
     def switch_provider(self, provider: str, model: str, temperature: float):
