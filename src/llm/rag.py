@@ -88,47 +88,19 @@ class RAG:
         gwp = getattr(response.impacts.gwp.value, "min", response.impacts.gwp.value)
         return energy_usage, gwp
 
-    # def build_prompt(
-    #     self, context: list[str], history: str, query: str
-    # ) -> list[dict[str, str]]:
-    #     """
-    #     Builds a prompt string for a conversational agent based on the given context and query.
-
-    #     Args:
-    #         context (str): The context information, typically extracted from books or other sources.
-    #         query (str): The user's query or question.
-
-    #     Returns:
-    #         list[dict[str, str]]: The RAG prompt in the OpenAI format
-    #     """
-    #     context_joined = "\n".join(context)
-    #     history_prompt = f"""
-    #     # Historique de conversation:
-    #     {history}
-    #     """
-    #     context_prompt = f"""
-    #     Tu disposes de la section "Contexte" pour t'aider à répondre aux questions.
-    #     # Contexte: 
-    #     {context_joined}
-    #     """
-    #     query_prompt = f"""
-    #     # Question:
-    #     {query}
-
-    #     # Réponse:
-    #     """
-    #     return [
-    #         {"role": "system", "content": history_prompt},
-    #         {"role": "system", "content": context_prompt},
-    #         {"role": "user", "content": query_prompt},
-    #     ]
-    
-    def build_prompt(self, prompt_type: str, message: str = None) -> list[dict[str, str]]:
+    def build_prompt(self, prompt_type: str, message: str = None, message_history: list[dict[str, str]] = None) -> list[dict[str, str]]:
         # Initialisation des prompts
-        history_prompt = ""
         context_prompt = ""
+        history_prompt = ""
         message_prompt = ""
         ressources_prompt = ""
+
+        # Récupération de l'historique de la conversation
+        if message_history:
+            message_history = "\n".join([f"{message['role']}: {message['content']}" for message in message_history])
+            message_history_formatted = f"Voici l'historique de la conversation : {message_history}. "
+        else:
+            message_history_formatted = ""
 
         # Construction du prompt pour la suggestion de questions
         if prompt_type == "suggestions":
@@ -156,14 +128,13 @@ class RAG:
 
         # Construction du prompt pour la génération de réponses à des messages
         elif prompt_type == "chat":
-            history_prompt = "" # [TEMP] Ajouter l'historique de la conversation
-            # history_prompt = f"Voici l'historique de la conversation : {history}. "
             context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'aide "
                 "et les réponses aux questions liées à l'éducation, l'école, "
                 "les cours et la culture générale. Si un message reçu sort de ce cadre, "
                 "tu réponds uniquement et strictement par le mot 'Guardian'. "
             )
+            history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
             ressources_prompt = "" # [TEMP] Ajouter les ressources pour la réponse
 
@@ -173,14 +144,13 @@ class RAG:
             wiki_summary = self.fetch_wikipedia_data(message)
 
             # Construction du prompt personnalisé
-            history_prompt = "" # [TEMP] Ajouter l'historique de la conversation
-            # history_prompt = f"Voici l'historique de la conversation : {history}. "
             context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'aide "
                 "et les réponses aux questions liées à l'éducation, l'école, "
                 "les cours et la culture générale. Si un message reçu sort de ce cadre, "
                 "tu réponds uniquement et strictement par le mot 'Guardian'. "
             )
+            history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
             ressources_prompt = (
                 "Pour répondre au message suivant, nous te fournissons du contenu "
@@ -196,11 +166,11 @@ class RAG:
                 "'question' (texte de la question), 'options' (liste de 4 options), "
                 "'answer' (réponse correcte). Ne donne que le JSON en retour. "
             )
-            message_prompt = f"Génère un quiz avec 5 questions à choix multiples sur le sujet suivant : {message}."
+            message_prompt = f"Génère un quiz avec 5 questions à choix multiples à partir des sujets évoqués dans la conversation suivante : {message_history}"
 
         return [
-            {"role": "system", "content": history_prompt},
             {"role": "system", "content": context_prompt},
+            {"role": "system", "content": history_prompt},
             {"role": "user", "content": message_prompt},
             {"role": "system", "content": ressources_prompt}
         ]
@@ -231,7 +201,7 @@ class RAG:
 
         return response
 
-    def __call__(self, provider: str, model: str, temperature: float, prompt_type: str, message: str = None) -> str:
+    def __call__(self, provider: str, model: str, temperature: float, prompt_type: str, message: str = None, message_history: list[dict[str, str]] = None) -> str:
         # chunks = self.bdd.chroma_db.query(
         #     query_texts=[query],
         #     n_results=self.top_n,
@@ -240,6 +210,6 @@ class RAG:
         # prompt_rag = self.build_prompt(
         #     context=chunks_list, history=str(history), query=query
         # )
-        prompt = self.build_prompt(prompt_type, message)
+        prompt = self.build_prompt(prompt_type, message, message_history)
         response = self.call_model(provider, model, temperature, prompt_dict=prompt)
         return response
