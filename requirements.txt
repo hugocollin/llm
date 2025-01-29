@@ -1,7 +1,5 @@
 python-dotenv
 PyPDF2
-mistralai
-google-generativeai
 torch
 sentence-transformers
 scikit-learn
@@ -11,3 +9,4 @@ ecologits
 tiktoken
 langchain
 langchain_openai
+langchain_community
