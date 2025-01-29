@@ -1,9 +1,14 @@
 python-dotenv
 PyPDF2
-mistralai
-google-generativeai
+litellm
 torch
 sentence-transformers
 scikit-learn
 plotly
 wikipedia
+ecologits
+tiktoken
+langchain
+langchain_openai
+langchain_community
+rapidfuzz

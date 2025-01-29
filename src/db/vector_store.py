@@ -11,8 +11,6 @@ from tqdm import tqdm
 
 # Adjust Python path if needed
 sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
-
-from src.rag.embedding_base import EmbeddingBase
 from src.rag.mistral_embedding import MistralEmbedding
 from src.rag.gemini_embedding import GoogleEmbedding
 
