@@ -14,4 +14,4 @@ langchain_community
 rapidfuzz
 pdfplumber
 chromadb
-sqlite3
+pysqlite3
