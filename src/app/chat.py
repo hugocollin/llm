@@ -176,7 +176,7 @@ class Chat:
             self.handle_user_message(self.initial_question)
 
         # Mise en page de l'interraction avec l'IA
-        cols = self.header_container.columns([1, 13, 1, 1])
+        cols = self.header_container.columns([1, 12, 1, 1, 1])
 
         # Paramètres du modèle
         with cols[0]:
@@ -228,6 +228,15 @@ class Chat:
                 else:
                     st.session_state["internet_search_active"] = True
                 st.rerun()
+        
+        # Mode quizz
+        with cols[4]:
+            if st.button(
+                "",
+                icon=":material/check_box:",
+                disabled=not st.session_state.get("found_api_keys", False)
+            ):
+                st.toast("À remplacer par l'affichage du quizz", icon=":material/check_box:") # [TEMP] : à changer par l'appel du st.dialog
 
         # Message d'avertissement
         st.write(
