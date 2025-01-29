@@ -34,3 +34,16 @@ LiteLLM completion() model= ministral-8b-latest; provider = mistral
 LiteLLM completion() model= ministral-8b-latest; provider = mistral
 2025-01-29 15:25:56,364 - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
 2025-01-29 15:25:56,365 - Wrapper: Completed Call, calling success_handler
+2025-01-29 15:31:15,079 - 
+LiteLLM completion() model= ministral-8b-latest; provider = mistral
+2025-01-29 15:31:16,946 - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-01-29 15:31:16,963 - Wrapper: Completed Call, calling success_handler
+2025-01-29 15:31:19,000 - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-01-29 15:31:20,371 - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBvltepWsG9En7B9Hgdr0IjWz9GUrXjB2w "HTTP/1.1 400 Bad Request"
+2025-01-29 15:31:49,677 - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-01-29 15:31:51,150 - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBvltepWsG9En7B9Hgdr0IjWz9GUrXjB2w "HTTP/1.1 400 Bad Request"
+2025-01-29 15:49:32,427 - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-01-29 15:49:34,242 - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBvltepWsG9En7B9Hgdr0IjWz9GUrXjB2w "HTTP/1.1 400 Bad Request"
