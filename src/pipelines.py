@@ -145,11 +145,11 @@ class VectorStore:
 # --- Exemple d'utilisation combinée ---
 if __name__ == "__main__":
     user_input = "Comment afficher Hello World en Python ?"
-    train_json_path = os.path.join("src", "ml", "guardrail_dataset_train.json")
-    test_json_path = os.path.join("src", "ml", "guardrail_dataset_test.json")
+    train_json_path = os.path.join("ml", "guardrail_dataset_train.json")
+    test_json_path = os.path.join("ml", "guardrail_dataset_test.json")
     
     # Gestionnaire de sécurité
-    security_manager = EnhancedLLMSecurityManager(user_input=user_input, role="educational assistant", train_json_path=train_json_path, test_json_path=test_json_path, train_model=True)
+    security_manager = EnhancedLLMSecurityManager(user_input=user_input, role="educational assistant", train_json_path=train_json_path, test_json_path=test_json_path, train_model=False)
     if not security_manager.validate_input():
         print("L'entrée utilisateur est invalide!")
     else:

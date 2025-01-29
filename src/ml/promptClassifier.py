@@ -202,7 +202,7 @@ class PromptClassifier:
         """
         if self.best_model is None:
             raise ValueError("Aucun modèle n'a été entraîné ou sélectionné. Veuillez appeler `train_and_evaluate` et `get_best_model` d'abord.")
-        output_path = os.path.join(os.getcwd(),"src", "ml", output_name)
+        output_path = os.path.join(os.path.dirname(__file__), output_name)
         # Sauvegarder le modèle avec pickle
         with open(output_name, 'wb') as f:
             _, model = self.best_model
