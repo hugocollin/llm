@@ -9,13 +9,11 @@ import pdfplumber
 import chromadb
 from chromadb.config import Settings
 import tiktoken
-import fitz
-from security.securite import LLMSecurityManager
-from ml.promptClassifier import PromptClassifier
-from rag.embedding_base import EmbeddingBase
-from rag.mistral_embedding import MistralEmbedding
-from rag.gemini_embedding import GoogleEmbedding
-from tqdm import tqdm
+from src.security.securite import LLMSecurityManager
+from src.ml.promptClassifier import PromptClassifier
+# from rag.embedding_base import EmbeddingBase
+# from rag.mistral_embedding import MistralEmbedding
+# from rag.gemini_embedding import GoogleEmbedding
 
 # Path adjustments for module imports
 sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
