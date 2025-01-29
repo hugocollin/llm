@@ -13,5 +13,3 @@ langchain_openai
 langchain_community
 rapidfuzz
 pdfplumber
-chromadb
-pysqlite3
