@@ -7,7 +7,6 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
 from src.db.vector_store import VectorStore
-from src.rag.embedding_base import EmbeddingBase
 from src.rag.mistral_embedding import MistralEmbedding
 from src.rag.gemini_embedding import GoogleEmbedding
 
@@ -38,7 +37,7 @@ def measure_latency(func):
 
 class RagRetriever:
     def __init__(self,
-                 modele_embedding: 'EmbeddingBase',
+                 modele_embedding: Union[MistralEmbedding, GoogleEmbedding],
                  vector_store: 'VectorStore',
                  nombre_resultats: int = 3,
                  prix_tokens: Optional[Dict[str, float]] = None,

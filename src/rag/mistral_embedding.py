@@ -6,7 +6,7 @@ from typing import List
 class MistralEmbedding:
     def __init__(self, api_key: str, model_name: str = "mistral-embed"):
         if not api_key:
-            raise ValueError("❌ La clé API Mistral est manquante. Vérifiez la configuration.")
+            raise ValueError("La clé API Mistral est manquante. Vérifiez la configuration.")
 
         self.client = Mistral(api_key=api_key)
         self.model_name = model_name
@@ -18,16 +18,15 @@ class MistralEmbedding:
             try:
                 response = self.client.embeddings.create(
                     model=self.model_name,
-                    inputs=[text]  # 🔥 Correction ici ("inputs" au lieu de "input")
+                    inputs=[text]  
                 )
                 return np.array(response.data[0].embedding)
             except Exception as e:
-                if "429" in str(e):  # Trop de requêtes
-                    wait_time = 2 ** attempt  # Exponential backoff
-                    print(f"⚠️ Trop de requêtes, attente de {wait_time} secondes...")
+                if "429" in str(e): 
+                    wait_time = 2 ** attempt  
                     time.sleep(wait_time)
                 else:
-                    print(f"❌ Erreur lors de l'embedding du texte : {e}")
+                    print(f"Erreur lors de l'embedding du texte : {e}")
                     return np.array([])
         return np.array([])
 
@@ -40,5 +39,5 @@ class MistralEmbedding:
                 embeddings.append(embedding)
             else:
                 embeddings.append(np.array([]))
-            time.sleep(0.5)  # Pause entre les requêtes pour éviter les 429
+            time.sleep(0.5) 
         return embeddings
