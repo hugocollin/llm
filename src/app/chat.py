@@ -6,7 +6,7 @@ import streamlit as st
 import PyPDF2
 
 from src.app.components import stream_text
-from src.pipeline import EnhancedLLMSecurityManager
+from src.pipelines import EnhancedLLMSecurityManager
 from src.llm.rag import RAG
 
 class Chat:
