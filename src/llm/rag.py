@@ -187,6 +187,14 @@ class RAG:
                 "provenant d'un recherche sur Wikipedia "
                 f"afin de te donner des informations sur le sujet : {wiki_summary}."
             )
+        elif type=="quizz":
+            context_prompt = (
+                "Tu es une intelligence artificielle spécialisée dans l'éducation. "
+                f"Génère un quiz avec 5 questions à choix multiples sur le sujet suivant : {message}. "
+                "Pour chaque question, fournis un dictionnaire JSON avec les clés suivantes : "
+                "'question' (texte de la question), 'options' (liste de 4 options), "
+                "'answer' (réponse correcte). Ne donne que le JSON en retour."
+            )
 
         return [
             {"role": "system", "content": history_prompt},

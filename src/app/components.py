@@ -7,6 +7,7 @@ import time
 import streamlit as st
 import plotly.express as px
 from dotenv import find_dotenv, load_dotenv
+import json
 
 def load_api_keys():
     """
@@ -38,6 +39,12 @@ def stream_text(text: str):
     for word in text.split(" "):
         yield word + " "
         time.sleep(0.03)
+
+# llm quizz json text to json
+def convert_to_json(response):
+    res = response.strip("```json\n").strip("\n```")
+    return json.loads(res)
+
 
 def create_new_chat():
     """

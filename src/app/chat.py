@@ -5,7 +5,7 @@ Ce fichier définit la classe Chat pour gérer les interractions avec l'IA.
 import streamlit as st
 import PyPDF2
 
-from src.app.components import stream_text
+from src.app.components import stream_text, convert_to_json
 from src.pipelines import EnhancedLLMSecurityManager
 from src.llm.rag import RAG
 
@@ -233,7 +233,7 @@ class Chat:
                 icon=":material/check_box:",
                 disabled=not st.session_state.get("found_api_keys", False)
             ):
-                st.toast("À remplacer par l'affichage du quizz", icon=":material/check_box:") # [TEMP] : à changer par l'appel du st.dialog
+                self.generate_quiz(topic=self.selected_chat) # TODO: [TEMP] Ajouter un champ pré - rempli avec le nom du chat pour le sujet
 
         # Message d'avertissement
         st.write(
@@ -347,6 +347,100 @@ class Chat:
         # Si c'est le premier message envoyé, alors génération du nom de la conversation
         if len(st.session_state["chats"][self.selected_chat]) == 2:
             self.generate_chat_name(st.session_state["chats"][self.selected_chat][0]["content"])
+ 
+    
+
+    @st.dialog("Quiz généré par l'IA 🎓", width="large")
+    def generate_quiz(self, topic, num_questions=5):
+        """
+        Génère un quiz avec des questions sur le sujet donné.
+
+        Args:
+            topic (str): Sujet du quiz.
+            num_questions (int, optionnel): Nombre de questions à générer. 5 par défaut.
+
+        Returns:
+            dict: Résultats du quiz avec les réponses de l'utilisateur.
+        """
+        quiz, result = st.columns([3, 1])
+        user_answers = {}
+
+        # Génération des questions du quiz
+        response = st.session_state["LLM"](
+            provider=st.session_state["AI_provider"],
+            model=st.session_state["AI_model"],
+            temperature=st.session_state["AI_temperature"],
+            type="quizz",
+            message=topic
+        )
+        quiz_data = convert_to_json(response["response"])
+
+        with quiz:
+            # Vérifier que les données sont correctes
+            if not isinstance(quiz_data, list):
+                st.error("Erreur : Les données du quiz ne sont pas au bon format.")
+                return
+
+            # Affichage des questions du quiz
+            for idx, question_data in enumerate(quiz_data):
+                st.subheader(f"Question {idx + 1}")
+                st.write(question_data["question"])
+
+                options = question_data["options"]
+                user_answers[idx] = st.radio(
+                    "Choisissez une réponse :",
+                    options=options,
+                    index=0,  # Ajout d'un index par défaut pour éviter les erreurs
+                    key=f"question_{idx}"
+                )
+
+            # Bouton pour soumettre les réponses
+            if st.button("Soumettre mes réponses"):
+                score, total, results = self.evaluate_quiz(quiz_data, user_answers)
+
+                with result:
+                    st.subheader("Résultats 📊")
+                    for res in results:
+                        if res["correct"]:
+                            st.success(f"✅ {res['question']} → {res['user_answer']}")
+                        else:
+                            st.error(f"❌ {res['question']} → {res['user_answer']} (Bonne réponse : {res['correct_answer']})")
+
+                    st.write(f"**Score final : {score} / {total}** 🎯")
+
+
+    def evaluate_quiz(self, quiz_data, user_answers):
+        """
+        Évalue les réponses du quiz et retourne le score final.
+
+        Args:
+            quiz_data (list): Liste des questions avec les bonnes réponses.
+            user_answers (dict): Réponses de l'utilisateur.
+
+        Returns:
+            tuple: (score, nombre total de questions, liste des résultats détaillés)
+        """
+        score = 0
+        total = len(quiz_data)
+        results = []
+
+        for idx, question_data in enumerate(quiz_data):
+            correct_answer = question_data["answer"]
+            user_answer = user_answers.get(idx, None)  # Vérifier si la réponse existe
+
+            is_correct = user_answer == correct_answer
+            if is_correct:
+                score += 1  # Augmenter le score si la réponse est correcte
+
+            results.append({
+                "question": question_data["question"],
+                "user_answer": user_answer if user_answer else "Aucune réponse",
+                "correct_answer": correct_answer,
+                "correct": is_correct
+            })
+
+        return score, total, results  # Bien retourner les trois valeurs
+
 
     @st.dialog("Paramètres de l'IA")
     def settings_dialog(self):
