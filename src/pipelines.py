@@ -4,11 +4,9 @@ import sqlite3
 import uuid
 import torch
 import pdfplumber
-import chromadb
 import tiktoken
 from typing import List, Dict, Union
 from transformers import AutoTokenizer, AutoModel
-from chromadb.config import Settings
 
 from src.security.securite import LLMSecurityManager
 from src.ml.promptClassifier import PromptClassifier
@@ -99,31 +97,31 @@ class PDFPipeline:
         self.store_in_database(discussion_id, chunks)
         print(f"PDF traité avec succès et stocké sous discussion_id : {discussion_id}")
 
-# --- Gestion des Embeddings ---
-class VectorStore:
-    def __init__(self, chemin_persistance: str = "../db/ChromaDB", modele_embedding: str = "gemini-1.5-flash", nom_collection: str = "collection_par_defaut", batch_size: int = 100, gemini_api_key: str = None, mistral_api_key: str = None) -> None:
-        self.batch_size = batch_size
-        self.chemin_persistance = chemin_persistance
-        self.gemini_api_key = gemini_api_key
-        self.mistral_api_key = mistral_api_key
-        os.makedirs(chemin_persistance, exist_ok=True)
-        self.encodeur = tiktoken.get_encoding("cl100k_base")
-        self.client = chromadb.PersistentClient(path=chemin_persistance, settings=Settings(anonymized_telemetry=False))
-        self.fonction_embedding = Embeddings()
-        self.collection = self._creer_collection(nom_collection)
+# # --- Gestion des Embeddings ---
+# class VectorStore:
+#     def __init__(self, chemin_persistance: str = "../db/ChromaDB", modele_embedding: str = "gemini-1.5-flash", nom_collection: str = "collection_par_defaut", batch_size: int = 100, gemini_api_key: str = None, mistral_api_key: str = None) -> None:
+#         self.batch_size = batch_size
+#         self.chemin_persistance = chemin_persistance
+#         self.gemini_api_key = gemini_api_key
+#         self.mistral_api_key = mistral_api_key
+#         os.makedirs(chemin_persistance, exist_ok=True)
+#         self.encodeur = tiktoken.get_encoding("cl100k_base")
+#         self.client = chromadb.PersistentClient(path=chemin_persistance, settings=Settings(anonymized_telemetry=False))
+#         self.fonction_embedding = Embeddings()
+#         self.collection = self._creer_collection(nom_collection)
 
-    def _creer_collection(self, nom: str) -> chromadb.Collection:
-        nom = "a" + nom[:50].strip().replace(" ", "_") + "a"
-        return self.client.get_or_create_collection(name=nom, embedding_function=self.fonction_embedding, metadata={"hnsw:space": "cosine"})
+#     def _creer_collection(self, nom: str) -> chromadb.Collection:
+#         nom = "a" + nom[:50].strip().replace(" ", "_") + "a"
+#         return self.client.get_or_create_collection(name=nom, embedding_function=self.fonction_embedding, metadata={"hnsw:space": "cosine"})
 
-    def rechercher(self, requete: Union[str, List[float]], nb_resultats: int = 3) -> Dict[str, List]:
-        if isinstance(requete, str):
-            resultats = self.collection.query(query_texts=[requete], n_results=nb_resultats)
-        elif isinstance(requete, list):
-            resultats = self.collection.query(query_embeddings=[requete], n_results=nb_resultats)
-        else:
-            raise ValueError("La requête doit être une chaîne ou un vecteur d'embedding")
-        return {"documents": resultats["documents"][0] if resultats["documents"] else [], "distances": resultats["distances"][0] if resultats["distances"] else []}
+#     def rechercher(self, requete: Union[str, List[float]], nb_resultats: int = 3) -> Dict[str, List]:
+#         if isinstance(requete, str):
+#             resultats = self.collection.query(query_texts=[requete], n_results=nb_resultats)
+#         elif isinstance(requete, list):
+#             resultats = self.collection.query(query_embeddings=[requete], n_results=nb_resultats)
+#         else:
+#             raise ValueError("La requête doit être une chaîne ou un vecteur d'embedding")
+#         return {"documents": resultats["documents"][0] if resultats["documents"] else [], "distances": resultats["distances"][0] if resultats["distances"] else []}
 
 
 
