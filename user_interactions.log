@@ -1,0 +1,12 @@
+2025-01-29 16:15:03,029 - 
+LiteLLM completion() model= ministral-8b-latest; provider = mistral
+2025-01-29 16:15:04,585 - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-01-29 16:15:04,599 - Wrapper: Completed Call, calling success_handler
+2025-01-29 16:15:06,709 - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-01-29 16:15:08,162 - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBGJM_7Ge755pywuAmCf3hqp_ffFTYrK3M "HTTP/1.1 200 OK"
+2025-01-29 16:15:08,164 - Wrapper: Completed Call, calling success_handler
+2025-01-29 16:15:13,316 - 
+LiteLLM completion() model= ministral-8b-latest; provider = mistral
+2025-01-29 16:15:18,221 - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-01-29 16:15:18,223 - Wrapper: Completed Call, calling success_handler
