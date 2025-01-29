@@ -10,3 +10,4 @@ wikipedia
 ecologits
 tiktoken
 langchain
+langchain_openai
