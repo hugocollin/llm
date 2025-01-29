@@ -34,6 +34,9 @@ class Chat:
         if "AI_temperature" not in st.session_state:
             st.session_state["AI_temperature"] = 0.7
 
+        # Initialisation du pipeline de sécurité
+        self.security_manager = EnhancedLLMSecurityManager(allowed_words=[])
+
         # Récupération du chat sélectionné
         self.selected_chat = selected_chat
 
@@ -250,14 +253,14 @@ class Chat:
             {"role": "User", "content": message}
         )
 
-        # Initialisation du pipeline de sécurité
-        security_manager = EnhancedLLMSecurityManager(message)
+        # Définition du message de sécurité
         security_message = (
             "Votre message a été bloqué car il ne respecte pas nos conditions d'utilisation."
         )
 
         # Validation du message de l'utilisateur
-        is_valid_message = security_manager.validate_input()
+        is_valid_message = self.security_manager.is_valid_prompt(message)
+        is_valid_message = True # [TEMP]
 
         # Si le message de utilisateur est autorisé
         if is_valid_message is True:

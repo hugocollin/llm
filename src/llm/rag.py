@@ -191,16 +191,20 @@ class RAG:
     
     @measure_latency
     def _generate(self, provider, model, temperature, prompt_dict: list[dict[str, str]]) -> litellm.ModelResponse:
-        if provider == "gemini":
-            model_name = model
+        if provider == "mistral":
+            response = litellm.completion(
+                model=f"{provider}/{model}",
+                messages=prompt_dict,
+                max_tokens=self.max_tokens,
+                temperature=temperature,
+            )
         else:
-            model_name = f"mistral/{model}"
-        response = litellm.completion(
-            model=model_name,
-            messages=prompt_dict,
-            max_tokens=self.max_tokens,
-            temperature=temperature,
-        )  # type: ignore
+            response = litellm.completion(
+                model=f"{provider}/{model}",
+                messages=prompt_dict,
+                max_tokens=self.max_tokens,
+                temperature=temperature,
+            )
 
         return response
 
