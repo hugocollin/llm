@@ -181,6 +181,10 @@ class Chat:
                 with self.chat_container.chat_message(message["role"], avatar="🛡️"):
                     st.write(message["content"])
 
+        # bouton pour générer un quiz
+        if st.button("Générer un quiz", icon="🎓"):
+            self.generate_quiz("mathématiques")
+
         # Si une question initiale est présente, l'envoyer automatiquement
         if self.initial_question and not st.session_state["chats"][self.selected_chat]:
             self.handle_user_message(self.initial_question)
@@ -374,6 +378,107 @@ class Chat:
         if len(st.session_state["chats"][self.selected_chat]) == 2:
             print(self.selected_chat)
             self.generate_chat_name(st.session_state["chats"][self.selected_chat][0]["content"])
+
+    # fonction pour générer un quiz 
+    def generate_quiz(self, topic, num_questions=5):
+        """
+        Génère un quiz avec des questions sur le sujet donné.
+
+        Args:
+            topic (str): Sujet du quiz.
+            num_questions (int, optionnel): Nombre de questions à générer. 5 par défaut.
+
+        Returns:
+            dict: Résultats du quiz avec les réponses de l'utilisateur.
+        """
+        st.title("Quiz généré par l'IA 🎓")
+        user_answers = {}
+
+        # Définition du prompt
+        prompt = (
+            "Tu es une intelligence artificielle spécialisée dans la création de quiz dans un contexte éducatif. "
+            "Génère un quiz avec des questions sur un sujet spécifique. "
+            f"Le sujet du quiz est : {topic}. "
+            f"Génère {num_questions} questions avec leurs réponses possibles et la bonne réponse. "
+            "Répond uniquement en donnant les questions en commençant par Q: ,les options réponses par R:, et la bonne réponse par BR: "
+            "sans explication supplémentaire."
+        )
+
+        # Génération des questions du quiz
+        response = self.llm.generate(
+            prompt=prompt,
+            provider="mistral",
+            model="mistral-large-latest",
+            temperature=0.7,
+            max_tokens=1000
+        )
+
+        # st.write(response)
+
+        # Récupération des questions et des réponses depuis la réponse brute
+        quiz = []
+        for line in response["response"].split("\n"):
+            if line.startswith("Q:"):
+                question = {"question": line[3:], "options": [], "answer": None}
+            elif line.startswith("R:"):
+                question["options"].append(line[3:])
+            elif line.startswith("BR:"):
+                question["answer"] = line[4:]
+                quiz.append(question)
+
+        st.write(quiz)
+        # Affichage des questions du quiz
+        for idx, question_data in enumerate(quiz):
+
+            st.subheader(f"Question {idx + 1}")
+            st.write(question_data["question"])
+            options = question_data["options"]
+            user_answers[idx] = st.radio(
+                "Choisissez une réponse :",
+                options=options,
+                key=f"question_{idx}"
+            )
+
+        # Bouton pour soumettre les réponses
+        if st.button("Soumettre mes réponses"):
+            return self.evaluate_quiz(quiz, user_answers)
+
+
+
+    def evaluate_quiz(self, quiz, user_answers):
+
+        """
+        Évalue les réponses du quiz et affiche les résultats.
+
+        Args:
+            quiz (list[dict]): Liste de questions avec les réponses et options.
+            user_answers (dict): Réponses de l'utilisateur.
+
+        Returns:
+            dict: Résultats du quiz avec les réponses de l'utilisateur.
+        """
+
+        # Initialisation des résultats du quiz
+        results = {"total_questions": len(quiz), "correct_answers": 0}
+
+        # Évaluation des réponses
+        for idx, question_data in enumerate(quiz):
+            # Vérification de la réponse
+            if user_answers[idx] == question_data["answer"]:
+                results["correct_answers"] += 1
+
+        # Affichage des résultats du quiz
+        st.title("Résultats du Quiz 📝")
+        st.write(f"Nombre total de questions : {results['total_questions']}")
+        st.write(f"Nombre de réponses correctes : {results['correct_answers']}")
+        st.write(f"Nombre de réponses incorrectes : {results['total_questions'] - results['correct_answers']}")
+
+        # Calcul du score
+        score = (results["correct_answers"] / results["total_questions"]) * 100
+        st.write(f"Score final : {score:.2f}%")
+        st.write(results)
+        return results
+    
 
     @st.dialog("Paramètres de l'IA")
     def settings_dialog(self):
