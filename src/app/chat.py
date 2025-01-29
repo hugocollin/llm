@@ -80,8 +80,8 @@ class Chat:
 
         # Génération des questions
         response = st.session_state["LLM"](
-            provider="gemini",
-            model="gemini-1.5-flash",
+            provider="mistral",
+            model="mistral-large-latest",
             temperature=0.7,
             prompt_type="suggestions"
         )
@@ -102,8 +102,8 @@ class Chat:
         for _ in range(5):
             # Génération du nom de la conversation
             response = st.session_state["LLM"](
-                provider="gemini",
-                model="gemini-1.5-flash",
+                provider="mistral",
+                model="mistral-large-latest",
                 temperature=0.7,
                 prompt_type="chat_name",
                 message=initial_message

@@ -15,12 +15,12 @@ class LLMSecurityManager:
         )
         self.forbidden_terms = ["hack", "bypass", "exploit", "malware", "confidential"]
         
-        # Configuration du journal
-        logging.basicConfig(
-            filename="user_interactions.log",
-            level=logging.INFO,
-            format="%(asctime)s - %(message)s"
-        )
+        # # Configuration du journal
+        # logging.basicConfig(
+        #     filename="user_interactions.log",
+        #     level=logging.INFO,
+        #     format="%(asctime)s - %(message)s"
+        # )
 
     def clean_input(self, user_input):
         """
