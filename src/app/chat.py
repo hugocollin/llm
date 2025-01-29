@@ -5,7 +5,7 @@ Ce fichier définit la classe Chat pour gérer les interractions avec l'IA.
 import streamlit as st
 import PyPDF2
 
-from src.app.components import stream_text
+from src.app.components import stream_text, convert_to_json
 from src.pipelines import EnhancedLLMSecurityManager
 from src.llm.rag import RAG
 
@@ -171,10 +171,6 @@ class Chat:
                 with self.chat_container.chat_message(message["role"], avatar="🛡️"):
                     st.write(message["content"])
 
-        # bouton pour générer un quiz
-        if st.button("Générer un quiz", icon="🎓"):
-            self.generate_quiz("mathématiques")
-
         # Si une question initiale est présente, l'envoyer automatiquement
         if self.initial_question and not st.session_state["chats"][self.selected_chat]:
             self.handle_user_message(self.initial_question)
@@ -240,7 +236,7 @@ class Chat:
                 icon=":material/check_box:",
                 disabled=not st.session_state.get("found_api_keys", False)
             ):
-                st.toast("À remplacer par l'affichage du quizz", icon=":material/check_box:") # [TEMP] : à changer par l'appel du st.dialog
+                self.generate_quiz(topic="Géométrie")
 
         # Message d'avertissement
         st.write(
@@ -352,8 +348,9 @@ class Chat:
         # Si c'est le premier message envoyé, alors génération du nom de la conversation
         if len(st.session_state["chats"][self.selected_chat]) == 2:
             self.generate_chat_name(st.session_state["chats"][self.selected_chat][0]["content"])
-
-    # fonction pour générer un quiz 
+ 
+    
+    @st.dialog("Générer un quiz")
     def generate_quiz(self, topic, num_questions=5):
         """
         Génère un quiz avec des questions sur le sujet donné.
@@ -368,29 +365,21 @@ class Chat:
         st.title("Quiz généré par l'IA 🎓")
         user_answers = {}
 
-        # Définition du prompt
-        prompt = (
-            "Tu es une intelligence artificielle spécialisée dans la création de quiz dans un contexte éducatif. "
-            "Génère un quiz avec des questions sur un sujet spécifique. "
-            f"Le sujet du quiz est : {topic}. "
-            f"Génère {num_questions} questions avec leurs réponses possibles et la bonne réponse. "
-            "Répond uniquement en donnant les questions en commençant par Q: ,les options réponses par R:, et la bonne réponse par BR: "
-            "sans explication supplémentaire."
-        )
-
         # Génération des questions du quiz
-        response = self.llm.generate(
-            prompt=prompt,
-            provider="mistral",
-            model="mistral-large-latest",
-            temperature=0.7,
-            max_tokens=1000
-        )
-
+        response =  st.session_state["LLM"](
+                provider=st.session_state["AI_provider"],
+                model=st.session_state["AI_model"],
+                temperature=st.session_state["AI_temperature"],
+                type="quizz",
+                message=topic
+            )
         # st.write(response)
 
+        quiz_data = convert_to_json(response["response"])
+        st.write(quiz_data)
+
         # Récupération des questions et des réponses depuis la réponse brute
-        quiz = []
+        """quiz = []
         for line in response["response"].split("\n"):
             if line.startswith("Q:"):
                 question = {"question": line[3:], "options": [], "answer": None}
@@ -415,7 +404,7 @@ class Chat:
 
         # Bouton pour soumettre les réponses
         if st.button("Soumettre mes réponses"):
-            return self.evaluate_quiz(quiz, user_answers)
+            return self.evaluate_quiz(quiz, user_answers)"""
 
 
 
@@ -431,7 +420,7 @@ class Chat:
         Returns:
             dict: Résultats du quiz avec les réponses de l'utilisateur.
         """
-
+        print(f"*********{user_answers}")
         # Initialisation des résultats du quiz
         results = {"total_questions": len(quiz), "correct_answers": 0}
 
@@ -451,7 +440,7 @@ class Chat:
         score = (results["correct_answers"] / results["total_questions"]) * 100
         st.write(f"Score final : {score:.2f}%")
         st.write(results)
-        return results
+        
     
 
     @st.dialog("Paramètres de l'IA")
