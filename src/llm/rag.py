@@ -124,63 +124,83 @@ class RAG:
     #     ]
     
     def build_prompt(self, type: str, message: str = None) -> list[dict[str, str]]:
+        # Initialisation des prompts
+        history_prompt = ""
+        context_prompt = ""
+        message_prompt = ""
+        ressources_prompt = ""
+
+        # Construction du prompt pour la suggestion de questions
         if type == "suggestions":
-            # Construction du prompt personnalisé
-            prompt = (
+            context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'aide aux élèves à l'école. "
+            )
+            message_prompt = (
                 "Génère 5 questions courtes dans différentes matières sans les préciser, "
                 "qu'un élève pourrait te poser sur une notion de cours. "
                 "Répond uniquement en donnant les 5 questions sous forme de liste de tirets, "
                 "sans explication supplémentaire."
             )
+
+        # Construction du prompt pour la génération de noms de conversation
         elif type == "chat_name":
-            # Construction du prompt personnalisé
-            prompt = (
+            context_prompt = (
                 "Tu es une intelligence artificielle spécialisée "
                 "dans la création de nom de conversation. "
                 "En te basant sur le texte suivant, qui est le premier message de la conversation, "
                 "propose un nom d'un maximum de 30 caractères pour cette conversation. "
                 "Répond uniquement en donnant le nom de la conversation "
                 "sans explication supplémentaire. "
-                f"Voici le texte : {message}"
             )
+            message_prompt = f"Voici le premier message de la conversation envoyé par l'utilisateur : {message}"
+
+        # Construction du prompt pour la génération de réponses à des messages
         elif type == "chat":
-            # Construction du prompt personnalisé
-            prompt = (
+            history_prompt = "" # [TEMP] Ajouter l'historique de la conversation
+            # history_prompt = f"Voici l'historique de la conversation : {history}. "
+            context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'aide "
                 "et les réponses aux questions liées à l'éducation, l'école, "
                 "les cours et la culture générale. Si un message reçu sort de ce cadre, "
                 "tu réponds uniquement et strictement par le mot 'Guardian'. "
-                #f"Voici l'histoire de la conversation : {history}. "
-                f"Voici le message de l'utilisateur : {message}."
             )
+            message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
+            ressources_prompt = "" # [TEMP] Ajouter les ressources pour la réponse
+
+        # Construction du prompt pour la génération de réponses à des messages avec le mode internet
         elif type == "internet_chat":
             # Récupération des informations sur Wikipedia
             wiki_summary = self.fetch_wikipedia_data(message)
 
             # Construction du prompt personnalisé
-            prompt = (
+            history_prompt = "" # [TEMP] Ajouter l'historique de la conversation
+            # history_prompt = f"Voici l'historique de la conversation : {history}. "
+            context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'aide "
                 "et les réponses aux questions liées à l'éducation, l'école, "
                 "les cours et la culture générale. Si un message reçu sort de ce cadre, "
                 "tu réponds uniquement et strictement par le mot 'Guardian'. "
-                #f"Voici l'historique de la conversation : {history}. "
-                f"Voici le message de l'utilisateur : {message}. "
+            )
+            message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
+            ressources_prompt = (
                 "Pour répondre au message suivant, nous te fournissons du contenu "
                 "provenant d'un recherche sur Wikipedia "
                 f"afin de te donner des informations sur le sujet : {wiki_summary}."
             )
         elif type=="quizz":
-            prompt = (
+            context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'éducation. "
                 f"Génère un quiz avec 5 questions à choix multiples sur le sujet suivant : {message}. "
                 "Pour chaque question, fournis un dictionnaire JSON avec les clés suivantes : "
                 "'question' (texte de la question), 'options' (liste de 4 options), "
                 "'answer' (réponse correcte). Ne donne que le JSON en retour."
             )
+
         return [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": "Bonjour"}, # [TEMP] Découper les messages
+            {"role": "system", "content": history_prompt},
+            {"role": "system", "content": context_prompt},
+            {"role": "user", "content": message_prompt},
+            {"role": "system", "content": ressources_prompt}
         ]
 
     def call_model(self, provider: str, model: str, temperature: float, prompt_dict: list[dict[str, str]]) -> str:
