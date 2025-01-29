@@ -42,7 +42,8 @@ def stream_text(text: str):
 
 # llm quizz json text to json
 def convert_to_json(response):
-    return json.loads(response)
+    res = response.strip("```json\n").strip("\n```")
+    return json.loads(res)
 
 
 def create_new_chat():

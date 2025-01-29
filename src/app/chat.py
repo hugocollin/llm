@@ -236,7 +236,7 @@ class Chat:
                 icon=":material/check_box:",
                 disabled=not st.session_state.get("found_api_keys", False)
             ):
-                self.generate_quiz(topic="Géométrie")
+                self.generate_quiz(topic="Géométrie") # TODO: Ajouter un champ pour le sujet
 
         # Message d'avertissement
         st.write(
@@ -350,7 +350,8 @@ class Chat:
             self.generate_chat_name(st.session_state["chats"][self.selected_chat][0]["content"])
  
     
-    @st.dialog("Générer un quiz")
+
+    @st.dialog("Quiz généré par l'IA 🎓", width="large")
     def generate_quiz(self, topic, num_questions=5):
         """
         Génère un quiz avec des questions sur le sujet donné.
@@ -362,86 +363,85 @@ class Chat:
         Returns:
             dict: Résultats du quiz avec les réponses de l'utilisateur.
         """
-        st.title("Quiz généré par l'IA 🎓")
+        quiz, result = st.columns([3, 1])
         user_answers = {}
 
         # Génération des questions du quiz
-        response =  st.session_state["LLM"](
-                provider=st.session_state["AI_provider"],
-                model=st.session_state["AI_model"],
-                temperature=st.session_state["AI_temperature"],
-                type="quizz",
-                message=topic
-            )
-        # st.write(response)
-
+        response = st.session_state["LLM"](
+            provider=st.session_state["AI_provider"],
+            model=st.session_state["AI_model"],
+            temperature=st.session_state["AI_temperature"],
+            type="quizz",
+            message=topic
+        )
         quiz_data = convert_to_json(response["response"])
-        st.write(quiz_data)
 
-        # Récupération des questions et des réponses depuis la réponse brute
-        """quiz = []
-        for line in response["response"].split("\n"):
-            if line.startswith("Q:"):
-                question = {"question": line[3:], "options": [], "answer": None}
-            elif line.startswith("R:"):
-                question["options"].append(line[3:])
-            elif line.startswith("BR:"):
-                question["answer"] = line[4:]
-                quiz.append(question)
+        with quiz:
+            # Vérifier que les données sont correctes
+            if not isinstance(quiz_data, list):
+                st.error("Erreur : Les données du quiz ne sont pas au bon format.")
+                return
 
-        st.write(quiz)
-        # Affichage des questions du quiz
-        for idx, question_data in enumerate(quiz):
+            # Affichage des questions du quiz
+            for idx, question_data in enumerate(quiz_data):
+                st.subheader(f"Question {idx + 1}")
+                st.write(question_data["question"])
 
-            st.subheader(f"Question {idx + 1}")
-            st.write(question_data["question"])
-            options = question_data["options"]
-            user_answers[idx] = st.radio(
-                "Choisissez une réponse :",
-                options=options,
-                key=f"question_{idx}"
-            )
+                options = question_data["options"]
+                user_answers[idx] = st.radio(
+                    "Choisissez une réponse :",
+                    options=options,
+                    index=0,  # Ajout d'un index par défaut pour éviter les erreurs
+                    key=f"question_{idx}"
+                )
 
-        # Bouton pour soumettre les réponses
-        if st.button("Soumettre mes réponses"):
-            return self.evaluate_quiz(quiz, user_answers)"""
+            # Bouton pour soumettre les réponses
+            if st.button("Soumettre mes réponses"):
+                score, total, results = self.evaluate_quiz(quiz_data, user_answers)
+
+                with result:
+                    st.subheader("Résultats 📊")
+                    for res in results:
+                        if res["correct"]:
+                            st.success(f"✅ {res['question']} → {res['user_answer']}")
+                        else:
+                            st.error(f"❌ {res['question']} → {res['user_answer']} (Bonne réponse : {res['correct_answer']})")
+
+                    st.write(f"**Score final : {score} / {total}** 🎯")
 
 
-
-    def evaluate_quiz(self, quiz, user_answers):
-
+    def evaluate_quiz(self, quiz_data, user_answers):
         """
-        Évalue les réponses du quiz et affiche les résultats.
+        Évalue les réponses du quiz et retourne le score final.
 
         Args:
-            quiz (list[dict]): Liste de questions avec les réponses et options.
+            quiz_data (list): Liste des questions avec les bonnes réponses.
             user_answers (dict): Réponses de l'utilisateur.
 
         Returns:
-            dict: Résultats du quiz avec les réponses de l'utilisateur.
+            tuple: (score, nombre total de questions, liste des résultats détaillés)
         """
-        print(f"*********{user_answers}")
-        # Initialisation des résultats du quiz
-        results = {"total_questions": len(quiz), "correct_answers": 0}
+        score = 0
+        total = len(quiz_data)
+        results = []
 
-        # Évaluation des réponses
-        for idx, question_data in enumerate(quiz):
-            # Vérification de la réponse
-            if user_answers[idx] == question_data["answer"]:
-                results["correct_answers"] += 1
+        for idx, question_data in enumerate(quiz_data):
+            correct_answer = question_data["answer"]
+            user_answer = user_answers.get(idx, None)  # Vérifier si la réponse existe
 
-        # Affichage des résultats du quiz
-        st.title("Résultats du Quiz 📝")
-        st.write(f"Nombre total de questions : {results['total_questions']}")
-        st.write(f"Nombre de réponses correctes : {results['correct_answers']}")
-        st.write(f"Nombre de réponses incorrectes : {results['total_questions'] - results['correct_answers']}")
+            is_correct = user_answer == correct_answer
+            if is_correct:
+                score += 1  # Augmenter le score si la réponse est correcte
 
-        # Calcul du score
-        score = (results["correct_answers"] / results["total_questions"]) * 100
-        st.write(f"Score final : {score:.2f}%")
-        st.write(results)
-        
-    
+            results.append({
+                "question": question_data["question"],
+                "user_answer": user_answer if user_answer else "Aucune réponse",
+                "correct_answer": correct_answer,
+                "correct": is_correct
+            })
+
+        return score, total, results  # Bien retourner les trois valeurs
+
 
     @st.dialog("Paramètres de l'IA")
     def settings_dialog(self):
