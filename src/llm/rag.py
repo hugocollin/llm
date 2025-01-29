@@ -172,6 +172,7 @@ class RAG:
             )
         return [
             {"role": "system", "content": prompt},
+            {"role": "user", "content": "Bonjour"}, # [TEMP] Découper les messages
         ]
 
     def call_model(self, provider: str, model: str, temperature: float, prompt_dict: list[dict[str, str]]) -> str:
@@ -191,20 +192,12 @@ class RAG:
     
     @measure_latency
     def _generate(self, provider, model, temperature, prompt_dict: list[dict[str, str]]) -> litellm.ModelResponse:
-        if provider == "mistral":
-            response = litellm.completion(
-                model=f"{provider}/{model}",
-                messages=prompt_dict,
-                max_tokens=self.max_tokens,
-                temperature=temperature,
-            )
-        else:
-            response = litellm.completion(
-                model=f"{provider}/{model}",
-                messages=prompt_dict,
-                max_tokens=self.max_tokens,
-                temperature=temperature,
-            )
+        response = litellm.completion(
+            model=f"{provider}/{model}",
+            messages=prompt_dict,
+            max_tokens=self.max_tokens,
+            temperature=temperature,
+        )
 
         return response
 
