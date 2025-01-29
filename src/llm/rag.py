@@ -123,7 +123,7 @@ class RAG:
     #         {"role": "user", "content": query_prompt},
     #     ]
     
-    def build_prompt(self, type: str, message: str = None) -> list[dict[str, str]]:
+    def build_prompt(self, prompt_type: str, message: str = None) -> list[dict[str, str]]:
         # Initialisation des prompts
         history_prompt = ""
         context_prompt = ""
@@ -131,7 +131,7 @@ class RAG:
         ressources_prompt = ""
 
         # Construction du prompt pour la suggestion de questions
-        if type == "suggestions":
+        if prompt_type == "suggestions":
             context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'aide aux élèves à l'école. "
             )
@@ -143,7 +143,7 @@ class RAG:
             )
 
         # Construction du prompt pour la génération de noms de conversation
-        elif type == "chat_name":
+        elif prompt_type == "chat_name":
             context_prompt = (
                 "Tu es une intelligence artificielle spécialisée "
                 "dans la création de nom de conversation. "
@@ -155,7 +155,7 @@ class RAG:
             message_prompt = f"Voici le premier message de la conversation envoyé par l'utilisateur : {message}"
 
         # Construction du prompt pour la génération de réponses à des messages
-        elif type == "chat":
+        elif prompt_type == "chat":
             history_prompt = "" # [TEMP] Ajouter l'historique de la conversation
             # history_prompt = f"Voici l'historique de la conversation : {history}. "
             context_prompt = (
@@ -168,7 +168,7 @@ class RAG:
             ressources_prompt = "" # [TEMP] Ajouter les ressources pour la réponse
 
         # Construction du prompt pour la génération de réponses à des messages avec le mode internet
-        elif type == "internet_chat":
+        elif prompt_type == "internet_chat":
             # Récupération des informations sur Wikipedia
             wiki_summary = self.fetch_wikipedia_data(message)
 
@@ -187,14 +187,16 @@ class RAG:
                 "provenant d'un recherche sur Wikipedia "
                 f"afin de te donner des informations sur le sujet : {wiki_summary}."
             )
-        elif type=="quizz":
+
+        # Construction du prompt pour la génération de quiz
+        elif prompt_type == "quizz":
             context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'éducation. "
-                f"Génère un quiz avec 5 questions à choix multiples sur le sujet suivant : {message}. "
                 "Pour chaque question, fournis un dictionnaire JSON avec les clés suivantes : "
                 "'question' (texte de la question), 'options' (liste de 4 options), "
-                "'answer' (réponse correcte). Ne donne que le JSON en retour."
+                "'answer' (réponse correcte). Ne donne que le JSON en retour. "
             )
+            message_prompt = f"Génère un quiz avec 5 questions à choix multiples sur le sujet suivant : {message}."
 
         return [
             {"role": "system", "content": history_prompt},
@@ -229,7 +231,7 @@ class RAG:
 
         return response
 
-    def __call__(self, provider: str, model: str, temperature: float, type: str, message: str = None) -> str:
+    def __call__(self, provider: str, model: str, temperature: float, prompt_type: str, message: str = None) -> str:
         # chunks = self.bdd.chroma_db.query(
         #     query_texts=[query],
         #     n_results=self.top_n,
@@ -238,6 +240,6 @@ class RAG:
         # prompt_rag = self.build_prompt(
         #     context=chunks_list, history=str(history), query=query
         # )
-        prompt = self.build_prompt(type, message)
+        prompt = self.build_prompt(prompt_type, message)
         response = self.call_model(provider, model, temperature, prompt_dict=prompt)
         return response
