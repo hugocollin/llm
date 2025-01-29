@@ -9,3 +9,4 @@ plotly
 wikipedia
 ecologits
 tiktoken
+langchain
