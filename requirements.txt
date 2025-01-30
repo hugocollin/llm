@@ -10,5 +10,4 @@ ecologits
 langchain
 langchain_openai
 langchain_community
-rapidfuzz
 pdfplumber
