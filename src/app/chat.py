@@ -603,8 +603,8 @@ class Chat:
                                 disabled=False
                             ):
                                 st.session_state['quiz_answer_explanation'] = (
-                                    "Explique moi pourquoi la réponse correcte à la question suivante "
-                                    f"du quiz est '{res['correct_answer']}' ?\n"
+                                    "Explique moi pourquoi la réponse correcte à la question "
+                                    f"suivante du quiz est '{res['correct_answer']}' ?\n"
                                     f"**Question :** {res['question']}\n"
                                     f"**Ma réponse :** {res['user_answer']}\n"
                                     f"**Bonne réponse :** {res['correct_answer']}"
