@@ -172,6 +172,11 @@ class Chat:
         if self.initial_question and not st.session_state["chats"][self.selected_chat]:
             self.handle_user_message(self.initial_question)
 
+        # Si une demande d'explication de réponse de quiz est présente, l'envoyer automatiquement
+        if 'quiz_answer_explanation' in st.session_state:
+            message = st.session_state.pop('quiz_answer_explanation')
+            self.handle_user_message(message)
+
         # Mise en page de l'interraction avec l'IA
         cols = self.header_container.columns([1, 12, 1, 1, 1])
 
@@ -231,7 +236,10 @@ class Chat:
             if st.button(
                 "",
                 icon=":material/check_box:",
-                disabled=not st.session_state.get("found_api_keys", False)
+                disabled=(
+                    not st.session_state.get("found_api_keys", False) or
+                    st.session_state["chats"][self.selected_chat] == []
+                )
             ):
                 self.generate_quiz()
 
@@ -577,7 +585,7 @@ class Chat:
                 with st.container(border=True):
                     st.subheader("Résultats")
                     if st.session_state.get('quiz_submitted'):
-                        for res in st.session_state['quiz_results']:
+                        for idx, res in enumerate(st.session_state['quiz_results']):
                             if res["correct"]:
                                 st.success(
                                     f"✅ {res['question']}\n\n"
@@ -589,6 +597,20 @@ class Chat:
                                     f"Votre réponse : {res['user_answer']}\n\n"
                                     f"**Bonne réponse : {res['correct_answer']}**"
                                 )
+                            if st.button(
+                                "Expliquer la réponse",
+                                key=f"explain_{idx}",
+                                disabled=False
+                            ):
+                                st.session_state['quiz_answer_explanation'] = (
+                                    "Explique moi pourquoi la réponse correcte à la question suivante "
+                                    f"du quiz est '{res['correct_answer']}' ?\n"
+                                    f"**Question :** {res['question']}\n"
+                                    f"**Ma réponse :** {res['user_answer']}\n"
+                                    f"**Bonne réponse :** {res['correct_answer']}"
+                                )
+                                st.session_state['close_quiz_dialog'] = True
+                                st.rerun()
                         st.info(
                             f"🎯 **Score final : {st.session_state['quiz_score']} "
                             f"/ {st.session_state['quiz_total']}**"
