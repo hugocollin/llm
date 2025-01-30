@@ -82,8 +82,9 @@ class PDFPipeline:
                 cursor.execute("""
                     INSERT INTO discussions (discussion_id, chunk_id, content, embedding)
                     VALUES (?, ?, ?, ?)
-                """, (discussion_id, f"{discussion_id}_{i}", chunk, sqlite3.Binary(embedding.tobytes())))
+                    """, (discussion_id, f"{discussion_id}_{i}", chunk, sqlite3.Binary(embedding.tobytes())))
             conn.commit()
+        
 
     def process_pdf(self, pdf_path: str):
         discussion_id = str(uuid.uuid4())
