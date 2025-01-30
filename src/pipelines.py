@@ -43,17 +43,27 @@ class PDFPipeline:
         self.tokenizer = AutoTokenizer.from_pretrained(embedding_model)
         self.model = AutoModel.from_pretrained(embedding_model)
 
-    def extract_text_from_pdf(self, pdf_path: str) -> str:
+    """"def extract_text_from_pdf(self, pdf_path: str) -> str:
         text = ""
         with pdfplumber.open(pdf_path) as pdf:
             for page in pdf.pages:
                 text += page.extract_text()
-        return text
+        return text"""
 
     def split_into_chunks(self, text: str, chunk_size: int = 500) -> List[str]:
         tokens = text.split()
         chunks = [" ".join(tokens[i:i+chunk_size]) for i in range(0, len(tokens), chunk_size)]
         return chunks
+    
+    """ def split_into_chunks(self, text: str, chunk_size: int = 500) -> List[str]:
+        pages = text.split("\n")  # Divise le texte par page en utilisant le saut de ligne
+        chunks = []
+        for page in pages:
+            tokens = page.split()  # Découpe la page en tokens
+            # Divise la page en morceaux de chunk_size tokens
+            page_chunks = [" ".join(tokens[i:i+chunk_size]) for i in range(0, len(tokens), chunk_size)]
+            chunks.extend(page_chunks)  # Ajoute ces morceaux à la liste finale
+        return chunks"""
 
     def calculate_embedding(self, documents: Union[str, List[str]]) -> NDArray[np.float32]:
         """
@@ -81,9 +91,8 @@ class PDFPipeline:
                 """, (discussion_id, f"{discussion_id}_{i}", chunk, sqlite3.Binary(embedding.tobytes())))
             conn.commit()
 
-    def process_pdf(self, pdf_path: str):
+    def process_txt(self, text: str):
         discussion_id = str(uuid.uuid4())
-        text = self.extract_text_from_pdf(pdf_path)
         chunks = self.split_into_chunks(text)
         self.store_in_database(discussion_id, chunks)
         print(f"PDF traité avec succès et stocké sous discussion_id : {discussion_id}")
