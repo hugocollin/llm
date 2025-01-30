@@ -126,14 +126,17 @@ def show_sidebar() -> str:
         # Titre de l'application
         st.title("✨ SISE Classmate")
 
-        # Auteurs
-        st.write(
-            "*Cette application a été développée par "
-            "[KPAMEGAN Falonne](https://github.com/marinaKpamegan), "
-            "[KARAMOKO Awa](https://github.com/karamoko17), "
-            "[CISSE Lansana](https://github.com/lansanacisse) "
-            "et [COLLIN Hugo](https://github.com/hugocollin), dans le cadre du Master 2 SISE.*"
-        )
+        cols = st.columns([1, 1, 3])
+
+        # Bouton pour revenir à l'accueil
+        with cols[0]:
+            if st.button("", icon=":material/home:"):
+                st.session_state["selected_chat"] = None
+
+        # Bouton pour afficher les informations sur l'application
+        with cols[1]:
+            if st.button("", icon=":material/info:"):
+                show_info_dialog()
 
         header_cols = st.columns([3, 1, 1])
 
@@ -205,6 +208,104 @@ def show_sidebar() -> str:
                 icon=":material/info:",
             )
             return None
+
+@st.dialog("Informations sur l'application", width="large")
+def show_info_dialog():
+    """
+    Fonction pour afficher les informations sur l'application.
+    """
+    # Information générale
+    st.write(
+        "**SISE Classmate est un assistant conversationnel spécialisé dans le "
+        "domaine de l'éducation fonctionnant grâce aux modèles d'intelligence "
+        "artificielle de Mistral et Gemini.**"
+    )
+    st.write("Sur cette application vous pourrez :")
+
+    with st.container(border=True):
+        st.header("💬 Discuter avec l'IA")
+        st.write(
+            "Posez vos questions et obtenez des réponses précises et approfondies sur vos cours. "
+            "L'IA, entraînée sur plus de 6 000 cours, vous aide à réviser et à mieux comprendre "
+            "les sujets abordés en classe."
+        )
+
+    cols = st.columns(2)
+    with cols[0]:
+        with st.container(border=True):
+            st.header("💡 Obtenir des suggestions de messages")
+            st.write(
+                "L'IA génère automatiquement cinq suggestions de questions "
+                "pour faciliter vos interactions et mieux formuler vos demandes."
+            )
+    with cols[1]:
+        with st.container(border=True):
+            st.header("⚙️ Paramétrer l'IA selon vos besoins")
+            st.write(
+                "Personnalisez les paramètres de l'IA, comme le fournisseur, "
+                "le modèle et la température, pour une expérience adaptée à vos besoins."
+            )
+
+    cols = st.columns(3)
+    with cols[0]:
+        with st.container(border=True):
+            st.header("📄 Ajouter des documents à la discussion")
+            st.write(
+                "Importez des fichiers PDF pour permettre à l'IA d'analyser "
+                "leur contenu et d'enrichir ses réponses."
+            )
+    with cols[1]:
+        with st.container(border=True):
+            st.header("🌐 Enrichir les réponses grâce à internet")
+            st.write(
+                "Activez la recherche en ligne pour obtenir "
+                "des réponses actualisées et plus pertinentes."
+            )
+    with cols[2]:
+        with st.container(border=True):
+            st.header("⛳ S'entraîner grâce à des quiz")
+            st.write(
+                "Générez des quiz interactifs basés sur le sujet de "
+                "discussion pour tester et renforcer vos connaissances."
+            )
+
+    cols = st.columns(2)
+    with cols[0]:
+        with st.container(border=True):
+            st.header("📊 Visualiser les statistiques de conversation")
+            st.write(
+                "Consultez des statistiques détaillées sur l'utilisation "
+                "de l'application, incluant notamment la latence, le coût, "
+                "l'énergie consommée et l'empreinte carbone des messages et plus encore."
+            )
+    with cols[1]:
+        with st.container(border=True):
+            st.header("✒️ Personnaliser les noms de conversation")
+            st.write(
+                "Obtenez automatiquement un nom pertinent pour chaque "
+                "conversation ou personnalisez-le selon vos préférences."
+            )
+
+    with st.container(border=True):
+        st.header("🛡️ Assurez un espace d'échange sécurisé grâce au Guardian")
+        st.write(
+            "Le Guardian est un module de sécurité qui bloque les messages inappropriés, "
+            "non pertinents ou dangereux, en limitant les interactions aux sujets éducatifs, "
+            "scolaires et de culture générale. Il protège également contre les attaques, "
+            "telles que les tentatives d'injection SQL, garantissant un espace "
+            "d'apprentissage sûr, sain et fiable."
+        )
+
+    # Crédits de l'application
+    st.write(
+        "*L'application est Open Source et disponible sur "
+        "[GitHub](https://github.com/hugocollin/llm). "
+        "Celle-ci a été développée par "
+        "[KPAMEGAN Falonne](https://github.com/marinaKpamegan), "
+        "[KARAMOKO Awa](https://github.com/karamoko17), "
+        "[CISSE Lansana](https://github.com/lansanacisse) "
+        "et [COLLIN Hugo](https://github.com/hugocollin), dans le cadre du Master 2 SISE.*"
+    )
 
 @st.dialog("Statistiques de conversation", width="large")
 def show_stats_dialog():
