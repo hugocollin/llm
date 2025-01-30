@@ -557,7 +557,7 @@ class Chat:
                             key=f"question_{idx}"
                         )
 
-                    # Désactiver le bouton après soumission
+                    # Bouton de validation des réponses
                     if st.form_submit_button(
                         "Valider les réponses",
                         disabled=st.session_state['quiz_submitted']
@@ -572,6 +572,7 @@ class Chat:
                         st.session_state['quiz_submitted'] = True
                         st.rerun(scope="fragment")
 
+            # Affichage des résultats du quiz
             with result_col:
                 with st.container(border=True):
                     st.subheader("Résultats")
