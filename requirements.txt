@@ -7,7 +7,6 @@ scikit-learn
 plotly
 wikipedia
 ecologits
-tiktoken
 langchain
 langchain_openai
 langchain_community
