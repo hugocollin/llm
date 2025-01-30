@@ -415,15 +415,15 @@ def show_stats_dialog():
                 with cols[0]:
                     with st.container(border=True):
                         st.write("**🗨️ Nombre total de messages envoyés**")
-                        st.title(f"{total_user_messages:.0f}")
+                        st.title(f"{total_user_messages}")
                 with cols[1]:
                     with st.container(border=True):
                         st.write("**🛡️ Nombre total de messages bloqués**")
-                        st.title(f"{total_blocked_messages:.0f}")
+                        st.title(f"{total_blocked_messages}")
                 with cols[2]:
                     with st.container(border=True):
                         st.write("**🌐 Nombre total d'utilisation du mode internet**")
-                        st.title(f"{total_internet_search:.0f}")
+                        st.title(f"{total_internet_search}")
                 with cols[3]:
                     with st.container(border=True):
                         st.write("**📄 Nombre total de documents importés**")
@@ -436,15 +436,15 @@ def show_stats_dialog():
                 with cols[1]:
                     with st.container(border=True):
                         st.write("**💲 Coût total**")
-                        st.title(f"{total_cost:.6f} €")
+                        st.title(f"{total_cost:.7f} €")
                 with cols[2]:
                     with st.container(border=True):
                         st.write("**⚡ Utilisation énergétique totale**")
-                        st.title(f"{total_energy} kWh")
+                        st.title(f"{total_energy:.7f} kWh")
                 with cols[3]:
                     with st.container(border=True):
                         st.write("**🌡️ Potentiel de réchauffement global total**")
-                        st.title(f"{total_gwp} kgCO2eq")
+                        st.title(f"{total_gwp:.7f} kgCO2eq")
         else:
             # Message d'information si aucune conversation n'a été sélectionnée
             st.info(

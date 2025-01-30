@@ -155,9 +155,9 @@ class Chat:
                         label="NULL",
                         options=[
                             f"📶 {metrics['latency']:.2f} secondes",
-                            f"💲 {metrics['euro_cost']:.6f} €",
-                            f"⚡ {metrics['energy_usage']} kWh",
-                            f"🌡️ {metrics['gwp']} kgCO2eq",
+                            f"💲 {metrics['euro_cost']:.7f} €",
+                            f"⚡ {metrics['energy_usage']:.7f} kWh",
+                            f"🌡️ {metrics['gwp']:.7f} kgCO2eq",
                         ],
                         label_visibility="collapsed",
                         key=idx
@@ -310,9 +310,9 @@ class Chat:
                     label="NULL",
                     options=[
                         f"📶 {response['latency']:.2f} secondes",
-                        f"💲 {response['euro_cost']:.6f} €",
-                        f"⚡ {response['energy_usage']} kWh",
-                        f"🌡️ {response['gwp']} kgCO2eq",
+                        f"💲 {response['euro_cost']:.7f} €",
+                        f"⚡ {response['energy_usage']:.7f} kWh",
+                        f"🌡️ {response['gwp']:.7f} kgCO2eq",
                     ],
                     label_visibility="collapsed"
                 )
