@@ -144,20 +144,20 @@ class Chat:
             # Affichage des messages de l'utilisateur
             if message["role"] == "User":
                 with self.chat_container.chat_message(message["role"], avatar="👤"):
-                    st.write(message["content"])
+                    st.markdown(message["content"])
 
             # Affichage des messages de l'IA
             elif message["role"] == "AI":
                 with self.chat_container.chat_message(message["role"], avatar="✨"):
-                    st.write(message["content"])
+                    st.markdown(message["content"])
                     metrics = message["metrics"]
                     st.pills(
                         label="NULL",
                         options=[
                             f"📶 {metrics['latency']:.2f} secondes",
-                            f"💲 {metrics['euro_cost']:.6f} €",
-                            f"⚡ {metrics['energy_usage']} kWh",
-                            f"🌡️ {metrics['gwp']} kgCO2eq",
+                            f"💲 {metrics['euro_cost']:.7f} €",
+                            f"⚡ {metrics['energy_usage']:.7f} kWh",
+                            f"🌡️ {metrics['gwp']:.7f} kgCO2eq",
                         ],
                         label_visibility="collapsed",
                         key=idx
@@ -233,7 +233,7 @@ class Chat:
                 icon=":material/check_box:",
                 disabled=not st.session_state.get("found_api_keys", False)
             ):
-                self.generate_quiz(topic=self.selected_chat) # [TEMP] Ajouter un champ pré - rempli avec le nom du chat pour le sujet
+                self.generate_quiz()
 
         # Message d'avertissement
         st.write(
@@ -261,7 +261,8 @@ class Chat:
 
         # Définition du message de sécurité
         security_message = (
-            "Votre message a été bloqué car il ne respecte pas nos conditions d'utilisation."
+            "Votre message a été bloqué car il ne respecte pas nos conditions d'utilisation. "
+            "Si vous estimez qu'il a été bloqué par erreur, veuillez essayer de le reformuler."
         )
 
         # Initialisation du pipeline de sécurité
@@ -278,40 +279,43 @@ class Chat:
             else:
                 prompt_type = "chat"
 
-            # Envoi du message et récupération de la réponse de l'IA
-            response = st.session_state["LLM"](
-                provider=st.session_state["AI_provider"],
-                model=st.session_state["AI_model"],
-                temperature=st.session_state["AI_temperature"],
-                prompt_type=prompt_type,
-                message=message
-            )
-
-            # Si l'IA a renvoyé le mot "Guardian"
-            if response["response"].strip() == "Guardian":
-                # Affichage du message de sécurité
-                with self.chat_container.chat_message("Guardian", avatar="🛡️"):
-                    st.write_stream(stream_text(security_message))
-
-                # Ajout du message de sécurité à l'historique de la conversation
-                st.session_state["chats"][self.selected_chat].append(
-                    {
-                        "role": "Guardian",
-                        "content": security_message,
-                    }
-                )
-                return
-
-            # Affichage de la réponse de l'IA
+            # Préparation de l'affichage du message de l'IA
             with self.chat_container.chat_message("AI", avatar="✨"):
+                with st.spinner("Je réfléchis..."):
+                # Envoi du message et récupération de la réponse de l'IA
+                    response = st.session_state["LLM"](
+                        provider=st.session_state["AI_provider"],
+                        model=st.session_state["AI_model"],
+                        temperature=st.session_state["AI_temperature"],
+                        prompt_type=prompt_type,
+                        message=message,
+                        message_history=st.session_state["chats"][self.selected_chat]
+                    )
+
+                # Si l'IA a renvoyé le mot "Guardian"
+                if response["response"].strip() == "Guardian":
+                    # Affichage du message de sécurité
+                    with self.chat_container.chat_message("Guardian", avatar="🛡️"):
+                        st.write_stream(stream_text(security_message))
+
+                    # Ajout du message de sécurité à l'historique de la conversation
+                    st.session_state["chats"][self.selected_chat].append(
+                        {
+                            "role": "Guardian",
+                            "content": security_message,
+                        }
+                    )
+                    st.rerun()
+
+                # Affichage de la réponse de l'IA
                 st.write_stream(stream_text(response["response"]))
                 st.pills(
                     label="NULL",
                     options=[
                         f"📶 {response['latency']:.2f} secondes",
-                        f"💲 {response['euro_cost']:.6f} €",
-                        f"⚡ {response['energy_usage']} kWh",
-                        f"🌡️ {response['gwp']} kgCO2eq",
+                        f"💲 {response['euro_cost']:.7f} €",
+                        f"⚡ {response['energy_usage']:.7f} kWh",
+                        f"🌡️ {response['gwp']:.7f} kgCO2eq",
                     ],
                     label_visibility="collapsed"
                 )
@@ -458,7 +462,7 @@ class Chat:
         uploaded_files = st.file_uploader(
             "NULL",
             label_visibility="collapsed",
-            prompt_type=["pdf"],
+            type=["pdf"],
             accept_multiple_files=True,
         )
 
@@ -488,68 +492,110 @@ class Chat:
                     expanded=False,
                 )
 
-    @st.dialog("Quiz généré par l'IA 🎓", width="large")
-    def generate_quiz(self, topic):
+
+    
+    @st.dialog("Quiz", width="large")
+    def generate_quiz(self):
         """
         Génère un quiz avec des questions sur le sujet donné, sans recharger l'application à chaque interaction.
-        
-        Args:
-            topic (str): Sujet du quiz.
         """
-        quiz, result = st.columns([3, 1])
-        user_answers = {}
 
-        # Génération des questions du quiz
-        response = st.session_state["LLM"](
-            provider=st.session_state["AI_provider"],
-            model=st.session_state["AI_model"],
-            temperature=st.session_state["AI_temperature"],
-            prompt_type="quizz",
-            message=topic
-        )
-        
-        # Convertir la réponse en format JSON et vérifier sa validité
-        try:
-            quiz_data = convert_to_json(response["response"])
-            if not isinstance(quiz_data, list):
-                raise ValueError("Une erreur est survenue. Réessayez ultérieurement.")
-        except Exception as e:
-            st.error(f"Erreur : {str(e)}")
-            return
+        # Initialisation des variables de session pour éviter les erreurs
+        if "quiz_data" not in st.session_state:
+            st.session_state["quiz_data"] = None
+        if "quiz_answers" not in st.session_state:
+            st.session_state["quiz_answers"] = {}
+        if "quiz_submitted" not in st.session_state:
+            st.session_state["quiz_submitted"] = False
 
-        with quiz:
-            # Affichage des questions du quiz dans un formulaire
-            with st.form(key="quiz_form", clear_on_submit=False):
-                for idx, question_data in enumerate(quiz_data):
-                    st.subheader(f"Question {idx + 1}")
-                    st.write(question_data["question"])
+        # Sélection du nombre de questions avec un slider dans le formulaire
+        with st.form(key="quiz_setup_form"):
+            nb_questions = st.slider("Nombre de questions", min_value=1, max_value=10, value=5, step=1)
+            generate_quiz_button = st.form_submit_button("Créer le quiz", type="primary")
 
-                    options = question_data["options"]
-                    user_answers[idx] = st.radio(
-                        "Choisissez une réponse :",
-                        options=options,
-                        index=0,  # Définir un index par défaut pour éviter les erreurs
-                        key=f"question_{idx}"
+        # Vérification si on doit générer un quiz
+        if generate_quiz_button:
+            with st.spinner("Création du quiz..."):
+                # Génération des questions du quiz
+                response = st.session_state["LLM"](
+                    provider="mistral",
+                    model="mistral-large-latest",
+                    temperature=0.7,
+                    prompt_type="quizz",
+                    message_history=st.session_state["chats"].get(self.selected_chat, []),
+                    nb_questions=nb_questions
+                )
+
+            # Vérification du format de la réponse
+            try:
+                quiz_data = convert_to_json(response["response"])
+                if not isinstance(quiz_data, list):
+                    raise ValueError("Une erreur est survenue. Réessayez ultérieurement.")
+            except Exception as e:
+                st.error(f"Erreur : {str(e)}")
+                st.stop()
+
+            # Stocker le quiz dans session_state
+            st.session_state["quiz_data"] = quiz_data
+            st.session_state["quiz_answers"] = {}
+            st.session_state["quiz_submitted"] = False
+
+        # Si un quiz est présent, afficher les questions
+        if st.session_state["quiz_data"] is not None:
+            quiz, result = st.columns([3, 1])
+
+            with quiz:
+                with st.form(key="quiz_form"):
+                    for idx, question_data in enumerate(st.session_state["quiz_data"]):
+                        st.subheader(f"Question {idx + 1}")
+                        st.write(question_data["question"])
+
+                        options = question_data["options"]
+                        st.session_state["quiz_answers"][idx] = st.radio(
+                            "Choisissez une réponse :",
+                            options=options,
+                            index=0,
+                            key=f"question_{idx}"
+                        )
+
+                    # Désactiver le bouton après soumission
+                    submit_button = st.form_submit_button(
+                        "Soumettre mes réponses",
+                        disabled=st.session_state["quiz_submitted"]
                     )
 
-                # Soumettre les réponses via le formulaire
-                submit_button = st.form_submit_button("Soumettre mes réponses")
-                
-                if submit_button:
-                    score, total, results = self.evaluate_quiz(quiz_data, user_answers)
-                    with result:
-                        st.subheader("Résultats 📊")
-                        for res in results:
-                            if res["correct"]:
-                                st.success(f"✅ {res['question']} → {res['user_answer']}")
-                            else:
-                                st.error(f"❌ {res['question']} → {res['user_answer']} (Bonne réponse : {res['correct_answer']})")
-                        st.write(f"**Score final : {score} / {total}** 🎯")
-                        # pop ballons if score == total
-                        if score == total:
-                            st.balloons()
+                    if submit_button:
+                        score, total, results = self.evaluate_quiz(st.session_state["quiz_data"], st.session_state["quiz_answers"])
+                        st.session_state["quiz_results"] = results
+                        st.session_state["quiz_score"] = score
+                        st.session_state["quiz_total"] = total
+                        st.session_state["quiz_submitted"] = True
 
-                #[TEMP] add a button to load a new quiz
+        # Affichage des résultats une fois les réponses soumises
+        if st.session_state["quiz_submitted"]:
+            with result:
+                st.subheader("Résultats 📊")
+                for res in st.session_state["quiz_results"]:
+                    if res["correct"]:
+                        st.success(f"✅ {res['question']} → {res['user_answer']}")
+                    else:
+                        st.error(f"❌ {res['question']} → {res['user_answer']} (Bonne réponse : {res['correct_answer']})")
+
+                st.write(f"**Score final : {st.session_state['quiz_score']} / {st.session_state['quiz_total']}** 🎯")
+
+                if st.session_state["quiz_score"] == st.session_state["quiz_total"]:
+                    st.balloons()
+
+        # Bouton pour recommencer un quiz sans fermer le dialogue
+        if st.session_state["quiz_submitted"]:
+            if st.button("Nouveau quiz"):
+                # Réinitialiser les variables du quiz sans fermer la boîte de dialogue
+                st.session_state["quiz_data"] = None
+                st.session_state["quiz_answers"] = {}
+                st.session_state["quiz_results"] = None
+                st.session_state["quiz_score"] = None
+                st.session_state["quiz_total"] = None
+                st.session_state["quiz_submitted"] = False
 
 
 

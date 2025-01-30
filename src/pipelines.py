@@ -2,25 +2,33 @@ import os
 import sys
 import sqlite3
 import uuid
-import torch
-from typing import List, Dict, Optional, Any, Union
-from transformers import AutoTokenizer, AutoModel
 import pdfplumber
-import chromadb
-from chromadb.config import Settings
-import tiktoken
+import numpy as np
+from typing import List, Union
+from transformers import AutoTokenizer, AutoModel
+sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
 from src.security.securite import LLMSecurityManager
 from src.ml.promptClassifier import PromptClassifier
-# from rag.embedding_base import EmbeddingBase
-# from rag.mistral_embedding import MistralEmbedding
-# from rag.gemini_embedding import GoogleEmbedding
-
-# Path adjustments for module imports
-sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
+from sentence_transformers import SentenceTransformer
+from numpy.typing import NDArray
 
 # --- Gestionnaire de sécurité ---
 class EnhancedLLMSecurityManager(LLMSecurityManager):
     def __init__(self, user_input, role="educational assistant", train_json_path=None, test_json_path=None, train_model=False):
+        """
+        Initialise le gestionnaire de sécurité avec un classificateur de prompts.
+
+        Args:
+            user_input (str): Entrée utilisateur à valider.
+            role (str, optional): Rôle attribué à l'assistant. Par défaut, "educational assistant".
+            train_json_path (str, optional): Chemin vers le fichier JSON d'entraînement.
+            test_json_path (str, optional): Chemin vers le fichier JSON de test.
+            train_model (bool, optional): Indique s'il faut entraîner un nouveau modèle.
+
+        If train_model is True and both JSON paths are provided, the classifier is trained, evaluated, and the best model is saved.
+        Otherwise, an existing model is loaded.
+        """
+        
         super().__init__(role)
         self.user_input = user_input
         self.classifier = PromptClassifier()
@@ -33,6 +41,16 @@ class EnhancedLLMSecurityManager(LLMSecurityManager):
             self.classifier.load_model()
 
     def validate_input(self):
+        """
+        Valide l'entrée utilisateur en utilisant un classificateur de prompts.
+
+        Returns:
+            bool: True si l'entrée est valide, False sinon.
+
+        L'entrée est d'abord nettoyée avant d'être validée par la classe parent.
+        Ensuite, elle est évaluée par un modèle de classification.
+        Si le modèle classe l'entrée comme suspecte (prédit 1), elle est rejetée.
+        """
         cleaned_input = self.clean_input(self.user_input)
         is_valid, _ = super().validate_input(cleaned_input)
         if not is_valid:
@@ -44,45 +62,61 @@ class EnhancedLLMSecurityManager(LLMSecurityManager):
 
 # --- Pipeline PDF et Base de données ---
 class PDFPipeline:
-    def __init__(self, db_path="discussions.db", embedding_model="sentence-transformers/all-MiniLM-L6-v2"):
+    def __init__(self, db_path="llm_database.db", embedding_model="sentence-transformers/all-MiniLM-L6-v2"):
+        """
+        Initialise la pipeline de traitement des fichiers PDF et de stockage dans une base de données.
+
+        Args:
+            db_path (str, optional): Chemin de la base de données SQLite. Par défaut, "llm_database.db".
+            embedding_model (str, optional): Modèle utilisé pour générer des embeddings textuels. 
+        """
         self.db_path = db_path
         self.tokenizer = AutoTokenizer.from_pretrained(embedding_model)
         self.model = AutoModel.from_pretrained(embedding_model)
-        self._init_database()
 
-    def _init_database(self):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS discussions (
-                    discussion_id TEXT,
-                    chunk_id TEXT,
-                    content TEXT,
-                    embedding BLOB
-                )
-            """)
-            conn.commit()
-
-    def extract_text_from_pdf(self, pdf_path: str) -> str:
-        text = ""
-        with pdfplumber.open(pdf_path) as pdf:
-            for page in pdf.pages:
-                text += page.extract_text()
-        return text
 
     def split_into_chunks(self, text: str, chunk_size: int = 500) -> List[str]:
+        """
+        Divise un texte en segments de longueur définie.
+
+        Args:
+            text (str): Texte à diviser.
+            chunk_size (int, optional): Nombre de tokens par segment. Par défaut, 500.
+
+        Returns:
+            List[str]: Liste des segments du texte.
+        """
         tokens = text.split()
         chunks = [" ".join(tokens[i:i+chunk_size]) for i in range(0, len(tokens), chunk_size)]
         return chunks
+    
 
-    def calculate_embedding(self, text: str) -> torch.Tensor:
-        tokens = self.tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-        with torch.no_grad():
-            outputs = self.model(**tokens)
-        embedding = outputs.last_hidden_state.mean(dim=1).squeeze()
-        return embedding
+
+    def calculate_embedding(self, documents: Union[str, List[str]]) -> NDArray[np.float32]:
+        """
+        Generates embeddings for a list of documents using SentenceTransformer model.
+
+        Args:
+            documents (Union[str, List[str]]): A string or a list of strings (documents) for which embeddings are to be generated.
+
+        Returns:
+            NDArray: A NumPy array containing the embeddings for each document.
+        """
+        model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+        if isinstance(documents, str):
+            documents = [documents]
+        return model.encode(documents)
 
     def store_in_database(self, discussion_id: str, chunks: List[str]):
+        """
+        Stocke les segments d'un texte et leurs embeddings dans la base de données SQLite.
+
+        Args:
+            discussion_id (str): Identifiant unique de la discussion.
+            chunks (List[str]): Liste des segments de texte.
+
+        Chaque segment est associé à un ID unique et à un embedding avant d'être inséré dans la base de données.
+        """
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             for i, chunk in enumerate(chunks):
@@ -90,73 +124,20 @@ class PDFPipeline:
                 cursor.execute("""
                     INSERT INTO discussions (discussion_id, chunk_id, content, embedding)
                     VALUES (?, ?, ?, ?)
-                """, (discussion_id, f"{discussion_id}_{i}", chunk, embedding.numpy().tobytes()))
+                    """, (discussion_id, f"{discussion_id}_{i}", chunk, sqlite3.Binary(embedding.tobytes())))
             conn.commit()
+        
 
-    def process_pdf(self, pdf_path: str):
+    def process_txt(self, text: str):
+        """
+        Traite un texte brut en le découpant en segments et en le stockant dans la base de données.
+
+        Args:
+            text (str): Texte brut à traiter.
+
+        Un identifiant unique est généré pour la discussion, puis le texte est segmenté et stocké avec ses embeddings.
+        """
         discussion_id = str(uuid.uuid4())
-        text = self.extract_text_from_pdf(pdf_path)
         chunks = self.split_into_chunks(text)
         self.store_in_database(discussion_id, chunks)
         print(f"PDF traité avec succès et stocké sous discussion_id : {discussion_id}")
-
-# --- Gestion des Embeddings ---
-class VectorStore:
-    def __init__(self, chemin_persistance: str = "../db/ChromaDB", modele_embedding: str = "gemini-1.5-flash", nom_collection: str = "collection_par_defaut", batch_size: int = 100, gemini_api_key: str = None, mistral_api_key: str = None) -> None:
-        self.batch_size = batch_size
-        self.chemin_persistance = chemin_persistance
-        self.gemini_api_key = gemini_api_key
-        self.mistral_api_key = mistral_api_key
-        os.makedirs(chemin_persistance, exist_ok=True)
-        self.encodeur = tiktoken.get_encoding("cl100k_base")
-        self.client = chromadb.PersistentClient(path=chemin_persistance, settings=Settings(anonymized_telemetry=False))
-        self.fonction_embedding = self._get_embedding_function(modele_embedding)
-        self.collection = self._creer_collection(nom_collection)
-
-    def _get_embedding_function(self, model_name: str):
-        if model_name.startswith("gemini"):
-            return GoogleEmbedding(api_key=self.gemini_api_key)
-        elif model_name.startswith("mistral"):
-            return MistralEmbedding(api_key=self.mistral_api_key)
-        else:
-            raise ValueError(f"Modèle d'embedding non pris en charge : {model_name}")
-
-    def _creer_collection(self, nom: str) -> chromadb.Collection:
-        nom = "a" + nom[:50].strip().replace(" ", "_") + "a"
-        return self.client.get_or_create_collection(name=nom, embedding_function=self.fonction_embedding, metadata={"hnsw:space": "cosine"})
-
-    def rechercher(self, requete: Union[str, List[float]], nb_resultats: int = 3) -> Dict[str, List]:
-        if isinstance(requete, str):
-            resultats = self.collection.query(query_texts=[requete], n_results=nb_resultats)
-        elif isinstance(requete, list):
-            resultats = self.collection.query(query_embeddings=[requete], n_results=nb_resultats)
-        else:
-            raise ValueError("La requête doit être une chaîne ou un vecteur d'embedding")
-        return {"documents": resultats["documents"][0] if resultats["documents"] else [], "distances": resultats["distances"][0] if resultats["distances"] else []}
-
-
-
-
-
-
-
-# --- Exemple d'utilisation combinée ---
-if __name__ == "__main__":
-    user_input = "Comment afficher Hello World en Python ?"
-    train_json_path = os.path.join("ml", "guardrail_dataset_train.json")
-    test_json_path = os.path.join("ml", "guardrail_dataset_test.json")
-    
-    # Gestionnaire de sécurité
-    security_manager = EnhancedLLMSecurityManager(user_input=user_input, role="educational assistant", train_json_path=train_json_path, test_json_path=test_json_path, train_model=False)
-    if not security_manager.validate_input():
-        print("L'entrée utilisateur est invalide!")
-    else:
-        print("Entrée validée!")
-
-        # Traitement du PDF
-        pdf_pipeline = PDFPipeline()
-        pdf_pipeline.process_pdf("D:/M2 SISE/LLM/Présentation_Cours - Jour 1.pdf")
-        
-        # Ajout des données à la base de données vectorielle
-        vector_store = VectorStore(chemin_persistance="../db/ChromaDB", modele_embedding="gemini-1.5-flash", nom_collection="collection_par_defaut", batch_size=100, gemini_api_key="your_api_key", mistral_api_key="your_api_key")
-        # Utiliser vector_store pour ajouter et rechercher des documents après avoir stocké les données
