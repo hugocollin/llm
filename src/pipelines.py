@@ -2,17 +2,13 @@ import os
 import sys
 import sqlite3
 import uuid
-import torch
 import pdfplumber
-import tiktoken
 import numpy as np
-from typing import List, Dict, Union
+from typing import List, Union
 from transformers import AutoTokenizer, AutoModel
-# Path adjustments for module imports
 sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
 from src.security.securite import LLMSecurityManager
 from src.ml.promptClassifier import PromptClassifier
-from src.llm.embeddings import Embeddings
 from sentence_transformers import SentenceTransformer
 from numpy.typing import NDArray
 
