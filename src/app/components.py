@@ -4,10 +4,10 @@ Ce fichier contient les fonctions nécessaires pour l'affichage de l'interface d
 
 import os
 import time
+import json
 import streamlit as st
 import plotly.express as px
 from dotenv import find_dotenv, load_dotenv
-import json
 
 def load_api_keys():
     """
@@ -40,11 +40,18 @@ def stream_text(text: str):
         yield word + " "
         time.sleep(0.03)
 
-# llm quizz json text to json
-def convert_to_json(response):
+def convert_to_json(response : str) -> dict:
+    """
+    Fonction pour convertir une réponse en JSON.
+
+    Args:
+        response (str): Réponse à convertir en JSON.
+
+    Returns:
+        dict: Réponse convertie en JSON.
+    """
     res = response.strip("```json\n").strip("\n```")
     return json.loads(res)
-
 
 def create_new_chat():
     """
@@ -69,9 +76,12 @@ def create_new_chat():
     st.session_state["selected_chat"] = new_chat_name
 
 @st.dialog("Renommer la conversation")
-def rename_chat(current_name: str):
+def rename_chat(current_name : str):
     """
     Fonction pour renommer une conversation.
+
+    Args:
+        current_name (str): Nom actuel de la conversation.
     """
 
     # Saisie du nouveau nom de la conversation
@@ -230,6 +240,7 @@ def show_stats_dialog():
             total_energy = 0.0
             total_gwp = 0.0
             total_internet_search = 0
+            model_counts = {}
 
             # Calcul des statistiques
             for chat in chats_to_analyze.values():
@@ -244,6 +255,8 @@ def show_stats_dialog():
                         total_energy += metrics.get("energy_usage", 0.0)
                         total_gwp += metrics.get("gwp", 0.0)
                         total_internet_search += 1 if message.get("internet_search") else 0
+                        model = message.get("model_used", "Inconnu")
+                        model_counts[model] = model_counts.get(model, 0) + 1
                     if message["role"] == "Guardian":
                         total_blocked_messages += 1
 
@@ -254,14 +267,40 @@ def show_stats_dialog():
 
             # Affichage des graphiques
             if afficher_graphiques:
+                # Graphique de la répartition du nombre total d'utilisations de chaque modèle d'IA
                 with st.container(border=True):
-                    # Graphique de la répartition du nombre total de messages envoyés
+                    st.header(
+                        "**📊 Nombre total d'utilisations de chaque modèle d'IA**"
+                    )
+
+                    if total_ai_messages == 0:
+                        st.info(
+                            "Le graphique ne possède pas de données à afficher.",
+                            icon=":material/info:"
+                        )
+                    else:
+                        fig = px.pie(
+                            names=list(model_counts.keys()),
+                            values=list(model_counts.values()),
+                            color_discrete_map=px.colors.qualitative.D3
+                        )
+                        fig.update_traces(
+                            texttemplate='%{value} <br> %{percent}',
+                            hovertemplate='<b>%{label} :</b> %{value} (%{percent})<extra></extra>'
+                        )
+                        st.plotly_chart(fig, key="models_chart")
+
+                # Graphique de la répartition du nombre total de messages envoyés
+                with st.container(border=True):
                     st.header(
                             f"**🗨️ Nombre total de messages envoyés : {total_user_messages}**"
                     )
-                    
+
                     if total_user_messages == 0:
-                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                        st.info(
+                            "Le graphique ne possède pas de données à afficher.",
+                            icon=":material/info:"
+                        )
                     else:
                         conversation_names = list(chats_to_analyze.keys())
                         message_counts = [(len(chat) / 2) for chat in chats_to_analyze.values()]
@@ -279,15 +318,18 @@ def show_stats_dialog():
                         )
                         st.plotly_chart(fig, key="messages_chart")
 
+                # Graphique de la répartition du nombre total de messages bloqués
                 with st.container(border=True):
-                    # Graphique de la répartition du nombre total de messages bloqués
                     st.header(
                         "**🛡️ Nombre total de messages bloqués : "
                         f"{total_blocked_messages}**"
                     )
 
                     if total_blocked_messages == 0:
-                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                        st.info(
+                            "Le graphique ne possède pas de données à afficher.",
+                            icon=":material/info:"
+                        )
                     else:
                         blocked_message_counts = [0] * len(conversation_names)
                         for i, chat in enumerate(chats_to_analyze.values()):
@@ -308,15 +350,18 @@ def show_stats_dialog():
                         )
                         st.plotly_chart(fig, key="blocked_messages_chart")
 
+                # Graphique de la répartition du nombre total d'utilisation du mode internet
                 with st.container(border=True):
-                    # Graphique de la répartition du nombre total d'utilisation du mode internet
                     st.header(
                         "**🌐 Nombre total d'utilisations du mode internet : "
                         f"{total_internet_search}**"
                     )
 
                     if total_internet_search == 0:
-                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                        st.info(
+                            "Le graphique ne possède pas de données à afficher.",
+                            icon=":material/info:"
+                        )
                     else:
                         internet_search_counts = [0] * len(conversation_names)
                         for i, chat in enumerate(chats_to_analyze.values()):
@@ -337,15 +382,18 @@ def show_stats_dialog():
                         )
                         st.plotly_chart(fig, key="internet_search_chart")
 
+                # Graphique de la latence moyenne
                 with st.container(border=True):
-                    # Graphique de la latence moyenne
                     st.header(
                         "**📶 Latence moyenne des réponses : "
                         f"{average_latency:.2f} secondes**"
                     )
 
                     if total_ai_messages == 0:
-                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                        st.info(
+                            "Le graphique ne possède pas de données à afficher.",
+                            icon=":material/info:"
+                        )
                     else:
                         latences = [
                             message["metrics"]["latency"]
@@ -373,12 +421,15 @@ def show_stats_dialog():
                         )
                         st.plotly_chart(fig, key="latency_chart")
 
+                # Graphique du coût total
                 with st.container(border=True):
-                    # Graphique du coût total
                     st.header(f"**💲 Coût total : {total_cost:.7f} €**")
 
                     if total_cost == 0:
-                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                        st.info(
+                            "Le graphique ne possède pas de données à afficher.",
+                            icon=":material/info:"
+                        )
                     else:
                         fig = px.pie(
                             names=conversation_names,
@@ -394,16 +445,21 @@ def show_stats_dialog():
                         )
                         fig.update_traces(
                             texttemplate='%{value:.7f}<br>%{percent}',
-                            hovertemplate='<b>%{label} :</b> %{value:.7f} € (%{percent})<extra></extra>'
+                            hovertemplate=(
+                                '<b>%{label} :</b> %{value:.7f} € (%{percent})<extra></extra>'
+                            )
                         )
                         st.plotly_chart(fig, key="cost_chart")
 
+                # Graphique de l'utilisation énergétique totale
                 with st.container(border=True):
-                    # Graphique de l'utilisation énergétique totale
                     st.header(f"**⚡ Utilisation énergétique totale : {total_energy:.7f} kWh**")
 
                     if total_energy == 0:
-                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                        st.info(
+                            "Le graphique ne possède pas de données à afficher.",
+                            icon=":material/info:"
+                        )
                     else:
                         fig = px.pie(
                             names=conversation_names,
@@ -419,18 +475,23 @@ def show_stats_dialog():
                         )
                         fig.update_traces(
                             texttemplate='%{value:.7f}<br>%{percent}',
-                            hovertemplate='<b>%{label} :</b> %{value:.7f} kWh (%{percent})<extra></extra>'
+                            hovertemplate=(
+                                '<b>%{label} :</b> %{value:.7f} kWh (%{percent})<extra></extra>'
+                            )
                         )
                         st.plotly_chart(fig, key="energy_chart")
 
+                # Graphique du potentiel de réchauffement global total
                 with st.container(border=True):
-                    # Graphique du potentiel de réchauffement global total
                     st.header(
                         f"**🌡️ Potentiel de réchauffement global total : {total_gwp:.7f} kgCO2eq**"
                     )
 
                     if total_gwp == 0:
-                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                        st.info(
+                            "Le graphique ne possède pas de données à afficher.",
+                            icon=":material/info:"
+                        )
                     else:
                         fig = px.pie(
                             names=conversation_names,
@@ -447,8 +508,7 @@ def show_stats_dialog():
                         fig.update_traces(
                             texttemplate='%{value:.7f}<br>%{percent}',
                             hovertemplate=(
-                                '<b>%{label} :</b> %{value:.7f} '
-                                'kgCO2eq (%{percent})<extra></extra>'
+                                '<b>%{label} :</b> %{value:.7f} kgCO2eq (%{percent})<extra></extra>'
                             )
                         )
                         st.plotly_chart(fig, key="gwp_chart")
