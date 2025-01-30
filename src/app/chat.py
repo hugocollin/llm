@@ -504,7 +504,7 @@ class Chat:
         # Paramètre pour le nombre de questions
         nb_questions = st.slider("Nombre de questions", min_value=1, max_value=10, value=5, step=1, key="nb_questions")
 
-        if st.button("Créer le quiz", icon=":material/check_box:"):
+        if st.button("Créer le quiz", icon=":material/edit_note:"):
             quiz, result = st.columns([3, 1])
             user_answers = {}
 
