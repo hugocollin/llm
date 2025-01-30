@@ -459,7 +459,7 @@ class Chat:
         uploaded_files = st.file_uploader(
             "NULL",
             label_visibility="collapsed",
-            prompt_type=["pdf"],
+            type=["pdf"],
             accept_multiple_files=True,
         )
 
