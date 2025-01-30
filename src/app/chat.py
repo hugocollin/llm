@@ -501,7 +501,13 @@ class Chat:
 
         # Paramétrage du quiz
         with st.container(border=True):
-            nb_questions = st.slider("Nombre de questions", min_value=1, max_value=10, value=5, step=1)
+            nb_questions = st.slider(
+                "Nombre de questions",
+                min_value=1,
+                max_value=10,
+                value=5,
+                step=1
+            )
             if st.button("Créer un quiz"):
                 # Réinitialisation des données du quiz
                 st.session_state['quiz_data'] = None
@@ -529,7 +535,8 @@ class Chat:
                         st.session_state['quiz_submitted'] = False
                     except Exception:
                         st.error(
-                            "Une erreur est survenue lors de la création du quiz. Veuillez réessayer."
+                            "Une erreur est survenue lors de la création du quiz. "
+                            "Veuillez réessayer."
                         )
 
         if 'quiz_data' in st.session_state:
@@ -589,7 +596,10 @@ class Chat:
                         if st.session_state['quiz_score'] == st.session_state['quiz_total']:
                             st.balloons()
                     else:
-                        st.info("Veuillez valider vos réponses pour afficher les résultats.", icon=":material/info:")
+                        st.info(
+                            "Veuillez valider vos réponses pour afficher les résultats.",
+                            icon=":material/info:"
+                        )
 
     def evaluate_quiz(self, quiz_data : list, user_answers : dict) -> tuple:
         """
