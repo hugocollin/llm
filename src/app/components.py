@@ -256,154 +256,208 @@ def show_stats_dialog():
             if afficher_graphiques:
                 with st.container(border=True):
                     # Graphique de la répartition du nombre total de messages envoyés
-                    conversation_names = list(chats_to_analyze.keys())
-                    message_counts = [(len(chat) / 2) for chat in chats_to_analyze.values()]
-                    fig = px.pie(
-                        names=conversation_names,
-                        values=message_counts,
-                        color_discrete_sequence=px.colors.sequential.Blues[::-1]
-                    )
-                    fig.update_traces(
-                        textposition='inside',
-                        texttemplate='%{value}<br>%{percent}',
-                        hovertemplate=(
-                            '<b>%{label} :</b> %{value} '
-                            'messages (%{percent})<extra></extra>'
-                        )
-                    )
                     st.header(
-                        f"**🗨️ Nombre total de messages envoyés : {total_user_messages}**"
+                            f"**🗨️ Nombre total de messages envoyés : {total_user_messages}**"
                     )
-                    st.plotly_chart(fig, key="messages_chart")
+                    
+                    if total_user_messages == 0:
+                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                    else:
+                        conversation_names = list(chats_to_analyze.keys())
+                        message_counts = [(len(chat) / 2) for chat in chats_to_analyze.values()]
+                        fig = px.pie(
+                            names=conversation_names,
+                            values=message_counts,
+                            color_discrete_sequence=px.colors.sequential.Blues[::-1]
+                        )
+                        fig.update_traces(
+                            textposition='inside',
+                            texttemplate='%{value}<br>%{percent}',
+                            hovertemplate=(
+                                '<b>%{label} :</b> %{value} '
+                                'messages (%{percent})<extra></extra>'
+                            )
+                        )
+                        st.plotly_chart(fig, key="messages_chart")
 
                 with st.container(border=True):
                     # Graphique de la répartition du nombre total de messages bloqués
-                    blocked_message_counts = [0] * len(conversation_names)
-                    for i, chat in enumerate(chats_to_analyze.values()):
-                        for message in chat:
-                            if message["role"] == "Guardian":
-                                blocked_message_counts[i] += 1
-                    fig = px.pie(
-                        names=conversation_names,
-                        values=blocked_message_counts,
-                        color_discrete_sequence=px.colors.sequential.Purples[::-1]
-                    )
-                    fig.update_traces(
-                        textposition='inside',
-                        texttemplate='%{value}<br>%{percent}',
-                        hovertemplate=(
-                            '<b>%{label} :</b> %{value} '
-                            'messages bloqués (%{percent})<extra></extra>'
-                        )
-                    )
                     st.header(
                         "**🛡️ Nombre total de messages bloqués : "
                         f"{total_blocked_messages}**"
                     )
-                    st.plotly_chart(fig, key="blocked_messages_chart")
+
+                    if total_blocked_messages == 0:
+                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                    else:
+                        blocked_message_counts = [0] * len(conversation_names)
+                        for i, chat in enumerate(chats_to_analyze.values()):
+                            for message in chat:
+                                if message["role"] == "Guardian":
+                                    blocked_message_counts[i] += 1
+                        fig = px.pie(
+                            names=conversation_names,
+                            values=blocked_message_counts,
+                            color_discrete_sequence=px.colors.sequential.Purples[::-1]
+                        )
+                        fig.update_traces(
+                            textposition='inside',
+                            texttemplate='%{value}<br>%{percent}',
+                            hovertemplate=(
+                                '<b>%{label} :</b> %{value} '
+                                'messages bloqués (%{percent})<extra></extra>'
+                            )
+                        )
+                        st.plotly_chart(fig, key="blocked_messages_chart")
+
+                with st.container(border=True):
+                    # Graphique de la répartition du nombre total d'utilisation du mode internet
+                    st.header(
+                        "**🌐 Nombre total d'utilisations du mode internet : "
+                        f"{total_internet_search}**"
+                    )
+
+                    if total_internet_search == 0:
+                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                    else:
+                        internet_search_counts = [0] * len(conversation_names)
+                        for i, chat in enumerate(chats_to_analyze.values()):
+                            for message in chat:
+                                if message.get("internet_search"):
+                                    internet_search_counts[i] += 1
+                        fig = px.pie(
+                            names=conversation_names,
+                            values=internet_search_counts,
+                            color_discrete_sequence=px.colors.sequential.Mint[::-1]
+                        )
+                        fig.update_traces(
+                            textposition='inside',
+                            texttemplate='%{value}<br>%{percent}',
+                            hovertemplate=(
+                                '<b>%{label} :</b> %{value} '
+                                'utilisations du mode internet (%{percent})<extra></extra>'
+                            )
+                        )
+                        st.plotly_chart(fig, key="internet_search_chart")
 
                 with st.container(border=True):
                     # Graphique de la latence moyenne
-                    latences = [
-                        message["metrics"]["latency"]
-                        for chat in chats_to_analyze.values()
-                        for message in chat
-                        if message["role"] == "AI" and "latency" in message.get("metrics", {})
-                    ]
-                    fig = px.histogram(
-                        latences,
-                        nbins=20,
-                        labels={"value": "Latence (secondes)"},
-                        color_discrete_sequence=px.colors.sequential.Bluered
-                    )
-                    fig.update_layout(
-                        xaxis_title="Latence (secondes)",
-                        yaxis_title="Nombre de réponses",
-                        showlegend=False,
-                    )
-                    fig.update_traces(
-                        hovertemplate=(
-                            '<b>Latence :</b> %{x:.2f} '
-                            'secondes<br><b>Nombre de réponses :</b> %{y}<extra></extra>'
-                        ),
-                        marker=dict(opacity=0.7, line=dict(color='black', width=1))
-                    )
                     st.header(
                         "**📶 Latence moyenne des réponses : "
                         f"{average_latency:.2f} secondes**"
                     )
-                    st.plotly_chart(fig, key="latency_chart")
+
+                    if total_ai_messages == 0:
+                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                    else:
+                        latences = [
+                            message["metrics"]["latency"]
+                            for chat in chats_to_analyze.values()
+                            for message in chat
+                            if message["role"] == "AI" and "latency" in message.get("metrics", {})
+                        ]
+                        fig = px.histogram(
+                            latences,
+                            nbins=20,
+                            labels={"value": "Latence (secondes)"},
+                            color_discrete_sequence=px.colors.sequential.Bluered
+                        )
+                        fig.update_layout(
+                            xaxis_title="Latence (secondes)",
+                            yaxis_title="Nombre de réponses",
+                            showlegend=False,
+                        )
+                        fig.update_traces(
+                            hovertemplate=(
+                                '<b>Latence :</b> %{x:.2f} '
+                                'secondes<br><b>Nombre de réponses :</b> %{y}<extra></extra>'
+                            ),
+                            marker=dict(opacity=0.7, line=dict(color='black', width=1))
+                        )
+                        st.plotly_chart(fig, key="latency_chart")
 
                 with st.container(border=True):
                     # Graphique du coût total
-                    fig = px.pie(
-                        names=conversation_names,
-                        values=[
-                            sum(
-                                message["metrics"].get("euro_cost", 0.0)
-                                for message in chat
-                                if message["role"] == "AI"
-                            )
-                            for chat in chats_to_analyze.values()
-                        ],
-                        color_discrete_sequence=px.colors.sequential.Greens[::-1]
-                    )
-                    fig.update_traces(
-                        textposition='inside',
-                        texttemplate='%{value:.7f}<br>%{percent}',
-                        hovertemplate='<b>%{label} :</b> %{value:.7f} € (%{percent})<extra></extra>'
-                    )
                     st.header(f"**💲 Coût total : {total_cost:.7f} €**")
-                    st.plotly_chart(fig, key="cost_chart")
+
+                    if total_cost == 0:
+                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                    else:
+                        fig = px.pie(
+                            names=conversation_names,
+                            values=[
+                                sum(
+                                    message["metrics"].get("euro_cost", 0.0)
+                                    for message in chat
+                                    if message["role"] == "AI"
+                                )
+                                for chat in chats_to_analyze.values()
+                            ],
+                            color_discrete_sequence=px.colors.sequential.Greens[::-1]
+                        )
+                        fig.update_traces(
+                            textposition='inside',
+                            texttemplate='%{value:.7f}<br>%{percent}',
+                            hovertemplate='<b>%{label} :</b> %{value:.7f} € (%{percent})<extra></extra>'
+                        )
+                        st.plotly_chart(fig, key="cost_chart")
 
                 with st.container(border=True):
                     # Graphique de l'utilisation énergétique totale
-                    fig = px.pie(
-                        names=conversation_names,
-                        values=[
-                            sum(
-                                message["metrics"].get("energy_usage", 0.0)
-                                for message in chat
-                                if message["role"] == "AI"
-                            )
-                            for chat in chats_to_analyze.values()
-                        ],
-                        color_discrete_sequence=px.colors.sequential.solar[::-1]
-                    )
-                    fig.update_traces(
-                        textposition='inside',
-                        texttemplate='%{value:.7f}<br>%{percent}',
-                        hovertemplate='<b>%{label} :</b> %{value:.7f} kWh (%{percent})<extra></extra>'
-                    )
                     st.header(f"**⚡ Utilisation énergétique totale : {total_energy:.7f} kWh**")
-                    st.plotly_chart(fig, key="energy_chart")
+
+                    if total_energy == 0:
+                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                    else:
+                        fig = px.pie(
+                            names=conversation_names,
+                            values=[
+                                sum(
+                                    message["metrics"].get("energy_usage", 0.0)
+                                    for message in chat
+                                    if message["role"] == "AI"
+                                )
+                                for chat in chats_to_analyze.values()
+                            ],
+                            color_discrete_sequence=px.colors.sequential.solar[::-1]
+                        )
+                        fig.update_traces(
+                            textposition='inside',
+                            texttemplate='%{value:.7f}<br>%{percent}',
+                            hovertemplate='<b>%{label} :</b> %{value:.7f} kWh (%{percent})<extra></extra>'
+                        )
+                        st.plotly_chart(fig, key="energy_chart")
 
                 with st.container(border=True):
                     # Graphique du potentiel de réchauffement global total
-                    fig = px.pie(
-                        names=conversation_names,
-                        values=[
-                            sum(
-                                message["metrics"].get("gwp", 0.0)
-                                for message in chat
-                                if message["role"] == "AI"
-                            )
-                            for chat in chats_to_analyze.values()
-                        ],
-                        color_discrete_sequence=px.colors.sequential.Reds[::-1]
-                    )
-                    fig.update_traces(
-                        textposition='inside',
-                        texttemplate='%{value:.7f}<br>%{percent}',
-                        hovertemplate=(
-                            '<b>%{label} :</b> %{value:.7f} '
-                            'kgCO2eq (%{percent})<extra></extra>'
-                        )
-                    )
                     st.header(
                         f"**🌡️ Potentiel de réchauffement global total : {total_gwp:.7f} kgCO2eq**"
                     )
-                    st.plotly_chart(fig, key="gwp_chart")
+
+                    if total_gwp == 0:
+                        st.info("Le graphique ne possède pas de données à afficher.", icon=":material/info:")
+                    else:
+                        fig = px.pie(
+                            names=conversation_names,
+                            values=[
+                                sum(
+                                    message["metrics"].get("gwp", 0.0)
+                                    for message in chat
+                                    if message["role"] == "AI"
+                                )
+                                for chat in chats_to_analyze.values()
+                            ],
+                            color_discrete_sequence=px.colors.sequential.Reds[::-1]
+                        )
+                        fig.update_traces(
+                            textposition='inside',
+                            texttemplate='%{value:.7f}<br>%{percent}',
+                            hovertemplate=(
+                                '<b>%{label} :</b> %{value:.7f} '
+                                'kgCO2eq (%{percent})<extra></extra>'
+                            )
+                        )
+                        st.plotly_chart(fig, key="gwp_chart")
 
             # Affichage des KPIs
             else:
@@ -419,7 +473,7 @@ def show_stats_dialog():
                         st.title(f"{total_blocked_messages}")
                 with cols[2]:
                     with st.container(border=True):
-                        st.write("**🌐 Nombre total d'utilisation du mode internet**")
+                        st.write("**🌐 Nombre total d'utilisations du mode internet**")
                         st.title(f"{total_internet_search}")
                 with cols[3]:
                     with st.container(border=True):
