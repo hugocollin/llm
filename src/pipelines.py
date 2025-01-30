@@ -5,15 +5,16 @@ import uuid
 import torch
 import pdfplumber
 import tiktoken
+import numpy as np
 from typing import List, Dict, Union
 from transformers import AutoTokenizer, AutoModel
-
+# Path adjustments for module imports
+sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
 from src.security.securite import LLMSecurityManager
 from src.ml.promptClassifier import PromptClassifier
 from src.llm.embeddings import Embeddings
-
-# Path adjustments for module imports
-sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
+from sentence_transformers import SentenceTransformer
+from numpy.typing import NDArray
 
 # --- Gestionnaire de sécurité ---
 class EnhancedLLMSecurityManager(LLMSecurityManager):
@@ -41,24 +42,10 @@ class EnhancedLLMSecurityManager(LLMSecurityManager):
 
 # --- Pipeline PDF et Base de données ---
 class PDFPipeline:
-    def __init__(self, db_path="discussions.db", embedding_model="sentence-transformers/all-MiniLM-L6-v2"):
+    def __init__(self, db_path="llm_database.db", embedding_model="sentence-transformers/all-MiniLM-L6-v2"):
         self.db_path = db_path
         self.tokenizer = AutoTokenizer.from_pretrained(embedding_model)
         self.model = AutoModel.from_pretrained(embedding_model)
-        self._init_database()
-
-    def _init_database(self):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS discussions (
-                    discussion_id TEXT,
-                    chunk_id TEXT,
-                    content TEXT,
-                    embedding BLOB
-                )
-            """)
-            conn.commit()
 
     def extract_text_from_pdf(self, pdf_path: str) -> str:
         text = ""
@@ -72,12 +59,20 @@ class PDFPipeline:
         chunks = [" ".join(tokens[i:i+chunk_size]) for i in range(0, len(tokens), chunk_size)]
         return chunks
 
-    def calculate_embedding(self, text: str) -> torch.Tensor:
-        tokens = self.tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-        with torch.no_grad():
-            outputs = self.model(**tokens)
-        embedding = outputs.last_hidden_state.mean(dim=1).squeeze()
-        return embedding
+    def calculate_embedding(self, documents: Union[str, List[str]]) -> NDArray[np.float32]:
+        """
+        Generates embeddings for a list of documents using SentenceTransformer model.
+
+        Args:
+            documents (Union[str, List[str]]): A string or a list of strings (documents) for which embeddings are to be generated.
+
+        Returns:
+            NDArray: A NumPy array containing the embeddings for each document.
+        """
+        model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+        if isinstance(documents, str):
+            documents = [documents]
+        return model.encode(documents)
 
     def store_in_database(self, discussion_id: str, chunks: List[str]):
         with sqlite3.connect(self.db_path) as conn:
@@ -87,7 +82,7 @@ class PDFPipeline:
                 cursor.execute("""
                     INSERT INTO discussions (discussion_id, chunk_id, content, embedding)
                     VALUES (?, ?, ?, ?)
-                """, (discussion_id, f"{discussion_id}_{i}", chunk, embedding.numpy().tobytes()))
+                """, (discussion_id, f"{discussion_id}_{i}", chunk, sqlite3.Binary(embedding.tobytes())))
             conn.commit()
 
     def process_pdf(self, pdf_path: str):
@@ -96,56 +91,3 @@ class PDFPipeline:
         chunks = self.split_into_chunks(text)
         self.store_in_database(discussion_id, chunks)
         print(f"PDF traité avec succès et stocké sous discussion_id : {discussion_id}")
-
-# # --- Gestion des Embeddings ---
-# class VectorStore:
-#     def __init__(self, chemin_persistance: str = "../db/ChromaDB", modele_embedding: str = "gemini-1.5-flash", nom_collection: str = "collection_par_defaut", batch_size: int = 100, gemini_api_key: str = None, mistral_api_key: str = None) -> None:
-#         self.batch_size = batch_size
-#         self.chemin_persistance = chemin_persistance
-#         self.gemini_api_key = gemini_api_key
-#         self.mistral_api_key = mistral_api_key
-#         os.makedirs(chemin_persistance, exist_ok=True)
-#         self.encodeur = tiktoken.get_encoding("cl100k_base")
-#         self.client = chromadb.PersistentClient(path=chemin_persistance, settings=Settings(anonymized_telemetry=False))
-#         self.fonction_embedding = Embeddings()
-#         self.collection = self._creer_collection(nom_collection)
-
-#     def _creer_collection(self, nom: str) -> chromadb.Collection:
-#         nom = "a" + nom[:50].strip().replace(" ", "_") + "a"
-#         return self.client.get_or_create_collection(name=nom, embedding_function=self.fonction_embedding, metadata={"hnsw:space": "cosine"})
-
-#     def rechercher(self, requete: Union[str, List[float]], nb_resultats: int = 3) -> Dict[str, List]:
-#         if isinstance(requete, str):
-#             resultats = self.collection.query(query_texts=[requete], n_results=nb_resultats)
-#         elif isinstance(requete, list):
-#             resultats = self.collection.query(query_embeddings=[requete], n_results=nb_resultats)
-#         else:
-#             raise ValueError("La requête doit être une chaîne ou un vecteur d'embedding")
-#         return {"documents": resultats["documents"][0] if resultats["documents"] else [], "distances": resultats["distances"][0] if resultats["distances"] else []}
-
-
-
-
-
-
-
-# --- Exemple d'utilisation combinée ---
-if __name__ == "__main__":
-    user_input = "Comment afficher Hello World en Python ?"
-    train_json_path = os.path.join("ml", "guardrail_dataset_train.json")
-    test_json_path = os.path.join("ml", "guardrail_dataset_test.json")
-    
-    # Gestionnaire de sécurité
-    security_manager = EnhancedLLMSecurityManager(user_input=user_input, role="educational assistant", train_json_path=train_json_path, test_json_path=test_json_path, train_model=False)
-    if not security_manager.validate_input():
-        print("L'entrée utilisateur est invalide!")
-    else:
-        print("Entrée validée!")
-
-        # Traitement du PDF
-        pdf_pipeline = PDFPipeline()
-        pdf_pipeline.process_pdf("D:/M2 SISE/LLM/Présentation_Cours - Jour 1.pdf")
-        
-        # Ajout des données à la base de données vectorielle
-        vector_store = VectorStore(chemin_persistance="../db/ChromaDB", modele_embedding="gemini-1.5-flash", nom_collection="collection_par_defaut", batch_size=100, gemini_api_key="your_api_key", mistral_api_key="your_api_key")
-        # Utiliser vector_store pour ajouter et rechercher des documents après avoir stocké les données
