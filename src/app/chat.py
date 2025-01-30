@@ -492,66 +492,58 @@ class Chat:
                     expanded=False,
                 )
 
-
-    
     @st.dialog("Quiz", width="large")
     def generate_quiz(self):
         """
-        Génère un quiz avec des questions sur le sujet donné, sans recharger l'application à chaque interaction.
+        Génère un quiz avec des questions sur le sujet donné, 
+        sans recharger l'application à chaque interaction.
         """
 
-        # Initialisation des variables de session pour éviter les erreurs
-        if "quiz_data" not in st.session_state:
-            st.session_state["quiz_data"] = None
-        if "quiz_answers" not in st.session_state:
-            st.session_state["quiz_answers"] = {}
-        if "quiz_submitted" not in st.session_state:
-            st.session_state["quiz_submitted"] = False
-
-        # Sélection du nombre de questions avec un slider dans le formulaire
-        with st.form(key="quiz_setup_form"):
+        # Paramétrage du quiz
+        with st.container(border=True):
             nb_questions = st.slider("Nombre de questions", min_value=1, max_value=10, value=5, step=1)
-            generate_quiz_button = st.form_submit_button("Créer le quiz", type="primary")
+            if st.button("Créer un quiz"):
+                # Réinitialisation des données du quiz
+                st.session_state['quiz_data'] = None
+                st.session_state['quiz_answers'] = {}
+                st.session_state['quiz_submitted'] = False
+                st.session_state['quiz_score'] = 0
+                st.session_state['quiz_total'] = 0
+                st.session_state['quiz_results'] = []
 
-        # Vérification si on doit générer un quiz
-        if generate_quiz_button:
-            with st.spinner("Création du quiz..."):
                 # Génération des questions du quiz
-                response = st.session_state["LLM"](
-                    provider="mistral",
-                    model="mistral-large-latest",
-                    temperature=0.7,
-                    prompt_type="quizz",
-                    message_history=st.session_state["chats"].get(self.selected_chat, []),
-                    nb_questions=nb_questions
-                )
+                with st.spinner("Création du quiz..."):
+                    response = st.session_state["LLM"](
+                        provider="mistral",
+                        model="mistral-large-latest",
+                        temperature=0.7,
+                        prompt_type="quizz",
+                        message_history=st.session_state["chats"].get(self.selected_chat, []),
+                        nb_questions=nb_questions
+                    )
 
-            # Vérification du format de la réponse
-            try:
-                quiz_data = convert_to_json(response["response"])
-                if not isinstance(quiz_data, list):
-                    raise ValueError("Une erreur est survenue. Réessayez ultérieurement.")
-            except Exception as e:
-                st.error(f"Erreur : {str(e)}")
-                st.stop()
+                    # Conversion des données du quiz
+                    try :
+                        st.session_state['quiz_data'] = convert_to_json(response["response"])
+                        st.session_state['quiz_answers'] = {}
+                        st.session_state['quiz_submitted'] = False
+                    except Exception:
+                        st.error(
+                            "Une erreur est survenue lors de la création du quiz. Veuillez réessayer."
+                        )
 
-            # Stocker le quiz dans session_state
-            st.session_state["quiz_data"] = quiz_data
-            st.session_state["quiz_answers"] = {}
-            st.session_state["quiz_submitted"] = False
+        if 'quiz_data' in st.session_state:
+            quiz_col, result_col = st.columns([3, 2])
 
-        # Si un quiz est présent, afficher les questions
-        if st.session_state["quiz_data"] is not None:
-            quiz, result = st.columns([3, 1])
-
-            with quiz:
+            with quiz_col:
                 with st.form(key="quiz_form"):
-                    for idx, question_data in enumerate(st.session_state["quiz_data"]):
+                    # Affichage des questions du quiz
+                    for idx, question_data in enumerate(st.session_state['quiz_data']):
                         st.subheader(f"Question {idx + 1}")
                         st.write(question_data["question"])
 
                         options = question_data["options"]
-                        st.session_state["quiz_answers"][idx] = st.radio(
+                        st.session_state['quiz_answers'][idx] = st.radio(
                             "Choisissez une réponse :",
                             options=options,
                             index=0,
@@ -559,48 +551,47 @@ class Chat:
                         )
 
                     # Désactiver le bouton après soumission
-                    submit_button = st.form_submit_button(
-                        "Soumettre mes réponses",
-                        disabled=st.session_state["quiz_submitted"]
-                    )
+                    if st.form_submit_button(
+                        "Valider les réponses",
+                        disabled=st.session_state['quiz_submitted']
+                    ):
+                        score, total, results = self.evaluate_quiz(
+                            st.session_state['quiz_data'],
+                            st.session_state['quiz_answers']
+                        )
+                        st.session_state['quiz_score'] = score
+                        st.session_state['quiz_total'] = total
+                        st.session_state['quiz_results'] = results
+                        st.session_state['quiz_submitted'] = True
+                        st.rerun(scope="fragment")
 
-                    if submit_button:
-                        score, total, results = self.evaluate_quiz(st.session_state["quiz_data"], st.session_state["quiz_answers"])
-                        st.session_state["quiz_results"] = results
-                        st.session_state["quiz_score"] = score
-                        st.session_state["quiz_total"] = total
-                        st.session_state["quiz_submitted"] = True
+            with result_col:
+                with st.container(border=True):
+                    st.subheader("Résultats")
+                    if st.session_state.get('quiz_submitted'):
+                        for res in st.session_state['quiz_results']:
+                            if res["correct"]:
+                                st.success(
+                                    f"✅ {res['question']}\n\n"
+                                    f"**Bonne réponse : {res['user_answer']}**"
+                                )
+                            else:
+                                st.error(
+                                    f"❌ {res['question']}\n\n"
+                                    f"Votre réponse : {res['user_answer']}\n\n"
+                                    f"**Bonne réponse : {res['correct_answer']}**"
+                                )
+                        st.info(
+                            f"🎯 **Score final : {st.session_state['quiz_score']} "
+                            f"/ {st.session_state['quiz_total']}**"
+                        )
 
-        # Affichage des résultats une fois les réponses soumises
-        if st.session_state["quiz_submitted"]:
-            with result:
-                st.subheader("Résultats 📊")
-                for res in st.session_state["quiz_results"]:
-                    if res["correct"]:
-                        st.success(f"✅ {res['question']} → {res['user_answer']}")
+                        if st.session_state['quiz_score'] == st.session_state['quiz_total']:
+                            st.balloons()
                     else:
-                        st.error(f"❌ {res['question']} → {res['user_answer']} (Bonne réponse : {res['correct_answer']})")
+                        st.info("Veuillez valider vos réponses pour afficher les résultats.", icon=":material/info:")
 
-                st.write(f"**Score final : {st.session_state['quiz_score']} / {st.session_state['quiz_total']}** 🎯")
-
-                if st.session_state["quiz_score"] == st.session_state["quiz_total"]:
-                    st.balloons()
-
-        # Bouton pour recommencer un quiz sans fermer le dialogue
-        if st.session_state["quiz_submitted"]:
-            if st.button("Nouveau quiz"):
-                # Réinitialiser les variables du quiz sans fermer la boîte de dialogue
-                st.session_state["quiz_data"] = None
-                st.session_state["quiz_answers"] = {}
-                st.session_state["quiz_results"] = None
-                st.session_state["quiz_score"] = None
-                st.session_state["quiz_total"] = None
-                st.session_state["quiz_submitted"] = False
-
-
-
-
-    def evaluate_quiz(self, quiz_data, user_answers):
+    def evaluate_quiz(self, quiz_data : list, user_answers : dict) -> tuple:
         """
         Évalue les réponses du quiz et retourne le score final.
 
@@ -611,18 +602,22 @@ class Chat:
         Returns:
             tuple: (score, nombre total de questions, liste des résultats détaillés)
         """
+
+        # Initialisation des variables
         score = 0
         total = len(quiz_data)
         results = []
 
+        # Évaluation des réponses
         for idx, question_data in enumerate(quiz_data):
             correct_answer = question_data["answer"]
-            user_answer = user_answers.get(idx, None)  # Vérifier si la réponse existe
+            user_answer = user_answers.get(idx, None)
 
             is_correct = user_answer == correct_answer
             if is_correct:
-                score += 1  # Augmenter le score si la réponse est correcte
+                score += 1
 
+            # Ajout des résultats
             results.append({
                 "question": question_data["question"],
                 "user_answer": user_answer if user_answer else "Aucune réponse",
@@ -630,4 +625,4 @@ class Chat:
                 "correct": is_correct
             })
 
-        return score, total, results  # Bien retourner les trois valeurs
+        return score, total, results
