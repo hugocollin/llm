@@ -17,7 +17,7 @@ Cette application offre une gamme complète de fonctionnalités, incluant des in
 
 ### Fonctionnalités principales
 
-- Discuter avec l'IA : Posez vos questions et obtenez des réponses précises et approfondies sur vos cours. L'IA, entraînée sur plus de 6 000 cours, vous aide à réviser et à mieux comprendre les sujets abordés en classe.
+- Discuter avec l'IA : Posez vos questions et obtenez des réponses précises et approfondies sur vos cours. L'IA, ayant accès à plus de 6 000 cours, vous aide à réviser et à mieux comprendre les sujets abordés en classe.
 
 - Obtenir des suggestions de messages : L'IA génère automatiquement cinq suggestions de questions pour faciliter vos interactions et mieux formuler vos demandes.
 
