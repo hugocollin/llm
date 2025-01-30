@@ -489,16 +489,12 @@ class Chat:
                 )
 
     @st.dialog("Quiz généré par l'IA 🎓", width="large")
-    def generate_quiz(self, topic, num_questions=5):
+    def generate_quiz(self, topic):
         """
-        Génère un quiz avec des questions sur le sujet donné.
-
+        Génère un quiz avec des questions sur le sujet donné, sans recharger l'application à chaque interaction.
+        
         Args:
             topic (str): Sujet du quiz.
-            num_questions (int, optionnel): Nombre de questions à générer. 5 par défaut.
-
-        Returns:
-            dict: Résultats du quiz avec les réponses de l'utilisateur.
         """
         quiz, result = st.columns([3, 1])
         user_answers = {}
@@ -511,40 +507,51 @@ class Chat:
             prompt_type="quizz",
             message=topic
         )
-        quiz_data = convert_to_json(response["response"])
+        
+        # Convertir la réponse en format JSON et vérifier sa validité
+        try:
+            quiz_data = convert_to_json(response["response"])
+            if not isinstance(quiz_data, list):
+                raise ValueError("Une erreur est survenue. Réessayez ultérieurement.")
+        except Exception as e:
+            st.error(f"Erreur : {str(e)}")
+            return
 
         with quiz:
-            # Vérifier que les données sont correctes
-            if not isinstance(quiz_data, list):
-                st.error("Erreur : Les données du quiz ne sont pas au bon format.")
-                return
+            # Affichage des questions du quiz dans un formulaire
+            with st.form(key="quiz_form", clear_on_submit=False):
+                for idx, question_data in enumerate(quiz_data):
+                    st.subheader(f"Question {idx + 1}")
+                    st.write(question_data["question"])
 
-            # Affichage des questions du quiz
-            for idx, question_data in enumerate(quiz_data):
-                st.subheader(f"Question {idx + 1}")
-                st.write(question_data["question"])
+                    options = question_data["options"]
+                    user_answers[idx] = st.radio(
+                        "Choisissez une réponse :",
+                        options=options,
+                        index=0,  # Définir un index par défaut pour éviter les erreurs
+                        key=f"question_{idx}"
+                    )
 
-                options = question_data["options"]
-                user_answers[idx] = st.radio(
-                    "Choisissez une réponse :",
-                    options=options,
-                    index=0,  # Ajout d'un index par défaut pour éviter les erreurs
-                    key=f"question_{idx}"
-                )
+                # Soumettre les réponses via le formulaire
+                submit_button = st.form_submit_button("Soumettre mes réponses")
+                
+                if submit_button:
+                    score, total, results = self.evaluate_quiz(quiz_data, user_answers)
+                    with result:
+                        st.subheader("Résultats 📊")
+                        for res in results:
+                            if res["correct"]:
+                                st.success(f"✅ {res['question']} → {res['user_answer']}")
+                            else:
+                                st.error(f"❌ {res['question']} → {res['user_answer']} (Bonne réponse : {res['correct_answer']})")
+                        st.write(f"**Score final : {score} / {total}** 🎯")
+                        # pop ballons if score == total
+                        if score == total:
+                            st.balloons()
 
-            # Bouton pour soumettre les réponses
-            if st.button("Soumettre mes réponses"):
-                score, total, results = self.evaluate_quiz(quiz_data, user_answers)
+                #[TEMP] add a button to load a new quiz
 
-                with result:
-                    st.subheader("Résultats 📊")
-                    for res in results:
-                        if res["correct"]:
-                            st.success(f"✅ {res['question']} → {res['user_answer']}")
-                        else:
-                            st.error(f"❌ {res['question']} → {res['user_answer']} (Bonne réponse : {res['correct_answer']})")
 
-                    st.write(f"**Score final : {score} / {total}** 🎯")
 
 
     def evaluate_quiz(self, quiz_data, user_answers):
