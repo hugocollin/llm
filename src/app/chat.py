@@ -261,7 +261,8 @@ class Chat:
 
         # Définition du message de sécurité
         security_message = (
-            "Votre message a été bloqué car il ne respecte pas nos conditions d'utilisation."
+            "Votre message a été bloqué car il ne respecte pas nos conditions d'utilisation. "
+            "Si vous estimez qu'il a été bloqué par erreur, veuillez essayer de le reformuler."
         )
 
         # Initialisation du pipeline de sécurité
