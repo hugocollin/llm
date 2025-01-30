@@ -304,7 +304,7 @@ class Chat:
                             "content": security_message,
                         }
                     )
-                    return
+                    st.rerun()
 
                 # Affichage de la réponse de l'IA
                 st.write_stream(stream_text(response["response"]))
