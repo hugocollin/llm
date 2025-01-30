@@ -261,7 +261,8 @@ class Chat:
 
         # Définition du message de sécurité
         security_message = (
-            "Votre message a été bloqué car il ne respecte pas nos conditions d'utilisation."
+            "Votre message a été bloqué car il ne respecte pas nos conditions d'utilisation. "
+            "Si vous estimez qu'il a été bloqué par erreur, veuillez essayer de le reformuler."
         )
 
         # Initialisation du pipeline de sécurité
@@ -278,33 +279,35 @@ class Chat:
             else:
                 prompt_type = "chat"
 
-            # Envoi du message et récupération de la réponse de l'IA
-            response = st.session_state["LLM"](
-                provider=st.session_state["AI_provider"],
-                model=st.session_state["AI_model"],
-                temperature=st.session_state["AI_temperature"],
-                prompt_type=prompt_type,
-                message=message,
-                message_history=st.session_state["chats"][self.selected_chat]
-            )
-
-            # Si l'IA a renvoyé le mot "Guardian"
-            if response["response"].strip() == "Guardian":
-                # Affichage du message de sécurité
-                with self.chat_container.chat_message("Guardian", avatar="🛡️"):
-                    st.write_stream(stream_text(security_message))
-
-                # Ajout du message de sécurité à l'historique de la conversation
-                st.session_state["chats"][self.selected_chat].append(
-                    {
-                        "role": "Guardian",
-                        "content": security_message,
-                    }
-                )
-                return
-
-            # Affichage de la réponse de l'IA
+            # Préparation de l'affichage du message de l'IA
             with self.chat_container.chat_message("AI", avatar="✨"):
+                with st.spinner("Je réfléchis..."):
+                # Envoi du message et récupération de la réponse de l'IA
+                    response = st.session_state["LLM"](
+                        provider=st.session_state["AI_provider"],
+                        model=st.session_state["AI_model"],
+                        temperature=st.session_state["AI_temperature"],
+                        prompt_type=prompt_type,
+                        message=message,
+                        message_history=st.session_state["chats"][self.selected_chat]
+                    )
+
+                # Si l'IA a renvoyé le mot "Guardian"
+                if response["response"].strip() == "Guardian":
+                    # Affichage du message de sécurité
+                    with self.chat_container.chat_message("Guardian", avatar="🛡️"):
+                        st.write_stream(stream_text(security_message))
+
+                    # Ajout du message de sécurité à l'historique de la conversation
+                    st.session_state["chats"][self.selected_chat].append(
+                        {
+                            "role": "Guardian",
+                            "content": security_message,
+                        }
+                    )
+                    st.rerun()
+
+                # Affichage de la réponse de l'IA
                 st.write_stream(stream_text(response["response"]))
                 st.pills(
                     label="NULL",
@@ -459,7 +462,7 @@ class Chat:
         uploaded_files = st.file_uploader(
             "NULL",
             label_visibility="collapsed",
-            prompt_type=["pdf"],
+            type=["pdf"],
             accept_multiple_files=True,
         )
 
