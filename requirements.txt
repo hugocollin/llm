@@ -7,7 +7,4 @@ scikit-learn
 plotly
 wikipedia
 ecologits
-langchain
-langchain_openai
-langchain_community
 pdfplumber
