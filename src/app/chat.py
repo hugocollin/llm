@@ -144,12 +144,12 @@ class Chat:
             # Affichage des messages de l'utilisateur
             if message["role"] == "User":
                 with self.chat_container.chat_message(message["role"], avatar="👤"):
-                    st.write(message["content"])
+                    st.markdown(message["content"])
 
             # Affichage des messages de l'IA
             elif message["role"] == "AI":
                 with self.chat_container.chat_message(message["role"], avatar="✨"):
-                    st.write(message["content"])
+                    st.markdown(message["content"])
                     metrics = message["metrics"]
                     st.pills(
                         label="NULL",
@@ -233,7 +233,7 @@ class Chat:
                 icon=":material/check_box:",
                 disabled=not st.session_state.get("found_api_keys", False)
             ):
-                self.generate_quiz(topic=self.selected_chat) # [TEMP] Ajouter un champ pré - rempli avec le nom du chat pour le sujet
+                self.generate_quiz()
 
         # Message d'avertissement
         st.write(
@@ -489,8 +489,8 @@ class Chat:
                     expanded=False,
                 )
 
-    @st.dialog("Quiz généré par l'IA 🎓", width="large")
-    def generate_quiz(self, topic, num_questions=5):
+    @st.dialog("Quiz", width="large")
+    def generate_quiz(self):
         """
         Génère un quiz avec des questions sur le sujet donné.
 
@@ -501,52 +501,58 @@ class Chat:
         Returns:
             dict: Résultats du quiz avec les réponses de l'utilisateur.
         """
-        quiz, result = st.columns([3, 1])
-        user_answers = {}
+        # Paramètre pour le nombre de questions
+        nb_questions = st.slider("Nombre de questions", min_value=1, max_value=10, value=5, step=1, key="nb_questions")
 
-        # Génération des questions du quiz
-        response = st.session_state["LLM"](
-            provider=st.session_state["AI_provider"],
-            model=st.session_state["AI_model"],
-            temperature=st.session_state["AI_temperature"],
-            prompt_type="quizz",
-            message=topic
-        )
-        quiz_data = convert_to_json(response["response"])
+        if st.button("Créer le quiz", icon=":material/check_box:"):
+            quiz, result = st.columns([3, 1])
+            user_answers = {}
 
-        with quiz:
-            # Vérifier que les données sont correctes
-            if not isinstance(quiz_data, list):
-                st.error("Erreur : Les données du quiz ne sont pas au bon format.")
-                return
-
-            # Affichage des questions du quiz
-            for idx, question_data in enumerate(quiz_data):
-                st.subheader(f"Question {idx + 1}")
-                st.write(question_data["question"])
-
-                options = question_data["options"]
-                user_answers[idx] = st.radio(
-                    "Choisissez une réponse :",
-                    options=options,
-                    index=0,  # Ajout d'un index par défaut pour éviter les erreurs
-                    key=f"question_{idx}"
+            with st.spinner("Création du quiz..."):
+                # Génération des questions du quiz
+                response = st.session_state["LLM"](
+                    provider="mistral",
+                    model="mistral-large-latest",
+                    temperature=0.7,
+                    prompt_type="quizz",
+                    message_history=st.session_state["chats"][self.selected_chat],
+                    nb_questions=nb_questions
                 )
+                print(response["response"])
+                quiz_data = convert_to_json(response["response"])
 
-            # Bouton pour soumettre les réponses
-            if st.button("Soumettre mes réponses"):
-                score, total, results = self.evaluate_quiz(quiz_data, user_answers)
+            with quiz:
+                # Vérifier que les données sont correctes
+                if not isinstance(quiz_data, list):
+                    st.error("La création du quiz a échoué. Veuillez réessayer.", key=":material/error:")
+                    return
 
-                with result:
-                    st.subheader("Résultats 📊")
-                    for res in results:
-                        if res["correct"]:
-                            st.success(f"✅ {res['question']} → {res['user_answer']}")
-                        else:
-                            st.error(f"❌ {res['question']} → {res['user_answer']} (Bonne réponse : {res['correct_answer']})")
+                # Affichage des questions du quiz
+                for idx, question_data in enumerate(quiz_data):
+                    st.subheader(f"Question {idx + 1}")
+                    st.write(question_data["question"])
 
-                    st.write(f"**Score final : {score} / {total}** 🎯")
+                    options = question_data["options"]
+                    user_answers[idx] = st.radio(
+                        "Choisissez une réponse :",
+                        options=options,
+                        index=0,  # Ajout d'un index par défaut pour éviter les erreurs
+                        key=f"question_{idx}"
+                    )
 
+                # Bouton pour soumettre les réponses
+                if st.button("Soumettre mes réponses"):
+                    score, total, results = self.evaluate_quiz(quiz_data, user_answers)
+
+                    with result:
+                        st.subheader("Résultats 📊")
+                        for res in results:
+                            if res["correct"]:
+                                st.success(f"✅ {res['question']} → {res['user_answer']}")
+                            else:
+                                st.error(f"❌ {res['question']} → {res['user_answer']} (Bonne réponse : {res['correct_answer']})")
+
+                        st.write(f"**Score final : {score} / {total}** 🎯")
 
     def evaluate_quiz(self, quiz_data, user_answers):
         """

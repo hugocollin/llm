@@ -88,7 +88,7 @@ class RAG:
         gwp = getattr(response.impacts.gwp.value, "min", response.impacts.gwp.value)
         return energy_usage, gwp
 
-    def build_prompt(self, prompt_type: str, message: str = None, message_history: list[dict[str, str]] = None) -> list[dict[str, str]]:
+    def build_prompt(self, prompt_type: str, message: str = None, message_history: list[dict[str, str]] = None, nb_questions: int = None) -> list[dict[str, str]]:
         # Initialisation des prompts
         context_prompt = ""
         history_prompt = ""
@@ -97,7 +97,11 @@ class RAG:
 
         # Récupération de l'historique de la conversation
         if message_history:
-            message_history = "\n".join([f"{message['role']}: {message['content']}" for message in message_history])
+            message_history = "\n".join([
+                f"{message['role']}: {message['content']}" 
+                for message in message_history
+                if 'role' in message and 'content' in message
+            ])
             message_history_formatted = f"Voici l'historique de la conversation : {message_history}. "
         else:
             message_history_formatted = ""
@@ -105,7 +109,7 @@ class RAG:
         # Construction du prompt pour la suggestion de questions
         if prompt_type == "suggestions":
             context_prompt = (
-                "Tu es une intelligence artificielle spécialisée dans l'aide aux élèves à l'école. "
+                "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
             )
             message_prompt = (
                 "Génère 5 questions courtes dans différentes matières sans les préciser, "
@@ -129,10 +133,16 @@ class RAG:
         # Construction du prompt pour la génération de réponses à des messages
         elif prompt_type == "chat":
             context_prompt = (
-                "Tu es une intelligence artificielle spécialisée dans l'aide "
-                "et les réponses aux questions liées à l'éducation, l'école, "
-                "les cours et la culture générale. Si un message reçu sort de ce cadre, "
-                "tu réponds uniquement et strictement par le mot 'Guardian'. "
+                "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
+                "Tu réponds aux questions liées à l'école, aux cours, aux devoirs, aux examens, aux matières académiques "
+                ", ainsi qu'à la culture générale. "
+                "Tu peux fournir des explications, des résumés, des formules mathématiques, des exemples de code, des corrigés "
+                "et des conseils pédagogiques. "
+                "Si une question concerne une matière scolaire ou un sujet éducatif, réponds avec une réponse claire et détaillée. "
+                "Si une formule mathématique est incluse dans ta réponse, entoure-la obligatoirement avec le symbole '$'. "
+                "Si un exemple de code est inclus, assure-toi qu'il est bien formaté dans un bloc de code. "
+                "Si le message de l'utilisateur n'a aucun lien avec l'école, l'éducation ou la culture générale, "
+                "réponds uniquement et strictement par le mot 'Guardian'. "
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
@@ -145,10 +155,16 @@ class RAG:
 
             # Construction du prompt personnalisé
             context_prompt = (
-                "Tu es une intelligence artificielle spécialisée dans l'aide "
-                "et les réponses aux questions liées à l'éducation, l'école, "
-                "les cours et la culture générale. Si un message reçu sort de ce cadre, "
-                "tu réponds uniquement et strictement par le mot 'Guardian'. "
+                "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
+                "Tu réponds aux questions liées à l'école, aux cours, aux devoirs, aux examens, aux matières académiques "
+                ", ainsi qu'à la culture générale. "
+                "Tu peux fournir des explications, des résumés, des formules mathématiques, des exemples de code, des corrigés "
+                "et des conseils pédagogiques. "
+                "Si une question concerne une matière scolaire ou un sujet éducatif, réponds avec une réponse claire et détaillée. "
+                "Si une formule mathématique est incluse dans ta réponse, entoure-la obligatoirement avec le symbole '$'. "
+                "Si un exemple de code est inclus, assure-toi qu'il est bien formaté dans un bloc de code. "
+                "Si le message de l'utilisateur n'a aucun lien avec l'école, l'éducation ou la culture générale, "
+                "réponds uniquement et strictement par le mot 'Guardian'. "
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
@@ -161,13 +177,15 @@ class RAG:
         # Construction du prompt pour la génération de quiz
         elif prompt_type == "quizz":
             context_prompt = (
-                "Tu es une intelligence artificielle spécialisée dans l'éducation. "
-                "Pour chaque question, fournis un dictionnaire JSON avec les clés suivantes : "
+                "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
+                f"Génère un quiz à choix multiples contenant {nb_questions} questions sur le sujet donné. "
+                "Retourne les questions sous forme d'un unique tableau JSON. "
+                "Chaque question doit être un dictionnaire avec les clés suivantes : "
                 "'question' (texte de la question), 'options' (liste de 4 options), "
-                "'answer' (réponse correcte). Ne donne que le JSON en retour. "
+                "'answer' (réponse correcte). "
+                "Répond en envoyant uniquement et strictement le tableau JSON sans texte supplémentaire."
             )
-            message_prompt = f"Génère un quiz avec 5 questions à choix multiples à partir des sujets évoqués dans la conversation suivante : {message_history}"
-
+            message_prompt = f"Les question doivent être exclusivement et uniquement sur les sujets évoqués dans la conversation. {message_history_formatted}"
         return [
             {"role": "system", "content": context_prompt},
             {"role": "system", "content": history_prompt},
@@ -198,10 +216,9 @@ class RAG:
             max_tokens=self.max_tokens,
             temperature=temperature,
         )
-
         return response
 
-    def __call__(self, provider: str, model: str, temperature: float, prompt_type: str, message: str = None, message_history: list[dict[str, str]] = None) -> str:
+    def __call__(self, provider: str, model: str, temperature: float, prompt_type: str, message: str = None, message_history: list[dict[str, str]] = None, nb_questions: int = None) -> str:
         # chunks = self.bdd.chroma_db.query(
         #     query_texts=[query],
         #     n_results=self.top_n,
@@ -210,6 +227,6 @@ class RAG:
         # prompt_rag = self.build_prompt(
         #     context=chunks_list, history=str(history), query=query
         # )
-        prompt = self.build_prompt(prompt_type, message, message_history)
+        prompt = self.build_prompt(prompt_type, message, message_history, nb_questions)
         response = self.call_model(provider, model, temperature, prompt_dict=prompt)
         return response
