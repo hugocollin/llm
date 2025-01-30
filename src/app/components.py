@@ -265,14 +265,14 @@ def show_stats_dialog():
                     )
                     fig.update_traces(
                         textposition='inside',
-                        texttemplate='%{percent}<br>%{value}',
+                        texttemplate='%{value}<br>%{percent}',
                         hovertemplate=(
                             '<b>%{label} :</b> %{value} '
                             'messages (%{percent})<extra></extra>'
                         )
                     )
                     st.header(
-                        f"**🗨️ Nombre total de messages envoyés : {total_user_messages:.0f}**"
+                        f"**🗨️ Nombre total de messages envoyés : {total_user_messages}**"
                     )
                     st.plotly_chart(fig, key="messages_chart")
 
@@ -290,7 +290,7 @@ def show_stats_dialog():
                     )
                     fig.update_traces(
                         textposition='inside',
-                        texttemplate='%{percent}<br>%{value}',
+                        texttemplate='%{value}<br>%{percent}',
                         hovertemplate=(
                             '<b>%{label} :</b> %{value} '
                             'messages bloqués (%{percent})<extra></extra>'
@@ -298,7 +298,7 @@ def show_stats_dialog():
                     )
                     st.header(
                         "**🛡️ Nombre total de messages bloqués : "
-                        f"{total_blocked_messages:.0f}**"
+                        f"{total_blocked_messages}**"
                     )
                     st.plotly_chart(fig, key="blocked_messages_chart")
 
@@ -319,12 +319,11 @@ def show_stats_dialog():
                     fig.update_layout(
                         xaxis_title="Latence (secondes)",
                         yaxis_title="Nombre de réponses",
-                        title_font_size=20,
-                        legend_title_text="Latences (secondes)"
+                        showlegend=False,
                     )
                     fig.update_traces(
                         hovertemplate=(
-                            '<b>Latence :</b> %{x} '
+                            '<b>Latence :</b> %{x:.2f} '
                             'secondes<br><b>Nombre de réponses :</b> %{y}<extra></extra>'
                         ),
                         marker=dict(opacity=0.7, line=dict(color='black', width=1))
@@ -351,11 +350,10 @@ def show_stats_dialog():
                     )
                     fig.update_traces(
                         textposition='inside',
-                        texttemplate='%{percent}<br>%{value}',
-                        hovertemplate='<b>%{label} :</b> %{value} € (%{percent})<extra></extra>'
+                        texttemplate='%{value:.7f}<br>%{percent}',
+                        hovertemplate='<b>%{label} :</b> %{value:.7f} € (%{percent})<extra></extra>'
                     )
-                    fig.update_traces(textposition='inside', texttemplate='%{percent}<br>%{value}')
-                    st.header(f"**💲 Coût total : {total_cost:.6f} €**")
+                    st.header(f"**💲 Coût total : {total_cost:.7f} €**")
                     st.plotly_chart(fig, key="cost_chart")
 
                 with st.container(border=True):
@@ -370,15 +368,14 @@ def show_stats_dialog():
                             )
                             for chat in chats_to_analyze.values()
                         ],
-                        color_discrete_sequence=px.colors.sequential.Electric[::-1]
+                        color_discrete_sequence=px.colors.sequential.solar[::-1]
                     )
                     fig.update_traces(
                         textposition='inside',
-                        texttemplate='%{percent}<br>%{value}',
-                        hovertemplate='<b>%{label} :</b> %{value} kWh (%{percent})<extra></extra>'
+                        texttemplate='%{value:.7f}<br>%{percent}',
+                        hovertemplate='<b>%{label} :</b> %{value:.7f} kWh (%{percent})<extra></extra>'
                     )
-                    fig.update_traces(textposition='inside', texttemplate='%{percent}<br>%{value}')
-                    st.header(f"**⚡ Utilisation énergétique totale : {total_energy} kWh**")
+                    st.header(f"**⚡ Utilisation énergétique totale : {total_energy:.7f} kWh**")
                     st.plotly_chart(fig, key="energy_chart")
 
                 with st.container(border=True):
@@ -397,14 +394,14 @@ def show_stats_dialog():
                     )
                     fig.update_traces(
                         textposition='inside',
-                        texttemplate='%{percent}<br>%{value}',
+                        texttemplate='%{value:.7f}<br>%{percent}',
                         hovertemplate=(
-                            '<b>%{label} :</b> %{value} '
+                            '<b>%{label} :</b> %{value:.7f} '
                             'kgCO2eq (%{percent})<extra></extra>'
                         )
                     )
                     st.header(
-                        f"**🌡️ Potentiel de réchauffement global total : {total_gwp} kgCO2eq**"
+                        f"**🌡️ Potentiel de réchauffement global total : {total_gwp:.7f} kgCO2eq**"
                     )
                     st.plotly_chart(fig, key="gwp_chart")
 
