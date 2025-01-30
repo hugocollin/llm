@@ -271,7 +271,6 @@ def show_stats_dialog():
                             color_discrete_sequence=px.colors.sequential.Blues[::-1]
                         )
                         fig.update_traces(
-                            textposition='inside',
                             texttemplate='%{value}<br>%{percent}',
                             hovertemplate=(
                                 '<b>%{label} :</b> %{value} '
@@ -301,7 +300,6 @@ def show_stats_dialog():
                             color_discrete_sequence=px.colors.sequential.Purples[::-1]
                         )
                         fig.update_traces(
-                            textposition='inside',
                             texttemplate='%{value}<br>%{percent}',
                             hovertemplate=(
                                 '<b>%{label} :</b> %{value} '
@@ -331,7 +329,6 @@ def show_stats_dialog():
                             color_discrete_sequence=px.colors.sequential.Mint[::-1]
                         )
                         fig.update_traces(
-                            textposition='inside',
                             texttemplate='%{value}<br>%{percent}',
                             hovertemplate=(
                                 '<b>%{label} :</b> %{value} '
@@ -396,7 +393,6 @@ def show_stats_dialog():
                             color_discrete_sequence=px.colors.sequential.Greens[::-1]
                         )
                         fig.update_traces(
-                            textposition='inside',
                             texttemplate='%{value:.7f}<br>%{percent}',
                             hovertemplate='<b>%{label} :</b> %{value:.7f} € (%{percent})<extra></extra>'
                         )
@@ -422,7 +418,6 @@ def show_stats_dialog():
                             color_discrete_sequence=px.colors.sequential.solar[::-1]
                         )
                         fig.update_traces(
-                            textposition='inside',
                             texttemplate='%{value:.7f}<br>%{percent}',
                             hovertemplate='<b>%{label} :</b> %{value:.7f} kWh (%{percent})<extra></extra>'
                         )
@@ -450,7 +445,6 @@ def show_stats_dialog():
                             color_discrete_sequence=px.colors.sequential.Reds[::-1]
                         )
                         fig.update_traces(
-                            textposition='inside',
                             texttemplate='%{value:.7f}<br>%{percent}',
                             hovertemplate=(
                                 '<b>%{label} :</b> %{value:.7f} '
