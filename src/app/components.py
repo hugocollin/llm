@@ -239,8 +239,9 @@ def show_info_dialog():
         st.header("💬 Discuter avec l'IA")
         st.write(
             "Posez vos questions et obtenez des réponses précises et approfondies sur vos cours. "
-            "L'IA, ayant accès à plus de 6 000 cours, vous aide à réviser et à mieux comprendre "
-            "les sujets abordés en classe."
+            "L'IA, ayant accès à plus de 6 000 cours et à l'historique des messages précédemment "
+            "envoyés dans la discussion, vous aide à réviser et à mieux comprendre les sujets "
+            "abordés en classe."
         )
 
     cols = st.columns(2)
