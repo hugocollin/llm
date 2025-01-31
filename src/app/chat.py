@@ -34,9 +34,6 @@ class Chat:
         if "AI_temperature" not in st.session_state:
             st.session_state["AI_temperature"] = 0.7
 
-        # Initialisation du pipeline de sécurité
-        self.security_manager = EnhancedLLMSecurityManager()
-
         # Récupération du chat sélectionné
         self.selected_chat = selected_chat
 
@@ -57,6 +54,10 @@ class Chat:
             # Mise en page du chat avec l'IA
             self.header_container = st.container()
             self.chat_container = self.header_container.container(height=500)
+        
+        # Initialisation du Guardian
+        if "GUARDIAN" not in st.session_state:
+            st.session_state["GUARDIAN"] = EnhancedLLMSecurityManager()
 
         # Si les clés d'API sont trouvées
         if st.session_state["found_api_keys"] is True:
@@ -277,7 +278,7 @@ class Chat:
         )
 
         # Validation du message de l'utilisateur
-        is_valid_message = self.security_manager.validate_input(message)
+        is_valid_message = st.session_state["GUARDIAN"].validate_input(message)
 
         # Si le message de utilisateur est autorisé
         if is_valid_message is True:
