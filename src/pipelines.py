@@ -164,4 +164,4 @@ class PDFPipeline:
         discussion_id = str(uuid.uuid4())
         chunks = self.split_into_chunks(text)
         self.store_in_database(discussion_id, chunks)
-        print(f"PDF traité avec succès et stocké sous discussion_id : {discussion_id}")
+        print(f"[INFO] Le document a été ajouté avec succès à la base de données")

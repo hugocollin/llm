@@ -6,7 +6,7 @@ import streamlit as st
 import PyPDF2
 
 from src.app.components import stream_text, convert_to_json
-from src.pipelines import EnhancedLLMSecurityManager
+from src.pipelines import EnhancedLLMSecurityManager, PDFPipeline
 from src.llm.rag import RAG
 
 class Chat:
@@ -58,6 +58,10 @@ class Chat:
         # Initialisation du Guardian
         if "GUARDIAN" not in st.session_state:
             st.session_state["GUARDIAN"] = EnhancedLLMSecurityManager()
+
+        # Initialisation du pipeline de traitement des fichiers PDF
+        if "PDF_PIPELINE" not in st.session_state:
+            st.session_state["PDF_PIPELINE"] = PDFPipeline()
 
         # Si les clés d'API sont trouvées
         if st.session_state["found_api_keys"] is True:
@@ -209,7 +213,7 @@ class Chat:
                 if message.strip():
                     self.handle_user_message(message)
 
-        # Bouton pour ajouter un fichier PDF [TEMP]
+        # Bouton pour ajouter un fichier PDF
         with cols[2]:
             if st.button(
                 "",
@@ -486,14 +490,13 @@ class Chat:
                 expanded=True,
             ) as status:
                 # Lecture du contenu de chaque fichier PDF
-                documents = {}
                 for file in uploaded_files:
                     st.write(f"Ajout du fichier {file.name}...")
                     pdf_reader = PyPDF2.PdfReader(file)
                     text = ""
                     for page in pdf_reader.pages:
                         text += page.extract_text()
-                    documents[file.name] = text
+                    st.session_state["PDF_PIPELINE"].process_txt(text)
                 status.update(
                     label="**Les fichiers ont été ajoutés avec succès ! "
                     "Vous pouvez maintenant fermer la fenêtre.**",
