@@ -46,7 +46,7 @@ class Chat:
             # Mise en page du chat avec l'IA
             self.header_container = st.container()
             self.chat_container = self.header_container.container(height=500)
-        
+
         # Initialisation du Guardian
         if "GUARDIAN" not in st.session_state:
             st.session_state["GUARDIAN"] = EnhancedLLMSecurityManager()
@@ -479,12 +479,12 @@ class Chat:
             disabled=not uploaded_files,
         ):
             with st.status(
-                "**Ajout de(s) fichier(s) en cours... Ne fermez pas la fenêtre !**",
+                "**Ajout des fichiers en cours... Ne fermez pas la fenêtre !**",
                 expanded=True,
             ) as status:
                 # Lecture du contenu de chaque fichier PDF
                 for file in uploaded_files:
-                    st.write(f"Ajout du fichier {file.name}...")
+                    st.write(f"Traitement du fichier {file.name} en cours...")
                     pdf_reader = PyPDF2.PdfReader(file)
                     text = ""
                     for page in pdf_reader.pages:
@@ -492,6 +492,7 @@ class Chat:
                     document_ids = st.session_state["PDF_PIPELINE"].process_txt(text)
                     for document_id in document_ids:
                         st.session_state["chats"][self.selected_chat]["document_ids"].append(document_id)
+                    st.write(f"Traitement du fichier {file.name} terminé !")
                 status.update(
                     label="**Les fichiers ont été ajoutés avec succès ! "
                     "Vous pouvez maintenant fermer la fenêtre.**",
