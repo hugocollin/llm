@@ -100,7 +100,7 @@ def rename_chat(current_name : str):
         max_chars=30
     )
 
-    if st.button("Enregistrer", icon=":material/save_as:"):
+    if st.button("Enregistrer", icon=":material/save_as:", use_container_width=True):
         # Vérification de la conformité du nouveau nom
         if new_name in st.session_state["chats"] and new_name != current_name:
             st.error(
@@ -139,12 +139,12 @@ def show_sidebar() -> str:
 
         # Bouton pour revenir à l'accueil
         with cols[0]:
-            if st.button("", icon=":material/home:"):
+            if st.button("", icon=":material/home:", use_container_width=True):
                 st.session_state["selected_chat"] = None
 
         # Bouton pour afficher les informations sur l'application
         with cols[1]:
-            if st.button("", icon=":material/info:"):
+            if st.button("", icon=":material/info:", use_container_width=True):
                 show_info_dialog()
 
         header_cols = st.columns([3, 1, 1])
@@ -156,13 +156,13 @@ def show_sidebar() -> str:
         # Bouton pour afficher les statistiques
         with header_cols[1]:
             st.write("")
-            if st.button("", icon=":material/bar_chart:"):
+            if st.button("", icon=":material/bar_chart:", use_container_width=True):
                 show_stats_dialog()
 
         # Bouton pour ajouter un chat
         with header_cols[2]:
             st.write("")
-            if st.button("", icon=":material/add_comment:"):
+            if st.button("", icon=":material/add_comment:", use_container_width=True):
                 if len(st.session_state["chats"]) < 5:
                     create_new_chat()
                 else:
@@ -183,6 +183,7 @@ def show_sidebar() -> str:
                     st.button(
                         f":material/forum: {chat_name}",
                         type="primary" if chat_name == st.session_state.get("selected_chat") else "secondary",
+                        use_container_width=True,
                         on_click=select_chat,
                         args=(chat_name,)
                     )
@@ -190,7 +191,9 @@ def show_sidebar() -> str:
                 # Boutons pour renommer le chat
                 with btn_cols[1]:
                     if st.button(
-                        "", icon=":material/edit:", key=f"rename_'{chat_name}'_button"
+                        "",
+                        icon=":material/edit:", key=f"rename_'{chat_name}'_button",
+                        use_container_width=True
                     ):
                         rename_chat(chat_name)
                     if st.session_state["chat_renamed"] is True:
@@ -203,7 +206,9 @@ def show_sidebar() -> str:
                 # Bouton pour supprimer le chat
                 with btn_cols[2]:
                     if st.button(
-                        "", icon=":material/delete:", key=f"delete_'{chat_name}'_button"
+                        "",
+                        icon=":material/delete:", key=f"delete_'{chat_name}'_button",
+                        use_container_width=True
                     ):
                         del st.session_state["chats"][chat_name]
                         del st.session_state[f"delete_'{chat_name}'_button"]
@@ -227,6 +232,7 @@ def show_info_dialog():
     """
     Fonction pour afficher les informations sur l'application.
     """
+
     # Information générale
     st.write(
         "**SISE Classmate est un assistant conversationnel spécialisé dans le "

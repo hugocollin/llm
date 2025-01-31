@@ -186,6 +186,7 @@ class Chat:
                 "",
                 icon=":material/tune:",
                 disabled=not st.session_state.get("found_api_keys", False),
+                use_container_width=True
             ):
                 self.settings_dialog()
             if st.session_state["modified_model_params"] is True:
@@ -214,6 +215,7 @@ class Chat:
                     not st.session_state.get("found_api_keys", False) or
                     st.session_state.get("internet_search_active", False)
                 ),
+                use_container_width=True
             ):
                 self.upload_files_dialog()
 
@@ -223,6 +225,7 @@ class Chat:
                 "",
                 icon=":material/language:",
                 disabled=not st.session_state.get("found_api_keys", False),
+                use_container_width=True,
                 type="primary" if st.session_state["internet_search_active"] else "secondary"
             ):
                 if st.session_state["internet_search_active"] is True:
@@ -239,7 +242,8 @@ class Chat:
                 disabled=(
                     not st.session_state.get("found_api_keys", False) or
                     st.session_state["chats"][self.selected_chat]["messages"] == []
-                )
+                ),
+                use_container_width=True
             ):
                 self.generate_quiz()
 
@@ -451,7 +455,7 @@ class Chat:
         selected_temperature /= 100.0
 
         # Enregistrement des paramètres
-        if st.button("Enregistrer", icon=":material/save:"):
+        if st.button("Enregistrer", icon=":material/save:", use_container_width=True):
             st.session_state["AI_provider"] = selected_provider
             st.session_state["AI_model"] = selected_model
             st.session_state["AI_temperature"] = selected_temperature
@@ -477,6 +481,7 @@ class Chat:
             "Ajouter les fichiers sélectionnés",
             icon=":material/upload_file:",
             disabled=not uploaded_files,
+            use_container_width=True
         ):
             with st.status(
                 "**Ajout des fichiers en cours... Ne fermez pas la fenêtre !**",
@@ -516,7 +521,7 @@ class Chat:
                 value=5,
                 step=1
             )
-            if st.button("Créer un quiz"):
+            if st.button("Créer un quiz", use_container_width=True):
                 # Réinitialisation des données du quiz
                 st.session_state['quiz_data'] = None
                 st.session_state['quiz_answers'] = {}
@@ -568,7 +573,8 @@ class Chat:
                     # Bouton de validation des réponses
                     if st.form_submit_button(
                         "Valider les réponses",
-                        disabled=st.session_state['quiz_submitted']
+                        disabled=st.session_state['quiz_submitted'],
+                        use_container_width=True
                     ):
                         score, total, results = self.evaluate_quiz(
                             st.session_state['quiz_data'],
@@ -600,7 +606,7 @@ class Chat:
                             if st.button(
                                 "Expliquer la réponse",
                                 key=f"explain_{idx}",
-                                disabled=False
+                                use_container_width=True
                             ):
                                 st.session_state['quiz_answer_explanation'] = (
                                     f"Pourquoi la bonne réponse à la question **{res['question']}**\n"
