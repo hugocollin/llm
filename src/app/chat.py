@@ -294,7 +294,8 @@ class Chat:
                         temperature=st.session_state["AI_temperature"],
                         prompt_type=prompt_type,
                         message=message,
-                        message_history=st.session_state["chats"][self.selected_chat]["messages"]
+                        message_history=st.session_state["chats"][self.selected_chat]["messages"],
+                        ressources=st.session_state["chats"][self.selected_chat]["document_ids"]
                     )
 
                 # Si l'IA a renvoyé le mot "Guardian"

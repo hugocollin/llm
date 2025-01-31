@@ -7,6 +7,7 @@ import functools
 import litellm
 import numpy as np
 import wikipedia
+import sqlite3
 from ecologits import EcoLogits
 from numpy.typing import NDArray
 
@@ -59,6 +60,31 @@ class RAG:
         print(indices_of_max_values)
         return [corpus[i] for i in indices_of_max_values]
     
+    def get_documents_content(self, ressources: list[str]) -> str:
+        """
+        Récupère le contenu des documents à partir de la base de données
+        en utilisant les id_conversation fournies.
+
+        Args:
+            ressources (list[str]): Liste des id_conversation.
+
+        Returns:
+            str: Contenu concaténé des documents.
+        """
+        contents = []
+        db_path = "llm_database.db"
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            for discussion_id in ressources:
+                cursor.execute(
+                    "SELECT content FROM discussions WHERE discussion_id = ?",
+                    (discussion_id,)
+                )
+                rows = cursor.fetchall()
+                for row in rows:
+                    contents.append(row[0])
+        return "\n".join(contents)
+    
     def fetch_wikipedia_data(self, query : str) -> str:
         """
         Recherche des informations sur Wikipedia pour la requête donnée.
@@ -99,7 +125,7 @@ class RAG:
         gwp = getattr(response.impacts.gwp.value, "min", response.impacts.gwp.value)
         return energy_usage, gwp
 
-    def build_prompt(self, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, nb_questions : int = None) -> list[dict[str, str]]:
+    def build_prompt(self, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, ressources : list[str] = None, nb_questions : int = None) -> list[dict[str, str]]:
         # Initialisation des prompts
         context_prompt = ""
         history_prompt = ""
@@ -143,6 +169,12 @@ class RAG:
 
         # Construction du prompt pour la génération de réponses à des messages
         elif prompt_type == "chat":
+            # Récupération des informations des documents associés à la conversation
+            if ressources:
+                documents = self.get_documents_content(ressources)
+            else:
+                documents = "Pas de ressources supplémentaires fournies."
+
             context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
                 "Tu réponds aux questions liées à l'école, aux cours, aux devoirs, aux quizz, aux examens, aux matières académiques "
@@ -158,14 +190,16 @@ class RAG:
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
-            ressources_prompt = "" # [TEMP] Ajouter les ressources pour la réponse
+            ressources_prompt = (
+                "Pour répondre au message suivant, l'utilisateur a fourni des ressources "
+                f"supplémentaires afin de te donner des informations sur le sujet : {documents}"
+            )
 
         # Construction du prompt pour la génération de réponses à des messages avec le mode internet
         elif prompt_type == "internet_chat":
             # Récupération des informations sur Wikipedia
             wiki_summary = self.fetch_wikipedia_data(message)
 
-            # Construction du prompt personnalisé
             context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
                 "Tu réponds aux questions liées à l'école, aux cours, aux devoirs, aux quizz, aux examens, aux matières académiques "
@@ -231,7 +265,7 @@ class RAG:
         )
         return response
 
-    def __call__(self, provider : str, model : str, temperature : float, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, nb_questions : int = None) -> str:
-        prompt = self.build_prompt(prompt_type, message, message_history, nb_questions)
+    def __call__(self, provider : str, model : str, temperature : float, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, ressources : list[str] = None, nb_questions : int = None) -> str:
+        prompt = self.build_prompt(prompt_type, message, message_history, ressources, nb_questions)
         response = self.call_model(provider, model, temperature, prompt_dict=prompt)
         return response
