@@ -7,5 +7,4 @@ scikit-learn
 plotly
 wikipedia
 ecologits
-pdfplumber
 rapidfuzz

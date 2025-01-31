@@ -222,4 +222,4 @@ class PromptClassifier:
         model_path = os.path.join(os.path.dirname(__file__), 'best_prompt_model.pkl')
         with open(model_path, 'rb') as f:
             self.best_model = pickle.load(f)
-        print(f"Modèle chargé avec succès depuis {model_path}.")
+        print(f"[INFO] Le module Guardian a été chargé avec succès.")

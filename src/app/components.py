@@ -72,8 +72,17 @@ def create_new_chat():
 
     # Création de la nouvelle conversation
     new_chat_name = f"Conversation {n}"
-    st.session_state["chats"][new_chat_name] = []
+    st.session_state["chats"][new_chat_name] = {
+        "messages": [],
+        "document_ids": []
+    }
     st.session_state["selected_chat"] = new_chat_name
+
+def select_chat(chat_name : str):
+    """
+    Fonction pour sélectionner une conversation.
+    """
+    st.session_state["selected_chat"] = chat_name
 
 @st.dialog("Renommer la conversation")
 def rename_chat(current_name : str):
@@ -171,8 +180,12 @@ def show_sidebar() -> str:
 
                 # Bouton pour sélectionner le chat
                 with btn_cols[0]:
-                    if st.button(f":material/forum: {chat_name}"):
-                        selected_chat = chat_name
+                    st.button(
+                        f":material/forum: {chat_name}",
+                        type="primary" if chat_name == st.session_state.get("selected_chat") else "secondary",
+                        on_click=select_chat,
+                        args=(chat_name,)
+                    )
 
                 # Boutons pour renommer le chat
                 with btn_cols[1]:
@@ -345,7 +358,7 @@ def show_stats_dialog():
 
             # Calcul des statistiques
             for chat in chats_to_analyze.values():
-                for message in chat:
+                for message in chat.get("messages", []):
                     if message["role"] == "User":
                         total_user_messages += 1
                     if message["role"] == "AI":
@@ -404,7 +417,10 @@ def show_stats_dialog():
                         )
                     else:
                         conversation_names = list(chats_to_analyze.keys())
-                        message_counts = [(len(chat) / 2) for chat in chats_to_analyze.values()]
+                        message_counts = [
+                            sum(1 for message in chat.get("messages", []) if message.get("role") == "User")
+                            for chat in chats_to_analyze.values()
+                        ]
                         fig = px.pie(
                             names=conversation_names,
                             values=message_counts,
@@ -434,7 +450,7 @@ def show_stats_dialog():
                     else:
                         blocked_message_counts = [0] * len(conversation_names)
                         for i, chat in enumerate(chats_to_analyze.values()):
-                            for message in chat:
+                            for message in chat.get("messages", []):
                                 if message["role"] == "Guardian":
                                     blocked_message_counts[i] += 1
                         fig = px.pie(
@@ -466,7 +482,7 @@ def show_stats_dialog():
                     else:
                         internet_search_counts = [0] * len(conversation_names)
                         for i, chat in enumerate(chats_to_analyze.values()):
-                            for message in chat:
+                            for message in chat.get("messages", []):
                                 if message.get("internet_search"):
                                     internet_search_counts[i] += 1
                         fig = px.pie(
@@ -499,7 +515,7 @@ def show_stats_dialog():
                         latences = [
                             message["metrics"]["latency"]
                             for chat in chats_to_analyze.values()
-                            for message in chat
+                            for message in chat.get("messages", [])
                             if message["role"] == "AI" and "latency" in message.get("metrics", {})
                         ]
                         fig = px.histogram(
@@ -537,7 +553,7 @@ def show_stats_dialog():
                             values=[
                                 sum(
                                     message["metrics"].get("euro_cost", 0.0)
-                                    for message in chat
+                                    for message in chat.get("messages", [])
                                     if message["role"] == "AI"
                                 )
                                 for chat in chats_to_analyze.values()
@@ -567,7 +583,7 @@ def show_stats_dialog():
                             values=[
                                 sum(
                                     message["metrics"].get("energy_usage", 0.0)
-                                    for message in chat
+                                    for message in chat.get("messages", [])
                                     if message["role"] == "AI"
                                 )
                                 for chat in chats_to_analyze.values()
@@ -599,7 +615,7 @@ def show_stats_dialog():
                             values=[
                                 sum(
                                     message["metrics"].get("gwp", 0.0)
-                                    for message in chat
+                                    for message in chat.get("messages", [])
                                     if message["role"] == "AI"
                                 )
                                 for chat in chats_to_analyze.values()

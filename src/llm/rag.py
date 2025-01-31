@@ -1,14 +1,28 @@
+"""
+Ce fichier contient la classe RAG qui permet d'interagir avec un modèle de langage pour la génération de réponses.
+"""
+
 import time
 import functools
 import litellm
 import numpy as np
 import wikipedia
+import sqlite3
 from ecologits import EcoLogits
 from numpy.typing import NDArray
 
-def measure_latency(func):
+def measure_latency(func : callable) -> callable:
+    """
+    Décorateur pour mesurer le temps d'exécution d'une fonction.
+
+    Args:
+        func (callable): La fonction à décorer.
+
+    Returns:
+        callable: La fonction décorée.
+    """
     @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self, *args, **kwargs) -> float:
         start_time = time.time()
         result = func(self, *args, **kwargs)
         end_time = time.time()
@@ -20,23 +34,21 @@ def measure_latency(func):
 class RAG:
     def __init__(
         self,
-        # bdd_chunks: BDDChunks,
         max_tokens: int,
         top_n: int,
     ) -> None:
-        # self.bdd = bdd_chunks
         self.top_n = top_n
         self.max_tokens = max_tokens
         EcoLogits.init(providers="litellm", electricity_mix_zone="FRA")
 
-    def get_cosim(self, a: NDArray[np.float32], b: NDArray[np.float32]) -> float:
+    def get_cosim(self, a : NDArray[np.float32], b : NDArray[np.float32]) -> float:
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
     def get_top_similarity(
         self,
-        embedding_query: NDArray[np.float32],
-        embedding_chunks: NDArray[np.float32],
-        corpus: list[str],
+        embedding_query : NDArray[np.float32],
+        embedding_chunks : NDArray[np.float32],
+        corpus : list[str],
     ) -> list[str]:
         cos_dist_list = np.array(
             [
@@ -48,7 +60,32 @@ class RAG:
         print(indices_of_max_values)
         return [corpus[i] for i in indices_of_max_values]
     
-    def fetch_wikipedia_data(self, query: str) -> str:
+    def get_documents_content(self, ressources: list[str]) -> str:
+        """
+        Récupère le contenu des documents à partir de la base de données
+        en utilisant les id_conversation fournies.
+
+        Args:
+            ressources (list[str]): Liste des id_conversation.
+
+        Returns:
+            str: Contenu concaténé des documents.
+        """
+        contents = []
+        db_path = "llm_database.db"
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            for discussion_id in ressources:
+                cursor.execute(
+                    "SELECT content FROM discussions WHERE discussion_id = ?",
+                    (discussion_id,)
+                )
+                rows = cursor.fetchall()
+                for row in rows:
+                    contents.append(row[0])
+        return "\n".join(contents)
+    
+    def fetch_wikipedia_data(self, query : str) -> str:
         """
         Recherche des informations sur Wikipedia pour la requête donnée.
 
@@ -68,7 +105,7 @@ class RAG:
         except wikipedia.exceptions.PageError:
             return "Wikipedia n'a pas trouvé d'informations correspondant au message"
     
-    def _get_price_query(self, model: str, input_tokens: int, output_tokens: int) -> float:
+    def _get_price_query(self, model : str, input_tokens : int, output_tokens : int) -> float:
         pricing = {
             "ministral-8b-latest": {"input": 0.095, "output": 0.095},
             "mistral-large-latest": {"input": 1.92, "output": 5.75},
@@ -83,12 +120,12 @@ class RAG:
         cost_output = (output_tokens / 1_000_000) * pricing[model]["output"]
         return cost_input + cost_output
     
-    def _get_energy_usage(self, response: litellm.ModelResponse) -> tuple[float, float]:
+    def _get_energy_usage(self, response : litellm.ModelResponse) -> tuple[float, float]:
         energy_usage = getattr(response.impacts.energy.value, "min", response.impacts.energy.value)
         gwp = getattr(response.impacts.gwp.value, "min", response.impacts.gwp.value)
         return energy_usage, gwp
 
-    def build_prompt(self, prompt_type: str, message: str = None, message_history: list[dict[str, str]] = None, nb_questions: int = None) -> list[dict[str, str]]:
+    def build_prompt(self, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, ressources : list[str] = None, nb_questions : int = None) -> list[dict[str, str]]:
         # Initialisation des prompts
         context_prompt = ""
         history_prompt = ""
@@ -132,6 +169,12 @@ class RAG:
 
         # Construction du prompt pour la génération de réponses à des messages
         elif prompt_type == "chat":
+            # Récupération des informations des documents associés à la conversation
+            if ressources:
+                documents = self.get_documents_content(ressources)
+            else:
+                documents = "Pas de ressources supplémentaires fournies."
+
             context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
                 "Tu réponds aux questions liées à l'école, aux cours, aux devoirs, aux quizz, aux examens, aux matières académiques "
@@ -147,14 +190,16 @@ class RAG:
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
-            ressources_prompt = "" # [TEMP] Ajouter les ressources pour la réponse
+            ressources_prompt = (
+                "Pour répondre au message suivant, l'utilisateur a fourni des ressources "
+                f"supplémentaires afin de te donner des informations sur le sujet : {documents}"
+            )
 
         # Construction du prompt pour la génération de réponses à des messages avec le mode internet
         elif prompt_type == "internet_chat":
             # Récupération des informations sur Wikipedia
             wiki_summary = self.fetch_wikipedia_data(message)
 
-            # Construction du prompt personnalisé
             context_prompt = (
                 "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
                 "Tu réponds aux questions liées à l'école, aux cours, aux devoirs, aux quizz, aux examens, aux matières académiques "
@@ -187,7 +232,7 @@ class RAG:
                 "'answer' (réponse correcte). "
                 "Répond en envoyant uniquement et strictement le tableau JSON sans texte supplémentaire."
             )
-            message_prompt = f"Les question doivent être exclusivement et uniquement sur les sujets évoqués dans la conversation. {message_history_formatted}"
+            message_prompt = f"Les questions doivent être exclusivement et uniquement sur les sujets évoqués dans la conversation. {message_history_formatted}"
         return [
             {"role": "system", "content": context_prompt},
             {"role": "system", "content": history_prompt},
@@ -195,7 +240,7 @@ class RAG:
             {"role": "system", "content": ressources_prompt}
         ]
 
-    def call_model(self, provider: str, model: str, temperature: float, prompt_dict: list[dict[str, str]]) -> str:
+    def call_model(self, provider : str, model : str, temperature : float, prompt_dict : list[dict[str, str]]) -> str:
         response: litellm.ModelResponse = self._generate(provider, model, temperature, prompt_dict=prompt_dict)
         input_tokens = response.usage.prompt_tokens
         output_tokens = response.usage.completion_tokens
@@ -211,7 +256,7 @@ class RAG:
         }
     
     @measure_latency
-    def _generate(self, provider, model, temperature, prompt_dict: list[dict[str, str]]) -> litellm.ModelResponse:
+    def _generate(self, provider, model, temperature, prompt_dict : list[dict[str, str]]) -> litellm.ModelResponse:
         response = litellm.completion(
             model=f"{provider}/{model}",
             messages=prompt_dict,
@@ -220,15 +265,7 @@ class RAG:
         )
         return response
 
-    def __call__(self, provider: str, model: str, temperature: float, prompt_type: str, message: str = None, message_history: list[dict[str, str]] = None, nb_questions: int = None) -> str:
-        # chunks = self.bdd.chroma_db.query(
-        #     query_texts=[query],
-        #     n_results=self.top_n,
-        # )
-        # chunks_list: list[str] = chunks["documents"][0]
-        # prompt_rag = self.build_prompt(
-        #     context=chunks_list, history=str(history), query=query
-        # )
-        prompt = self.build_prompt(prompt_type, message, message_history, nb_questions)
+    def __call__(self, provider : str, model : str, temperature : float, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, ressources : list[str] = None, nb_questions : int = None) -> str:
+        prompt = self.build_prompt(prompt_type, message, message_history, ressources, nb_questions)
         response = self.call_model(provider, model, temperature, prompt_dict=prompt)
         return response
