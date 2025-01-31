@@ -17,7 +17,7 @@ Cette application offre une gamme complète de fonctionnalités, incluant des in
 
 ### Fonctionnalités principales
 
-- Discuter avec l'IA : Posez vos questions et obtenez des réponses précises et approfondies sur vos cours. L'IA, ayant accès à plus de 6 000 cours, vous aide à réviser et à mieux comprendre les sujets abordés en classe.
+- Discuter avec l'IA : Posez vos questions et obtenez des réponses précises et approfondies sur vos cours. L'IA, ayant accès à plus de 6 000 cours et à l'historique des messages précédemment envoyés dans la discussion, vous aide à réviser et à mieux comprendre les sujets abordés en classe.
 
 - Obtenir des suggestions de messages : L'IA génère automatiquement cinq suggestions de questions pour faciliter vos interactions et mieux formuler vos demandes.
 
@@ -49,9 +49,7 @@ Cette application offre une gamme complète de fonctionnalités, incluant des in
 │   │   └── components.py
 │   ├── db
 │   │   ├── __init__.py
-│   │   ├── db.ipynb
 │   │   ├── courses.py
-│   │   ├── llm_database.db
 │   │   └── scrapping_courses.py
 │   ├── llm
 │   │   ├── __init__.py
@@ -69,6 +67,7 @@ Cette application offre une gamme complète de fonctionnalités, incluant des in
 │   └── pipelines.py
 ├── .env # Placez le fichier .env à la racine du projet
 ├── .gitignore
+├── llm_database.db
 ├── main.py
 └── requirements.txt
 ```
