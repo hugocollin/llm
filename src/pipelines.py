@@ -95,6 +95,10 @@ class PDFPipeline:
         self.db_path = db_path
         self.tokenizer = AutoTokenizer.from_pretrained(embedding_model)
         self.model = AutoModel.from_pretrained(embedding_model)
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM discussions")
+            conn.commit()
 
     def split_into_chunks(self, text : str, chunk_size : int = 500) -> List[str]:
         """
