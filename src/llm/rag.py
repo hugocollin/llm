@@ -198,7 +198,7 @@ class RAG:
                 "'answer' (réponse correcte). "
                 "Répond en envoyant uniquement et strictement le tableau JSON sans texte supplémentaire."
             )
-            message_prompt = f"Les question doivent être exclusivement et uniquement sur les sujets évoqués dans la conversation. {message_history_formatted}"
+            message_prompt = f"Les questions doivent être exclusivement et uniquement sur les sujets évoqués dans la conversation. {message_history_formatted}"
         return [
             {"role": "system", "content": context_prompt},
             {"role": "system", "content": history_prompt},
