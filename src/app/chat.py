@@ -547,7 +547,7 @@ class Chat:
                             "Veuillez réessayer."
                         )
 
-        if 'quiz_data' in st.session_state:
+        if 'quiz_data' in st.session_state and st.session_state['quiz_data'] is not None:
             quiz_col, result_col = st.columns([3, 2])
 
             with quiz_col:
@@ -622,6 +622,7 @@ class Chat:
                             icon=":material/info:"
                         )
 
+   
     def evaluate_quiz(self, quiz_data : list, user_answers : dict) -> tuple:
         """
         Évalue les réponses du quiz et retourne le score final.
