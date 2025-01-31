@@ -1,3 +1,7 @@
+"""
+Ce fichier contient la classe RAG qui permet d'interagir avec un modèle de langage pour la génération de réponses.
+"""
+
 import time
 import functools
 import litellm
@@ -6,9 +10,18 @@ import wikipedia
 from ecologits import EcoLogits
 from numpy.typing import NDArray
 
-def measure_latency(func):
+def measure_latency(func : callable) -> callable:
+    """
+    Décorateur pour mesurer le temps d'exécution d'une fonction.
+
+    Args:
+        func (callable): La fonction à décorer.
+
+    Returns:
+        callable: La fonction décorée.
+    """
     @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self, *args, **kwargs) -> float:
         start_time = time.time()
         result = func(self, *args, **kwargs)
         end_time = time.time()
@@ -20,11 +33,9 @@ def measure_latency(func):
 class RAG:
     def __init__(
         self,
-        # bdd_chunks: BDDChunks,
         max_tokens: int,
         top_n: int,
     ) -> None:
-        # self.bdd = bdd_chunks
         self.top_n = top_n
         self.max_tokens = max_tokens
         EcoLogits.init(providers="litellm", electricity_mix_zone="FRA")
@@ -221,14 +232,6 @@ class RAG:
         return response
 
     def __call__(self, provider : str, model : str, temperature : float, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, nb_questions : int = None) -> str:
-        # chunks = self.bdd.chroma_db.query(
-        #     query_texts=[query],
-        #     n_results=self.top_n,
-        # )
-        # chunks_list: list[str] = chunks["documents"][0]
-        # prompt_rag = self.build_prompt(
-        #     context=chunks_list, history=str(history), query=query
-        # )
         prompt = self.build_prompt(prompt_type, message, message_history, nb_questions)
         response = self.call_model(provider, model, temperature, prompt_dict=prompt)
         return response
