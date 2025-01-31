@@ -355,6 +355,7 @@ def show_stats_dialog():
             total_gwp = 0.0
             total_internet_search = 0
             model_counts = {}
+            total_documents_imported = 0
 
             # Calcul des statistiques
             for chat in chats_to_analyze.values():
@@ -373,6 +374,8 @@ def show_stats_dialog():
                         model_counts[model] = model_counts.get(model, 0) + 1
                     if message["role"] == "Guardian":
                         total_blocked_messages += 1
+                document_ids = chat.get("document_ids", {})
+                total_documents_imported += len(document_ids)
 
             average_latency = total_latency / total_ai_messages if total_ai_messages > 0 else 0
 
@@ -381,6 +384,8 @@ def show_stats_dialog():
 
             # Affichage des graphiques
             if afficher_graphiques:
+                conversation_names = list(chats_to_analyze.keys())
+                
                 # Graphique de la répartition du nombre total d'utilisations de chaque modèle d'IA
                 with st.container(border=True):
                     st.header(
@@ -416,7 +421,6 @@ def show_stats_dialog():
                             icon=":material/info:"
                         )
                     else:
-                        conversation_names = list(chats_to_analyze.keys())
                         message_counts = [
                             sum(1 for message in chat.get("messages", []) if message.get("role") == "User")
                             for chat in chats_to_analyze.values()
@@ -466,6 +470,37 @@ def show_stats_dialog():
                             )
                         )
                         st.plotly_chart(fig, key="blocked_messages_chart")
+
+                # Graphique de la répartition du nombre total de documents importés
+                with st.container(border=True):
+                    st.header(
+                        "**📄 Nombre total de documents importés : "
+                        f"{total_documents_imported}**"
+                    )
+
+                    if total_documents_imported == 0:
+                        st.info(
+                            "Le graphique ne possède pas de données à afficher.",
+                            icon=":material/info:"
+                        )
+                    else:
+                        document_counts = [
+                            len(chat.get("document_ids", []))
+                            for chat in chats_to_analyze.values()
+                        ]
+                        fig = px.pie(
+                            names=conversation_names,
+                            values=document_counts,
+                            color_discrete_sequence=px.colors.sequential.Oranges[::-1]
+                        )
+                        fig.update_traces(
+                            texttemplate='%{value}<br>%{percent}',
+                            hovertemplate=(
+                                '<b>%{label} :</b> %{value} '
+                                'documents importés (%{percent})<extra></extra>'
+                            )
+                        )
+                        st.plotly_chart(fig, key="documents_chart")
 
                 # Graphique de la répartition du nombre total d'utilisation du mode internet
                 with st.container(border=True):
@@ -538,7 +573,7 @@ def show_stats_dialog():
                         )
                         st.plotly_chart(fig, key="latency_chart")
 
-                # Graphique du coût total
+                # Graphique de la répartition du coût total
                 with st.container(border=True):
                     st.header(f"**💲 Coût total : {total_cost:.7f} €**")
 
@@ -568,7 +603,7 @@ def show_stats_dialog():
                         )
                         st.plotly_chart(fig, key="cost_chart")
 
-                # Graphique de l'utilisation énergétique totale
+                # Graphique de la répartition de l'utilisation énergétique totale
                 with st.container(border=True):
                     st.header(f"**⚡ Utilisation énergétique totale : {total_energy:.7f} kWh**")
 
@@ -598,7 +633,7 @@ def show_stats_dialog():
                         )
                         st.plotly_chart(fig, key="energy_chart")
 
-                # Graphique du potentiel de réchauffement global total
+                # Graphique de la répartition du potentiel de réchauffement global total
                 with st.container(border=True):
                     st.header(
                         f"**🌡️ Potentiel de réchauffement global total : {total_gwp:.7f} kgCO2eq**"
@@ -644,12 +679,12 @@ def show_stats_dialog():
                         st.title(f"{total_blocked_messages}")
                 with cols[2]:
                     with st.container(border=True):
-                        st.write("**🌐 Nombre total d'utilisations du mode internet**")
-                        st.title(f"{total_internet_search}")
+                        st.write("**📄 Nombre total de documents importés**")
+                        st.title(f"{total_documents_imported}")
                 with cols[3]:
                     with st.container(border=True):
-                        st.write("**📄 Nombre total de documents importés**")
-                        st.write("*Statistique disponible ultérieurement*")
+                        st.write("**🌐 Nombre total d'utilisations du mode internet**")
+                        st.title(f"{total_internet_search}")
                 cols = st.columns(4)
                 with cols[0]:
                     with st.container(border=True):
