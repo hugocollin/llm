@@ -154,14 +154,19 @@ class PDFPipeline:
                 )
             conn.commit()
 
-    def process_txt(self, text : str):
+    def process_txt(self, text : str) -> List[str]:
         """
         Traite un texte brut en le découpant en segments et en le stockant dans la base de données.
 
         Args:
             text (str): Texte brut à traiter.
+
+        Returns:
+            List[str]: Identifiants des discussions ajoutées à la base de données.
         """
         discussion_id = str(uuid.uuid4())
         chunks = self.split_into_chunks(text)
         self.store_in_database(discussion_id, chunks)
         print(f"[INFO] Le document a été ajouté avec succès à la base de données")
+
+        return [discussion_id]

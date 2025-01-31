@@ -39,14 +39,6 @@ class Chat:
 
         # Si ce ne sont pas les suggestions
         if selected_chat != "suggestions":
-            # Initialisation des messages du chat
-            if "chats" not in st.session_state:
-                st.session_state["chats"] = {}
-
-            # Vérification si le chat sélectionné existe
-            if self.selected_chat not in st.session_state["chats"]:
-                st.session_state["chats"][self.selected_chat] = []
-
             # Stockage de la question initiale
             self.initial_question = initial_question
             st.session_state["initial_question"] = None
@@ -148,7 +140,7 @@ class Chat:
             st.session_state["internet_search_active"] = False
 
         # Affichage de l'historique de la conversation
-        for idx, message in enumerate(st.session_state["chats"][self.selected_chat]):
+        for idx, message in enumerate(st.session_state["chats"][self.selected_chat]["messages"]):
             # Affichage des messages de l'utilisateur
             if message["role"] == "User":
                 with self.chat_container.chat_message(message["role"], avatar="👤"):
@@ -177,7 +169,7 @@ class Chat:
                     st.write(message["content"])
 
         # Si une question initiale est présente, l'envoyer automatiquement
-        if self.initial_question and not st.session_state["chats"][self.selected_chat]:
+        if self.initial_question and not st.session_state["chats"][self.selected_chat]["messages"]:
             self.handle_user_message(self.initial_question)
 
         # Si une demande d'explication de réponse de quiz est présente, l'envoyer automatiquement
@@ -246,7 +238,7 @@ class Chat:
                 icon=":material/check_box:",
                 disabled=(
                     not st.session_state.get("found_api_keys", False) or
-                    st.session_state["chats"][self.selected_chat] == []
+                    st.session_state["chats"][self.selected_chat]["messages"] == []
                 )
             ):
                 self.generate_quiz()
@@ -271,7 +263,7 @@ class Chat:
             st.write(message)
 
         # Ajout du message à l'historique de la conversation
-        st.session_state["chats"][self.selected_chat].append(
+        st.session_state["chats"][self.selected_chat]["messages"].append(
             {"role": "User", "content": message}
         )
 
@@ -302,7 +294,7 @@ class Chat:
                         temperature=st.session_state["AI_temperature"],
                         prompt_type=prompt_type,
                         message=message,
-                        message_history=st.session_state["chats"][self.selected_chat]
+                        message_history=st.session_state["chats"][self.selected_chat]["messages"]
                     )
 
                 # Si l'IA a renvoyé le mot "Guardian"
@@ -312,7 +304,7 @@ class Chat:
                         st.write_stream(stream_text(security_message))
 
                     # Ajout du message de sécurité à l'historique de la conversation
-                    st.session_state["chats"][self.selected_chat].append(
+                    st.session_state["chats"][self.selected_chat]["messages"].append(
                         {
                             "role": "Guardian",
                             "content": security_message,
@@ -334,7 +326,7 @@ class Chat:
                 )
 
             # Ajout de la réponse de l'IA à l'historique de la conversation
-            st.session_state["chats"][self.selected_chat].append(
+            st.session_state["chats"][self.selected_chat]["messages"].append(
                 {
                     "role": "AI",
                     "content": response["response"],
@@ -354,7 +346,7 @@ class Chat:
                 st.write_stream(stream_text(security_message))
 
             # Ajout du message de sécurité à l'historique de la conversation
-            st.session_state["chats"][self.selected_chat].append(
+            st.session_state["chats"][self.selected_chat]["messages"].append(
                 {
                     "role": "Guardian",
                     "content": security_message,
@@ -362,8 +354,8 @@ class Chat:
             )
 
         # Si c'est le premier message envoyé, alors génération du nom de la conversation
-        if len(st.session_state["chats"][self.selected_chat]) == 2:
-            self.generate_chat_name(st.session_state["chats"][self.selected_chat][0]["content"])
+        if len(st.session_state["chats"][self.selected_chat]["messages"]) == 2:
+            self.generate_chat_name(st.session_state["chats"][self.selected_chat]["messages"][0]["content"])
 
     @st.dialog("Paramètres de l'IA")
     def settings_dialog(self):
@@ -496,7 +488,9 @@ class Chat:
                     text = ""
                     for page in pdf_reader.pages:
                         text += page.extract_text()
-                    st.session_state["PDF_PIPELINE"].process_txt(text)
+                    document_ids = st.session_state["PDF_PIPELINE"].process_txt(text)
+                    for document_id in document_ids:
+                        st.session_state["chats"][self.selected_chat]["document_ids"].append(document_id)
                 status.update(
                     label="**Les fichiers ont été ajoutés avec succès ! "
                     "Vous pouvez maintenant fermer la fenêtre.**",
@@ -536,7 +530,7 @@ class Chat:
                         model="mistral-large-latest",
                         temperature=0.7,
                         prompt_type="quizz",
-                        message_history=st.session_state["chats"].get(self.selected_chat, []),
+                        message_history=st.session_state["chats"].get(self.selected_chat, {}).get("messages", []),
                         nb_questions=nb_questions
                     )
 
