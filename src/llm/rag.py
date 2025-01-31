@@ -59,7 +59,21 @@ class RAG:
         indices_of_max_values = np.argsort(cos_dist_list)[-self.top_n :][::-1]
         print(indices_of_max_values)
         return [corpus[i] for i in indices_of_max_values]
-    
+
+    # def get_cours_embeddings(self) -> dict[str, NDArray[np.float32]]:
+    #     """
+    #     Récupère les embeddings des cours à partir de la base de données.
+
+    #     Returns:
+    #         dict[str, NDArray[np.float32]]: Dictionnaire des embeddings des cours
+    #     """
+    #     connection = sqlite3.connect('llm_database.db')
+    #     cursor = connection.cursor()
+    #     cursor.execute("SELECT nom_du_cours, embedding FROM cours")
+    #     cours_data = cursor.fetchall()
+    #     connection.close()
+    #     return {nom: embedding for nom, embedding in cours_data}
+
     def get_documents_content(self, ressources: list[str]) -> str:
         """
         Récupère le contenu des documents à partir de la base de données
@@ -130,6 +144,7 @@ class RAG:
         context_prompt = ""
         history_prompt = ""
         message_prompt = ""
+        # courses_prompt = ""
         ressources_prompt = ""
 
         # Récupération de l'historique de la conversation
@@ -169,6 +184,9 @@ class RAG:
 
         # Construction du prompt pour la génération de réponses à des messages
         elif prompt_type == "chat":
+            # # Récupération des informations sur les cours
+            # courses = self.get_cours_embeddings()
+
             # Récupération des informations des documents associés à la conversation
             if ressources:
                 documents = self.get_documents_content(ressources)
@@ -190,6 +208,9 @@ class RAG:
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
+            # courses_prompt = (
+            #     f"Pour répondre au message suivant, nous te fournissons les cours de l'Éducation nationale : {courses}"
+            # )
             ressources_prompt = (
                 "Pour répondre au message suivant, l'utilisateur a fourni des ressources "
                 f"supplémentaires afin de te donner des informations sur le sujet : {documents}"
@@ -197,6 +218,9 @@ class RAG:
 
         # Construction du prompt pour la génération de réponses à des messages avec le mode internet
         elif prompt_type == "internet_chat":
+            # # Récupération des informations sur les cours
+            # courses = self.get_cours_embeddings()
+
             # Récupération des informations sur Wikipedia
             wiki_summary = self.fetch_wikipedia_data(message)
 
@@ -215,6 +239,9 @@ class RAG:
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
+            # courses_prompt = (
+            #     f"Pour répondre au message suivant, nous te fournissons les cours de l'Éducation nationale : {courses}"
+            # )
             ressources_prompt = (
                 "Pour répondre au message suivant, nous te fournissons du contenu "
                 "provenant d'un recherche sur Wikipedia "
@@ -237,7 +264,8 @@ class RAG:
             {"role": "system", "content": context_prompt},
             {"role": "system", "content": history_prompt},
             {"role": "user", "content": message_prompt},
-            {"role": "system", "content": ressources_prompt}
+            # {"role": "user", "content": courses_prompt},
+            {"role": "user", "content": ressources_prompt}
         ]
 
     def call_model(self, provider : str, model : str, temperature : float, prompt_dict : list[dict[str, str]]) -> str:
