@@ -11,7 +11,7 @@
 
 ## Description
 
-SISE Classmate est un assistant conversationnel spécialisé dans le domaine de l'éducation fonctionnant grâce aux modèles d'intelligence artificielle de Mistral et Gemini.
+SISE Classmate est un assistant conversationnel spécialisé dans le domaine de l'éducation fonctionnant grâce aux modèles d'intelligence artificielle de Mistral et Gemini, que vous pouvez utiliser sur tous vos appareils, qu’il s’agisse de smartphones, tablettes ou ordinateurs.
 
 Cette application offre une gamme complète de fonctionnalités, incluant des interactions avec une IA avancée, la génération de suggestions de messages, la personnalisation des paramètres, l'intégration de documents, l'enrichissement des réponses via internet, des quiz interactifs, la visualisation de statistiques détaillées, la personnalisation des noms de conversation et un espace sécurisé assuré par le module Guardian.
 

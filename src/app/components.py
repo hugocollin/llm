@@ -237,7 +237,8 @@ def show_info_dialog():
     st.write(
         "**SISE Classmate est un assistant conversationnel spécialisé dans le "
         "domaine de l'éducation fonctionnant grâce aux modèles d'intelligence "
-        "artificielle de Mistral et Gemini.**"
+        "artificielle de Mistral et Gemini, que vous pouvez utiliser sur tous "
+        "vos appareils, qu’il s’agisse de smartphones, tablettes ou ordinateurs.**"
     )
     st.write("Sur cette application vous pourrez :")
 
