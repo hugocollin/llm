@@ -34,6 +34,9 @@ class Chat:
         if "AI_temperature" not in st.session_state:
             st.session_state["AI_temperature"] = 0.7
 
+        # Initialisation du pipeline de sécurité
+        self.security_manager = EnhancedLLMSecurityManager()
+
         # Récupération du chat sélectionné
         self.selected_chat = selected_chat
 
@@ -273,11 +276,8 @@ class Chat:
             "Si vous estimez qu'il a été bloqué par erreur, veuillez essayer de le reformuler."
         )
 
-        # Initialisation du pipeline de sécurité
-        security_manager = EnhancedLLMSecurityManager(message)
-
         # Validation du message de l'utilisateur
-        is_valid_message = security_manager.validate_input()
+        is_valid_message = self.security_manager.validate_input(message)
 
         # Si le message de utilisateur est autorisé
         if is_valid_message is True:

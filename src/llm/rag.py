@@ -29,14 +29,14 @@ class RAG:
         self.max_tokens = max_tokens
         EcoLogits.init(providers="litellm", electricity_mix_zone="FRA")
 
-    def get_cosim(self, a: NDArray[np.float32], b: NDArray[np.float32]) -> float:
+    def get_cosim(self, a : NDArray[np.float32], b : NDArray[np.float32]) -> float:
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
     def get_top_similarity(
         self,
-        embedding_query: NDArray[np.float32],
-        embedding_chunks: NDArray[np.float32],
-        corpus: list[str],
+        embedding_query : NDArray[np.float32],
+        embedding_chunks : NDArray[np.float32],
+        corpus : list[str],
     ) -> list[str]:
         cos_dist_list = np.array(
             [
@@ -48,7 +48,7 @@ class RAG:
         print(indices_of_max_values)
         return [corpus[i] for i in indices_of_max_values]
     
-    def fetch_wikipedia_data(self, query: str) -> str:
+    def fetch_wikipedia_data(self, query : str) -> str:
         """
         Recherche des informations sur Wikipedia pour la requête donnée.
 
@@ -68,7 +68,7 @@ class RAG:
         except wikipedia.exceptions.PageError:
             return "Wikipedia n'a pas trouvé d'informations correspondant au message"
     
-    def _get_price_query(self, model: str, input_tokens: int, output_tokens: int) -> float:
+    def _get_price_query(self, model : str, input_tokens : int, output_tokens : int) -> float:
         pricing = {
             "ministral-8b-latest": {"input": 0.095, "output": 0.095},
             "mistral-large-latest": {"input": 1.92, "output": 5.75},
@@ -83,12 +83,12 @@ class RAG:
         cost_output = (output_tokens / 1_000_000) * pricing[model]["output"]
         return cost_input + cost_output
     
-    def _get_energy_usage(self, response: litellm.ModelResponse) -> tuple[float, float]:
+    def _get_energy_usage(self, response : litellm.ModelResponse) -> tuple[float, float]:
         energy_usage = getattr(response.impacts.energy.value, "min", response.impacts.energy.value)
         gwp = getattr(response.impacts.gwp.value, "min", response.impacts.gwp.value)
         return energy_usage, gwp
 
-    def build_prompt(self, prompt_type: str, message: str = None, message_history: list[dict[str, str]] = None, nb_questions: int = None) -> list[dict[str, str]]:
+    def build_prompt(self, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, nb_questions : int = None) -> list[dict[str, str]]:
         # Initialisation des prompts
         context_prompt = ""
         history_prompt = ""
@@ -195,7 +195,7 @@ class RAG:
             {"role": "system", "content": ressources_prompt}
         ]
 
-    def call_model(self, provider: str, model: str, temperature: float, prompt_dict: list[dict[str, str]]) -> str:
+    def call_model(self, provider : str, model : str, temperature : float, prompt_dict : list[dict[str, str]]) -> str:
         response: litellm.ModelResponse = self._generate(provider, model, temperature, prompt_dict=prompt_dict)
         input_tokens = response.usage.prompt_tokens
         output_tokens = response.usage.completion_tokens
@@ -211,7 +211,7 @@ class RAG:
         }
     
     @measure_latency
-    def _generate(self, provider, model, temperature, prompt_dict: list[dict[str, str]]) -> litellm.ModelResponse:
+    def _generate(self, provider, model, temperature, prompt_dict : list[dict[str, str]]) -> litellm.ModelResponse:
         response = litellm.completion(
             model=f"{provider}/{model}",
             messages=prompt_dict,
@@ -220,7 +220,7 @@ class RAG:
         )
         return response
 
-    def __call__(self, provider: str, model: str, temperature: float, prompt_type: str, message: str = None, message_history: list[dict[str, str]] = None, nb_questions: int = None) -> str:
+    def __call__(self, provider : str, model : str, temperature : float, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, nb_questions : int = None) -> str:
         # chunks = self.bdd.chroma_db.query(
         #     query_texts=[query],
         #     n_results=self.top_n,
