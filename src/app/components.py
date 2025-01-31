@@ -78,6 +78,12 @@ def create_new_chat():
     }
     st.session_state["selected_chat"] = new_chat_name
 
+def select_chat(chat_name : str):
+    """
+    Fonction pour sélectionner une conversation.
+    """
+    st.session_state["selected_chat"] = chat_name
+
 @st.dialog("Renommer la conversation")
 def rename_chat(current_name : str):
     """
@@ -174,8 +180,12 @@ def show_sidebar() -> str:
 
                 # Bouton pour sélectionner le chat
                 with btn_cols[0]:
-                    if st.button(f":material/forum: {chat_name}"):
-                        selected_chat = chat_name
+                    st.button(
+                        f":material/forum: {chat_name}",
+                        type="primary" if chat_name == st.session_state.get("selected_chat") else "secondary",
+                        on_click=select_chat,
+                        args=(chat_name,)
+                    )
 
                 # Boutons pour renommer le chat
                 with btn_cols[1]:
