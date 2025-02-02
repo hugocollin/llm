@@ -83,6 +83,9 @@ def create_new_chat():
 def select_chat(chat_name : str):
     """
     Fonction pour sélectionner une conversation.
+
+    Args:
+        chat_name (str): Nom de la conversation à sélectionner.
     """
     st.session_state["selected_chat"] = chat_name
 

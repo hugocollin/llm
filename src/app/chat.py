@@ -74,6 +74,7 @@ class Chat:
         Génère 5 exemples de question avec l'IA.
 
         Returns:
+            list: Liste des questions générées.
         """
 
         # Génération des questions

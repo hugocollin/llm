@@ -6,10 +6,12 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
+
 class ScrappingCourses:
     """
     Classe pour récupérer les cours.
     """
+
 
     def __init__(self):
         """
@@ -22,13 +24,14 @@ class ScrappingCourses:
             "https://www.digischool.fr/lycee"
         ]
 
-    def get_links(self, url: str, prefix: str) -> list:
+
+    def get_links(self, url : str, prefix : str) -> list:
         """
         Méthode pour récupérer les liens des cours.
 
         Args:
-        url (str): URL de la page.
-        prefix (str): Préfixe des liens des cours.
+            url (str): URL de la page.
+            prefix (str): Préfixe des liens des cours.
     
         Returns:
             list: Liste des liens des cours.
@@ -46,6 +49,7 @@ class ScrappingCourses:
             liens_complets = [self.base_url + lien for lien in liens_filtres]
             liens.extend(liens_complets)
         return liens
+
 
     def get_lesson(self, url: str, cours_data: list):
         """
@@ -133,6 +137,7 @@ class ScrappingCourses:
         else:
             print("Erreur lors de la récupération de la page.")
 
+
     def run(self):
         """
         Méthode principale.
@@ -177,9 +182,10 @@ class ScrappingCourses:
         # Conversion des données en DataFrame et exportation en CSV
         df = pd.DataFrame(cours_data)
         df.to_csv('cours.csv', index=False, sep="|", encoding="utf-8")
-        print("[INFO] Les données ont été exportées dans 'cours.csv'.")
+        print("[INFO] Les données ont été sauvegardées.")
 
-# Appel de la classe ScrappingCourses
+
+# Fonction principale
 if __name__ == "__main__":
     sc = ScrappingCourses()
     sc.run()

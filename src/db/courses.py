@@ -91,6 +91,8 @@ def afficher_donnees(db_file : str):
     # Fermeture de la connexion
     conn.close()
 
+
+# Fonction principale
 if __name__ == "__main__":
     # Définition du fichier CSV et de la base de données SQLite
     CSV_FILE = "cours.csv"
