@@ -1,12 +1,22 @@
+"""
+Ce fichier contient un gestionnaire de sécurité pour le modèle de langage naturel (LLM).
+"""
+
 import re
 import logging
 
+
 class LLMSecurityManager:
-    def __init__(self, role="educational assistant"):
+    """
+    Gestionnaire de sécurité pour le modèle de langage naturel (LLM).
+    """
+
+    def __init__(self, role : str = "educational assistant"):
         """
         Initialise le gestionnaire de sécurité pour le LLM.
         
-        :param role: Rôle du modèle (par défaut : 'educational assistant').
+        Args:
+            role (str): Rôle de l'assistant (par défaut : "educational assistant").
         """
         self.system_prompt = (
             f"You are a {role}. "
@@ -14,82 +24,99 @@ class LLMSecurityManager:
             "Do not provide any information that is unrelated to this role."
         )
         self.forbidden_terms = ["hack", "bypass", "exploit", "malware", "confidential"]
-        
-        # # Configuration du journal
-        # logging.basicConfig(
-        #     filename="user_interactions.log",
-        #     level=logging.INFO,
-        #     format="%(asctime)s - %(message)s"
-        # )
 
-    def clean_input(self, user_input):
+
+    def clean_input(self, user_input : str) -> str:
         """
         Nettoie l'entrée utilisateur pour supprimer les caractères indésirables.
         
-        :param user_input: Input de l'utilisateur.
-        :return: Input nettoyé.
+        Args:
+            user_input (str): Input de l'utilisateur.
+
+        Returns:
+            str: Input nettoyé.
         """
         user_input = re.sub(r"[^\w\s,.?!]", "", user_input)
         return user_input[:200]
 
-    def validate_input(self, user_input):
+
+    def validate_input(self, user_input : str) -> tuple:
         """
         Valide si l'entrée utilisateur contient des termes interdits.
         
-        :param user_input: Input de l'utilisateur.
-        :return: Tuple (is_valid, message).
+        Args:
+            user_input (str): Input de l'utilisateur.
+
+        Returns:
+            tuple: Tuple (is_valid, message).
         """
         user_input_lower = user_input.lower()
         if any(term in user_input_lower for term in self.forbidden_terms):
             return False, "Requête bloquée pour des raisons de sécurité."
         return True, user_input
 
-    def validate_output(self, output):
+
+    def validate_output(self, output : str) -> tuple:
         """
         Valide si la sortie générée par le modèle contient des termes interdits.
         
-        :param output: Réponse générée par le LLM.
-        :return: Tuple (is_valid, message).
+        Args:
+            output (str): Sortie générée par le modèle.
+
+        Returns:
+            tuple: Tuple (is_valid, message).
         """
         if any(term in output.lower() for term in self.forbidden_terms):
             return False, "Réponse bloquée pour des raisons de sécurité."
         return True, output
 
-    def create_prompt(self, user_input):
+
+    def create_prompt(self, user_input : str) -> str:
         """
         Crée un prompt complet en ajoutant le contexte système.
         
-        :param user_input: Input de l'utilisateur.
-        :return: Prompt complet.
+        Args:
+            user_input (str): Input de l'utilisateur.
+
+        Returns:
+            str: Prompt complet.
         """
         return f"{self.system_prompt}\n\nUser: {user_input}\nAssistant:"
 
-    def log_interaction(self, user_input, response):
+
+    def log_interaction(self, user_input : str, response : str):
         """
         Enregistre les interactions entre l'utilisateur et le modèle dans un fichier de log.
         
-        :param user_input: Input de l'utilisateur.
-        :param response: Réponse générée par le modèle.
+        Args:
+            user_input (str): Input de l'utilisateur.
+            response (str): Réponse générée par le modèle.
         """
-        logging.info(f"User Input: {user_input} | Response: {response}")
+        logging.info("User Input: %s | Response: %s", user_input, response)
 
-    def handle_blocked_request(self, reason):
+
+    def handle_blocked_request(self, reason : str) -> str:
         """
         Gère les requêtes bloquées en fournissant une réponse standardisée.
         
-        :param reason: Raison du blocage.
-        :return: Message pour l'utilisateur.
+        Args:
+            reason (str): Raison de blocage de la requête.
+
+        Returns:
+            str: Réponse standardisée pour les requêtes bloquées.
         """
-        return f"Votre requête a été bloquée car elle enfreint nos règles. Raison : {reason}. Veuillez poser une question éducative."
+        return (
+            "Votre requête a été bloquée car elle enfreint nos règles. "
+            f"Raison : {reason}. Veuillez poser une question éducative."
+        )
 
-
-# Exemple d'utilisation
+# Fonction principale
 if __name__ == "__main__":
     security_manager = LLMSecurityManager(role="educational assistant")
 
     # Nettoyage de l'input utilisateur
-    user_input = "Explain how to hack a system! @#$%"
-    cleaned_input = security_manager.clean_input(user_input)
+    USER_INPUT = "Explain how to hack a system! @#$%"
+    cleaned_input = security_manager.clean_input(USER_INPUT)
     print("Input nettoyé :", cleaned_input)
 
     # Validation de l'input
@@ -101,16 +128,10 @@ if __name__ == "__main__":
         full_prompt = security_manager.create_prompt(cleaned_input)
         print("\nPrompt complet :\n", full_prompt)
 
-        # Exemple de validation de la réponse
-        response = "This exploit can bypass systems."
-        is_valid_response, validation_message = security_manager.validate_output(response)
+        # Validation de la réponse
+        RESPONSE = "This exploit can bypass systems."
+        is_valid_response, validation_message = security_manager.validate_output(RESPONSE)
         if not is_valid_response:
             print("\nRéponse bloquée :", validation_message)
         else:
-            print("\nRéponse validée :", response)
-
-        # # Journalisation de l'interaction
-        # security_manager.log_interaction(cleaned_input, response)
-
-
-
+            print("\nRéponse validée :", RESPONSE)
