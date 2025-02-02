@@ -7,9 +7,12 @@ import sqlite3
 import csv
 
 
-def creer_bdd(db_file):
+def creer_bdd(db_file : str):
     """
     Crée une base de données SQLite avec une table pour stocker les données des cours.
+
+    Args:
+        db_file (str): Nom du fichier de la base de données.
     """
 
     # Connexion à la base de données
@@ -36,9 +39,13 @@ def creer_bdd(db_file):
     conn.close()
 
 
-def inserer_donnees_de_csv(csv_file, db_file):
+def inserer_donnees_de_csv(csv_file : str, db_file : str):
     """
     Lit un fichier CSV et insère les données dans une base de données SQLite.
+
+    Args:
+        csv_file (str): Nom du fichier CSV contenant les données.
+        db_file (str): Nom du fichier de la base de données.
     """
 
     # Connexion à la base de données
@@ -63,9 +70,12 @@ def inserer_donnees_de_csv(csv_file, db_file):
     conn.close()
 
 
-def afficher_donnees(db_file):
+def afficher_donnees(db_file : str):
     """
     Affiche les données de la table cours.
+
+    Args:
+        db_file (str): Nom du fichier de la base de données.
     """
 
     # Connexion à la base de données
@@ -83,14 +93,14 @@ def afficher_donnees(db_file):
 
 if __name__ == "__main__":
     # Définition du fichier CSV et de la base de données SQLite
-    csv_file = "cours.csv"
-    db_file = "cours_donnees.db"
+    CSV_FILE = "cours.csv"
+    DB_FILE = "cours_donnees.db"
 
     # Création de la base de données
-    creer_bdd(db_file)
+    creer_bdd(DB_FILE)
 
     # Insertion des données du fichier CSV dans la base de données
-    inserer_donnees_de_csv(csv_file, db_file)
+    inserer_donnees_de_csv(CSV_FILE, DB_FILE)
 
     # Affichage des données de la base de données
-    afficher_donnees(db_file)
+    afficher_donnees(DB_FILE)
