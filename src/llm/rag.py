@@ -13,7 +13,7 @@ from ecologits import EcoLogits
 from numpy.typing import NDArray
 
 
-def measure_latency(func : callable) -> callable:
+def measure_latency(func: callable) -> callable:
     """
     Décorateur pour mesurer le temps d'exécution d'une fonction.
 
@@ -23,6 +23,7 @@ def measure_latency(func : callable) -> callable:
     Returns:
         callable: La fonction décorée.
     """
+
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs) -> float:
         start_time = time.time()
@@ -31,7 +32,9 @@ def measure_latency(func : callable) -> callable:
         latency = end_time - start_time
         self.last_latency = latency
         return result
+
     return wrapper
+
 
 class RAG:
     """
@@ -40,8 +43,8 @@ class RAG:
 
     def __init__(
         self,
-        max_tokens : int,
-        top_n : int,
+        max_tokens: int,
+        top_n: int,
     ):
         """
         Constructeur de la classe RAG.
@@ -56,8 +59,7 @@ class RAG:
         self.max_tokens = max_tokens
         EcoLogits.init(providers="litellm", electricity_mix_zone="FRA")
 
-
-    def get_cosim(self, a : NDArray[np.float32], b : NDArray[np.float32]) -> float:
+    def get_cosim(self, a: NDArray[np.float32], b: NDArray[np.float32]) -> float:
         """
         Calcule la similarité cosinus entre deux vecteurs.
 
@@ -70,12 +72,11 @@ class RAG:
         """
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-
     def get_top_similarity(
         self,
-        embedding_query : NDArray[np.float32],
-        embedding_chunks : NDArray[np.float32],
-        corpus : list[str],
+        embedding_query: NDArray[np.float32],
+        embedding_chunks: NDArray[np.float32],
+        corpus: list[str],
     ) -> list[str]:
         """
         Retourne les documents les plus similaires à la requête.
@@ -111,8 +112,7 @@ class RAG:
     #     connection.close()
     #     return {nom: embedding for nom, embedding in cours_data}
 
-
-    def get_documents_content(self, ressources : list[str]) -> str:
+    def get_documents_content(self, ressources: list[str]) -> str:
         """
         Récupère le contenu des documents à partir de la base de données
         en utilisant les id_conversation fournies.
@@ -130,15 +130,14 @@ class RAG:
             for discussion_id in ressources:
                 cursor.execute(
                     "SELECT content FROM discussions WHERE discussion_id = ?",
-                    (discussion_id,)
+                    (discussion_id,),
                 )
                 rows = cursor.fetchall()
                 for row in rows:
                     contents.append(row[0])
         return "\n".join(contents)
 
-
-    def fetch_wikipedia_data(self, query : str) -> str:
+    def fetch_wikipedia_data(self, query: str) -> str:
         """
         Recherche des informations sur Wikipedia pour la requête donnée.
 
@@ -158,16 +157,17 @@ class RAG:
         except wikipedia.exceptions.PageError:
             return "Wikipedia n'a pas trouvé d'informations correspondant au message"
 
-
-    def _get_price_query(self, model : str, input_tokens : int, output_tokens : int) -> float:
+    def _get_price_query(
+        self, model: str, input_tokens: int, output_tokens: int
+    ) -> float:
         """
         Calcule le coût d'une requête en fonction du modèle LLM utilisé.
-        
+
         Args:
             model (str): Modèle LLM utilisé.
             input_tokens (int): Nombre de tokens en entrée.
             output_tokens (int): Nombre de tokens en sortie.
-            
+
         Returns:
             float: Coût de la requête.
         """
@@ -177,7 +177,7 @@ class RAG:
             "codestral-latest": {"input": 0.30, "output": 0.85},
             "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
             "gemini-1.5-flash-8b": {"input": 0.0375, "output": 0.15},
-            "gemini-1.5-pro": {"input": 1.20, "output": 4.80}
+            "gemini-1.5-pro": {"input": 1.20, "output": 4.80},
         }
         if model not in pricing:
             raise ValueError(f"LLM {model} not found in pricing database.")
@@ -185,23 +185,30 @@ class RAG:
         cost_output = (output_tokens / 1_000_000) * pricing[model]["output"]
         return cost_input + cost_output
 
-
-    def _get_energy_usage(self, response : litellm.ModelResponse) -> tuple[float, float]:
+    def _get_energy_usage(self, response: litellm.ModelResponse) -> tuple[float, float]:
         """
         Calcule l'empreinte carbone et la consommation d'énergie d'une requête.
-        
+
         Args:
             response (litellm.ModelResponse): Réponse du modèle LLM.
-            
+
         Returns:
             tuple[float, float]: Consommation d'énergie et empreinte carbone.
         """
-        energy_usage = getattr(response.impacts.energy.value, "min", response.impacts.energy.value)
+        energy_usage = getattr(
+            response.impacts.energy.value, "min", response.impacts.energy.value
+        )
         gwp = getattr(response.impacts.gwp.value, "min", response.impacts.gwp.value)
         return energy_usage, gwp
 
-
-    def build_prompt(self, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, ressources : list[str] = None, nb_questions : int = None) -> list[dict[str, str]]:
+    def build_prompt(
+        self,
+        prompt_type: str,
+        message: str = None,
+        message_history: list[dict[str, str]] = None,
+        ressources: list[str] = None,
+        nb_questions: int = None,
+    ) -> list[dict[str, str]]:
         """
         Construit les prompts pour les différentes tâches.
 
@@ -225,19 +232,24 @@ class RAG:
 
         # Récupération de l'historique de la conversation
         if message_history:
-            message_history = "\n".join([
-                f"{message['role']}: {message['content']}" 
-                for message in message_history
-                if 'role' in message and 'content' in message
-            ])
-            message_history_formatted = f"Voici l'historique de la conversation : {message_history}. "
+            message_history = "\n".join(
+                [
+                    f"{message['role']}: {message['content']}"
+                    for message in message_history
+                    if "role" in message and "content" in message
+                ]
+            )
+            message_history_formatted = (
+                f"Voici l'historique de la conversation : {message_history}. "
+            )
         else:
             message_history_formatted = ""
 
         # Construction du prompt pour la suggestion de questions
         if prompt_type == "suggestions":
             context_prompt = (
-                "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
+                "Tu es une intelligence artificielle spécialisée "
+                "dans l'aide scolaire et éducative. "
             )
             message_prompt = (
                 "Génère 5 questions courtes dans différentes matières sans les préciser, "
@@ -256,7 +268,10 @@ class RAG:
                 "Répond uniquement en donnant le nom de la conversation "
                 "sans explication supplémentaire. "
             )
-            message_prompt = f"Voici le premier message de la conversation envoyé par l'utilisateur : {message}"
+            message_prompt = (
+                "Voici le premier message de la conversation "
+                f"envoyé par l'utilisateur : {message}"
+            )
 
         # Construction du prompt pour la génération de réponses à des messages
         elif prompt_type == "chat":
@@ -270,22 +285,28 @@ class RAG:
                 documents = "Pas de ressources supplémentaires fournies."
 
             context_prompt = (
-                "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
-                "Tu réponds aux questions liées à l'école, aux cours, aux devoirs, aux quizz, aux examens, aux matières académiques "
-                ", ainsi qu'à la culture générale. "
-                "Tu peux fournir des explications, des résumés, des formules mathématiques, des exemples de code, des corrigés "
-                "et des conseils pédagogiques. "
-                "Si une question concerne une matière scolaire ou un sujet éducatif, réponds avec une réponse claire et détaillée. "
-                "Si une formule mathématique est incluse dans ta réponse, entoure-la obligatoirement avec le symbole '$'. "
-                "Si un exemple de code est inclus, assure-toi qu'il est bien formaté dans un bloc de code. "
-                "Si la demande concerne une explication de réponse d'une question d'un quiz, réponds avec une explication détaillée. "
-                "Si le message de l'utilisateur n'a aucun lien avec l'école, l'éducation, ou la culture générale, "
-                "réponds uniquement et strictement par le mot 'Guardian'. "
+                "Tu es une intelligence artificielle spécialisée "
+                "dans l'aide scolaire et éducative. "
+                "Tu réponds aux questions liées à l'école, aux cours, aux devoirs, aux quizz, "
+                "aux examens, aux matières académiques , ainsi qu'à la culture générale. "
+                "Tu peux fournir des explications, des résumés, des formules mathématiques, "
+                "des exemples de code, des corrigés et des conseils pédagogiques. "
+                "Si une question concerne une matière scolaire ou un sujet éducatif, "
+                "réponds avec une réponse claire et détaillée. "
+                "Si une formule mathématique est incluse dans ta réponse, "
+                "entoure-la obligatoirement avec le symbole '$'. "
+                "Si un exemple de code est inclus, assure-toi qu'il est bien "
+                "formaté dans un bloc de code. "
+                "Si la demande concerne une explication de réponse d'une question d'un quiz, "
+                "réponds avec une explication détaillée. "
+                "Si le message de l'utilisateur n'a aucun lien avec l'école, l'éducation, "
+                "ou la culture générale, réponds uniquement et strictement par le mot 'Guardian'. "
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
             # courses_prompt = (
-            #     f"Pour répondre au message suivant, nous te fournissons les cours de l'Éducation nationale : {courses}"
+            #     "Pour répondre au message suivant, nous te fournissons "
+            #     f"les cours de l'Éducation nationale : {courses}"
             # )
             ressources_prompt = (
                 "Pour répondre au message suivant, l'utilisateur a fourni des ressources "
@@ -301,22 +322,28 @@ class RAG:
             wiki_summary = self.fetch_wikipedia_data(message)
 
             context_prompt = (
-                "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
-                "Tu réponds aux questions liées à l'école, aux cours, aux devoirs, aux quizz, aux examens, aux matières académiques "
-                ", ainsi qu'à la culture générale. "
-                "Tu peux fournir des explications, des résumés, des formules mathématiques, des exemples de code, des corrigés "
-                "et des conseils pédagogiques. "
-                "Si une question concerne une matière scolaire ou un sujet éducatif, réponds avec une réponse claire et détaillée. "
-                "Si une formule mathématique est incluse dans ta réponse, entoure-la obligatoirement avec le symbole '$'. "
-                "Si un exemple de code est inclus, assure-toi qu'il est bien formaté dans un bloc de code. "
-                "Si la demande concerne une explication de réponse d'une question d'un quiz, réponds avec une explication détaillée. "
-                "Si le message de l'utilisateur n'a aucun lien avec l'école, l'éducation ou la culture générale, "
-                "réponds uniquement et strictement par le mot 'Guardian'. "
+                "Tu es une intelligence artificielle spécialisée "
+                "dans l'aide scolaire et éducative. "
+                "Tu réponds aux questions liées à l'école, aux cours, aux devoirs, aux quizz, "
+                "aux examens, aux matières académiques , ainsi qu'à la culture générale. "
+                "Tu peux fournir des explications, des résumés, des formules mathématiques, "
+                "des exemples de code, des corrigés et des conseils pédagogiques. "
+                "Si une question concerne une matière scolaire ou un sujet éducatif, "
+                "réponds avec une réponse claire et détaillée. "
+                "Si une formule mathématique est incluse dans ta réponse, "
+                "entoure-la obligatoirement avec le symbole '$'. "
+                "Si un exemple de code est inclus, assure-toi qu'il est bien "
+                "formaté dans un bloc de code. "
+                "Si la demande concerne une explication de réponse d'une question d'un quiz, "
+                "réponds avec une explication détaillée. "
+                "Si le message de l'utilisateur n'a aucun lien avec l'école, l'éducation, "
+                "ou la culture générale, réponds uniquement et strictement par le mot 'Guardian'. "
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
             # courses_prompt = (
-            #     f"Pour répondre au message suivant, nous te fournissons les cours de l'Éducation nationale : {courses}"
+            #     "Pour répondre au message suivant, nous te fournissons "
+            #     f"les cours de l'Éducation nationale : {courses}"
             # )
             ressources_prompt = (
                 "Pour répondre au message suivant, nous te fournissons du contenu "
@@ -327,25 +354,36 @@ class RAG:
         # Construction du prompt pour la génération de quiz
         elif prompt_type == "quizz":
             context_prompt = (
-                "Tu es une intelligence artificielle spécialisée dans l'aide scolaire et éducative. "
-                f"Génère un quiz à choix multiples contenant {nb_questions} questions sur le sujet donné. "
+                "Tu es une intelligence artificielle spécialisée "
+                "dans l'aide scolaire et éducative. "
+                "Génère un quiz à choix multiples contenant "
+                f"{nb_questions} questions sur le sujet donné. "
                 "Retourne les questions sous forme d'un unique tableau JSON. "
                 "Chaque question doit être un dictionnaire avec les clés suivantes : "
                 "'question' (texte de la question), 'options' (liste de 4 options), "
                 "'answer' (réponse correcte). "
-                "Répond en envoyant uniquement et strictement le tableau JSON sans texte supplémentaire."
+                "Répond en envoyant uniquement et strictement le tableau JSON "
+                "sans texte supplémentaire."
             )
-            message_prompt = f"Les questions doivent être exclusivement et uniquement sur les sujets évoqués dans la conversation. {message_history_formatted}"
+            message_prompt = (
+                "Les questions doivent être exclusivement et uniquement "
+                f"sur les sujets évoqués dans la conversation. {message_history_formatted}"
+            )
         return [
             {"role": "system", "content": context_prompt},
             {"role": "system", "content": history_prompt},
             {"role": "user", "content": message_prompt},
             # {"role": "user", "content": courses_prompt},
-            {"role": "user", "content": ressources_prompt}
+            {"role": "user", "content": ressources_prompt},
         ]
 
-
-    def call_model(self, provider : str, model : str, temperature : float, prompt_dict : list[dict[str, str]]) -> str:
+    def call_model(
+        self,
+        provider: str,
+        model: str,
+        temperature: float,
+        prompt_dict: list[dict[str, str]],
+    ) -> str:
         """
         Appelle le modèle de langage pour générer une réponse.
 
@@ -358,7 +396,9 @@ class RAG:
         Returns:
             str: Réponse générée par le modèle.
         """
-        response: litellm.ModelResponse = self._generate(provider, model, temperature, prompt_dict=prompt_dict)
+        response: litellm.ModelResponse = self._generate(
+            provider, model, temperature, prompt_dict=prompt_dict
+        )
         input_tokens = response.usage.prompt_tokens
         output_tokens = response.usage.completion_tokens
         euro_cost = self._get_price_query(model, input_tokens, output_tokens)
@@ -366,14 +406,20 @@ class RAG:
         response_text = str(response.choices[0].message.content)
         return {
             "response": response_text,
-            "latency": getattr(self, 'last_latency', 0),
+            "latency": getattr(self, "last_latency", 0),
             "euro_cost": euro_cost,
             "energy_usage": energy_usage,
-            "gwp": gwp
+            "gwp": gwp,
         }
 
     @measure_latency
-    def _generate(self, provider : str, model : str, temperature : float, prompt_dict : list[dict[str, str]]) -> litellm.ModelResponse:
+    def _generate(
+        self,
+        provider: str,
+        model: str,
+        temperature: float,
+        prompt_dict: list[dict[str, str]],
+    ) -> litellm.ModelResponse:
         """
         Génère une réponse à partir des prompts donnés.
 
@@ -394,7 +440,17 @@ class RAG:
         )
         return response
 
-    def __call__(self, provider : str, model : str, temperature : float, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, ressources : list[str] = None, nb_questions : int = None) -> str:
+    def __call__(
+        self,
+        provider: str,
+        model: str,
+        temperature: float,
+        prompt_type: str,
+        message: str = None,
+        message_history: list[dict[str, str]] = None,
+        ressources: list[str] = None,
+        nb_questions: int = None,
+    ) -> str:
         """
         Appelle le modèle de langage pour générer une réponse.
 
@@ -411,6 +467,8 @@ class RAG:
         Returns:
             str: Réponse générée par le modèle.
         """
-        prompt = self.build_prompt(prompt_type, message, message_history, ressources, nb_questions)
+        prompt = self.build_prompt(
+            prompt_type, message, message_history, ressources, nb_questions
+        )
         response = self.call_model(provider, model, temperature, prompt_dict=prompt)
         return response
