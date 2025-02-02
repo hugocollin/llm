@@ -1,5 +1,5 @@
 """
-Ce fichier contient la classe PromptClassifier qui permet de classifier
+Ce fichier contient la classe prompt_classifier qui permet de classifier
 les prompts en utilisant des modèles de machine learning.
 """
 
@@ -19,7 +19,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 
-class PromptClassifier:
+class prompt_classifier:
     """
     Classe pour classifier les prompts en utilisant des modèles de machine learning.
     """

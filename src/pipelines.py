@@ -14,7 +14,7 @@ from transformers import AutoTokenizer, AutoModel
 from sentence_transformers import SentenceTransformer
 
 from src.security.securite import LLMSecurityManager
-from src.ml.promptClassifier import PromptClassifier
+from src.ml.prompt_classifier import prompt_classifier
 
 
 # Ajout du répertoire parent au chemin de recherche des modules
@@ -47,7 +47,7 @@ class EnhancedLLMSecurityManager(LLMSecurityManager):
         """
 
         super().__init__(role)
-        self.classifier = PromptClassifier()
+        self.classifier = prompt_classifier()
         if train_model and train_json_path and test_json_path:
             self.classifier.load_train_and_test_data_from_json(train_json_path, test_json_path)
             self.classifier.train_and_evaluate()

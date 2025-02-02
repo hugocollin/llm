@@ -59,7 +59,7 @@ Cette application offre une gamme complète de fonctionnalités, incluant des in
 │   │   ├── best_prompt_model.pkl
 │   │   ├── guardrail_dataset_test.json
 │   │   ├── guardrail_dataset_train.json
-│   │   └── promptClassifier.py
+│   │   └── prompt_classifier.py
 │   ├── security
 │   │   ├── __init__.py
 │   │   └── securite.py
