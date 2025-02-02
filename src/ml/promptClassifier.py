@@ -6,11 +6,11 @@ les prompts en utilisant des modèles de machine learning.
 import json
 import pickle
 import os
+from typing import List, Tuple, Dict
 from collections.abc import Iterable
 import pandas as pd
 import numpy as np
 import torch
-from typing import List, Tuple, Dict
 from transformers import BertTokenizer, BertModel
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
@@ -168,39 +168,40 @@ class PromptClassifier:
         for data, dataset_name in zip([train_data, test_data], ["train", "test"]):
             if not all(key in data[0] for key in ["query", "label"]):
                 raise ValueError(
-                    f"Le fichier JSON pour {dataset_name} doit contenir les clés 'query' et 'label'."
+                    f"Le fichier JSON pour {dataset_name} "
+                    "doit contenir les clés 'query' et 'label'."
                 )
 
         # Extraction des querys et des labels des ensembles d'entraînement et de test
-        X_train = [item["query"] for item in train_data]
+        x_train = [item["query"] for item in train_data]
         y_train = [item["label"] for item in train_data]
-        X_test = [item["query"] for item in test_data]
+        x_test = [item["query"] for item in test_data]
         y_test = [item["label"] for item in test_data]
 
         # Préparation des données
-        self.prepare_data(X_train, y_train, X_test, y_test)
+        self.prepare_data(x_train, y_train, x_test, y_test)
 
 
     def prepare_data(
         self,
-        X_train : List[str],
+        x_train : List[str],
         y_train : List[int],
-        X_test : List[str],
+        x_test : List[str],
         y_test : List[int],
     ):
         """
         Prépare les données d'entraînement et de test en calculant les embeddings.
 
         Args:
-            X_train (List[str]): Liste des prompts pour l'entraînement.
+            x_train (List[str]): Liste des prompts pour l'entraînement.
             y_train (List[int]): Liste des labels correspondants pour l'entraînement.
-            X_test (List[str]): Liste des prompts pour le test.
+            x_test (List[str]): Liste des prompts pour le test.
             y_test (List[int]): Liste des labels correspondants pour le test.
         """
 
         # Convertion en DataFrame
-        data_train = pd.DataFrame({"prompt": X_train, "label": y_train})
-        data_test = pd.DataFrame({"prompt": X_test, "label": y_test})
+        data_train = pd.DataFrame({"prompt": x_train, "label": y_train})
+        data_test = pd.DataFrame({"prompt": x_test, "label": y_test})
 
         # Génération des embeddings
         data_train["embedding"] = data_train["prompt"].apply(self.get_bert_embedding)
