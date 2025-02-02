@@ -1,15 +1,17 @@
 """
-Ce fichier contient la classe RAG qui permet d'interagir avec un modèle de langage pour la génération de réponses.
+Ce fichier contient la classe RAG qui permet d'interagir
+avec un modèle de langage pour la génération de réponses.
 """
 
 import time
 import functools
+import sqlite3
 import litellm
 import numpy as np
 import wikipedia
-import sqlite3
 from ecologits import EcoLogits
 from numpy.typing import NDArray
+
 
 def measure_latency(func : callable) -> callable:
     """
@@ -32,17 +34,42 @@ def measure_latency(func : callable) -> callable:
     return wrapper
 
 class RAG:
+    """
+    Classe pour interagir avec un modèle de langage pour la génération de réponses.
+    """
+
     def __init__(
         self,
-        max_tokens: int,
-        top_n: int,
-    ) -> None:
+        max_tokens : int,
+        top_n : int,
+    ):
+        """
+        Constructeur de la classe RAG.
+
+        Args:
+            max_tokens (int): Nombre maximum
+            de tokens pour la génération de texte.
+            top_n (int): Nombre de réponses
+            similaires à retourner.
+        """
         self.top_n = top_n
         self.max_tokens = max_tokens
         EcoLogits.init(providers="litellm", electricity_mix_zone="FRA")
 
+
     def get_cosim(self, a : NDArray[np.float32], b : NDArray[np.float32]) -> float:
+        """
+        Calcule la similarité cosinus entre deux vecteurs.
+
+        Args:
+            a (NDArray[np.float32]): Vecteur a.
+            b (NDArray[np.float32]): Vecteur b.
+
+        Returns:
+            float: Similarité cosinus entre les vecteurs a et b.
+        """
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
 
     def get_top_similarity(
         self,
@@ -50,6 +77,17 @@ class RAG:
         embedding_chunks : NDArray[np.float32],
         corpus : list[str],
     ) -> list[str]:
+        """
+        Retourne les documents les plus similaires à la requête.
+
+        Args:
+            embedding_query (NDArray[np.float32]): Embedding de la requête.
+            embedding_chunks (NDArray[np.float32]): Embeddings des documents.
+            corpus (list[str]): Liste des documents.
+
+        Returns:
+            list[str]: Liste des documents les plus similaires à la requête.
+        """
         cos_dist_list = np.array(
             [
                 self.get_cosim(embedding_query, embed_doc)
@@ -57,7 +95,6 @@ class RAG:
             ]
         )
         indices_of_max_values = np.argsort(cos_dist_list)[-self.top_n :][::-1]
-        print(indices_of_max_values)
         return [corpus[i] for i in indices_of_max_values]
 
     # def get_cours_embeddings(self) -> dict[str, NDArray[np.float32]]:
@@ -74,7 +111,8 @@ class RAG:
     #     connection.close()
     #     return {nom: embedding for nom, embedding in cours_data}
 
-    def get_documents_content(self, ressources: list[str]) -> str:
+
+    def get_documents_content(self, ressources : list[str]) -> str:
         """
         Récupère le contenu des documents à partir de la base de données
         en utilisant les id_conversation fournies.
@@ -98,7 +136,8 @@ class RAG:
                 for row in rows:
                     contents.append(row[0])
         return "\n".join(contents)
-    
+
+
     def fetch_wikipedia_data(self, query : str) -> str:
         """
         Recherche des informations sur Wikipedia pour la requête donnée.
@@ -118,8 +157,20 @@ class RAG:
             return f"Le message est ambigu, voici les suggestions de Wikipedia : {e.options[:5]}"
         except wikipedia.exceptions.PageError:
             return "Wikipedia n'a pas trouvé d'informations correspondant au message"
-    
+
+
     def _get_price_query(self, model : str, input_tokens : int, output_tokens : int) -> float:
+        """
+        Calcule le coût d'une requête en fonction du modèle LLM utilisé.
+        
+        Args:
+            model (str): Modèle LLM utilisé.
+            input_tokens (int): Nombre de tokens en entrée.
+            output_tokens (int): Nombre de tokens en sortie.
+            
+        Returns:
+            float: Coût de la requête.
+        """
         pricing = {
             "ministral-8b-latest": {"input": 0.095, "output": 0.095},
             "mistral-large-latest": {"input": 1.92, "output": 5.75},
@@ -133,13 +184,38 @@ class RAG:
         cost_input = (input_tokens / 1_000_000) * pricing[model]["input"]
         cost_output = (output_tokens / 1_000_000) * pricing[model]["output"]
         return cost_input + cost_output
-    
+
+
     def _get_energy_usage(self, response : litellm.ModelResponse) -> tuple[float, float]:
+        """
+        Calcule l'empreinte carbone et la consommation d'énergie d'une requête.
+        
+        Args:
+            response (litellm.ModelResponse): Réponse du modèle LLM.
+            
+        Returns:
+            tuple[float, float]: Consommation d'énergie et empreinte carbone.
+        """
         energy_usage = getattr(response.impacts.energy.value, "min", response.impacts.energy.value)
         gwp = getattr(response.impacts.gwp.value, "min", response.impacts.gwp.value)
         return energy_usage, gwp
 
+
     def build_prompt(self, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, ressources : list[str] = None, nb_questions : int = None) -> list[dict[str, str]]:
+        """
+        Construit les prompts pour les différentes tâches.
+
+        Args:
+            prompt_type (str): Type de prompt à construire.
+            message (str): Message de l'utilisateur.
+            message_history (list[dict[str, str]]): Historique de la conversation.
+            ressources (list[str]): Liste des id_conversation.
+            nb_questions (int): Nombre de questions pour le quiz.
+
+        Returns:
+            list[dict[str, str]]: Liste des prompts.
+        """
+
         # Initialisation des prompts
         context_prompt = ""
         history_prompt = ""
@@ -268,7 +344,20 @@ class RAG:
             {"role": "user", "content": ressources_prompt}
         ]
 
+
     def call_model(self, provider : str, model : str, temperature : float, prompt_dict : list[dict[str, str]]) -> str:
+        """
+        Appelle le modèle de langage pour générer une réponse.
+
+        Args:
+            provider (str): Nom du fournisseur du modèle.
+            model (str): Nom du modèle.
+            temperature (float): Température pour l'échantillonnage.
+            prompt_dict (list[dict[str, str]]): Liste des prompts.
+
+        Returns:
+            str: Réponse générée par le modèle.
+        """
         response: litellm.ModelResponse = self._generate(provider, model, temperature, prompt_dict=prompt_dict)
         input_tokens = response.usage.prompt_tokens
         output_tokens = response.usage.completion_tokens
@@ -282,9 +371,21 @@ class RAG:
             "energy_usage": energy_usage,
             "gwp": gwp
         }
-    
+
     @measure_latency
-    def _generate(self, provider, model, temperature, prompt_dict : list[dict[str, str]]) -> litellm.ModelResponse:
+    def _generate(self, provider : str, model : str, temperature : float, prompt_dict : list[dict[str, str]]) -> litellm.ModelResponse:
+        """
+        Génère une réponse à partir des prompts donnés.
+
+        Args:
+            provider (str): Nom du fournisseur du modèle.
+            model (str): Nom du modèle.
+            temperature (float): Température pour l'échantillonnage.
+            prompt_dict (list[dict[str, str]]): Liste des prompts.
+
+        Returns:
+            litellm.ModelResponse: Réponse générée par le modèle.
+        """
         response = litellm.completion(
             model=f"{provider}/{model}",
             messages=prompt_dict,
@@ -294,6 +395,22 @@ class RAG:
         return response
 
     def __call__(self, provider : str, model : str, temperature : float, prompt_type : str, message : str = None, message_history : list[dict[str, str]] = None, ressources : list[str] = None, nb_questions : int = None) -> str:
+        """
+        Appelle le modèle de langage pour générer une réponse.
+
+        Args:
+            provider (str): Nom du fournisseur du modèle.
+            model (str): Nom du modèle.
+            temperature (float): Température pour l'échantillonnage.
+            prompt_type (str): Type de prompt à construire.
+            message (str): Message de l'utilisateur.
+            message_history (list[dict[str, str]]): Historique de la conversation.
+            ressources (list[str]): Liste des id_conversation.
+            nb_questions (int): Nombre de questions pour le quiz.
+
+        Returns:
+            str: Réponse générée par le modèle.
+        """
         prompt = self.build_prompt(prompt_type, message, message_history, ressources, nb_questions)
         response = self.call_model(provider, model, temperature, prompt_dict=prompt)
         return response
