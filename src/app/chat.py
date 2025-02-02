@@ -2,6 +2,7 @@
 Ce fichier définit la classe Chat pour gérer les interractions avec l'IA.
 """
 
+import json
 import streamlit as st
 import PyPDF2
 
@@ -558,7 +559,7 @@ class Chat:
                         )
                         st.session_state["quiz_answers"] = {}
                         st.session_state["quiz_submitted"] = False
-                    except Exception:
+                    except json.JSONDecodeError:
                         st.error(
                             "Une erreur est survenue lors de la création du quiz. "
                             "Veuillez réessayer."
