@@ -1,5 +1,5 @@
 """
-Ce fichier contient la classe prompt_classifier qui permet de classifier
+Ce fichier contient la classe PromptClassifier qui permet de classifier
 les prompts en utilisant des modèles de machine learning.
 """
 
@@ -19,7 +19,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 
-class prompt_classifier:
+class PromptClassifier:
     """
     Classe pour classifier les prompts en utilisant des modèles de machine learning.
     """
@@ -75,10 +75,10 @@ class prompt_classifier:
         """
         for est_name, est_obj in self.estimators.items():
             # Entraînement du modèle
-            est_obj.fit(self.X_train_emb, self.y_train)
+            est_obj.fit(self.x_train_emb, self.y_train)
 
             # Prédictions sur les données de test
-            y_predict = est_obj.predict(self.X_test_emb)
+            y_predict = est_obj.predict(self.x_test_emb)
 
             # Calcul des métriques de performance
             accuracy = accuracy_score(self.y_test, y_predict)
@@ -208,9 +208,9 @@ class prompt_classifier:
         data_test["embedding"] = data_test["prompt"].apply(self.get_bert_embedding)
 
         # Extraction des features et labels
-        self.X_train_emb = pd.DataFrame(data_train["embedding"].to_list())
+        self.x_train_emb = pd.DataFrame(data_train["embedding"].to_list())
         self.y_train = data_train["label"]
-        self.X_test_emb = pd.DataFrame(data_test["embedding"].to_list())
+        self.x_test_emb = pd.DataFrame(data_test["embedding"].to_list())
         self.y_test = data_test["label"]
 
 
@@ -226,14 +226,13 @@ class prompt_classifier:
                 "Aucun modèle n'a été entraîné ou sélectionné. "
                 "Veuillez appeler `train_and_evaluate` et `get_best_model` d'abord."
             )
-        output_path = os.path.join(os.path.dirname(__file__), output_name)
 
         # Sauvegarde du meilleur modèle au format pickle
         with open(output_name, "wb") as f:
             _, model = self.best_model
             pickle.dump(model, f)
 
-        print(f"[INFO] Le meilleur modèle a été sauvegardé avec succès.")
+        print("[INFO] Le meilleur modèle a été sauvegardé avec succès.")
 
 
     def load_model(self):
@@ -244,4 +243,4 @@ class prompt_classifier:
         with open(model_path, "rb") as f:
             self.best_model = pickle.load(f)
 
-        print(f"[INFO] Le module Guardian a été chargé avec succès.")
+        print("[INFO] Le module Guardian a été chargé avec succès.")
