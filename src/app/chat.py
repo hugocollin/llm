@@ -15,7 +15,7 @@ class Chat:
     Classe pour gérer les interractions avec l'IA.
     """
 
-    def __init__(self, selected_chat: str, initial_question: str = None):
+    def __init__(self, selected_chat : str, initial_question : str = None):
         """
         Initialise la classe Chat avec le chat sélectionné et la question initiale si disponible.
 
@@ -88,7 +88,7 @@ class Chat:
         questions = response["response"].split("\n")
         return [q.strip("- ").strip() for q in questions[:5]]
 
-    def generate_chat_name(self, initial_message: str):
+    def generate_chat_name(self, initial_message : str):
         """
         Génère un nom pour la conversation en fonction du premier message avec l'IA.
 
@@ -261,7 +261,7 @@ class Chat:
             "et n'envoyez pas d'informations confidentielles.*]"
         )
 
-    def handle_user_message(self, message: str):
+    def handle_user_message(self, message : str):
         """
         Gère le message de l'utilisateur et envoie une requête à l'IA.
 
@@ -520,8 +520,7 @@ class Chat:
     @st.dialog("Quiz", width="large")
     def generate_quiz(self):
         """
-        Génère un quiz avec des questions sur le sujet donné,
-        sans recharger l'application à chaque interaction.
+        Génère un quiz avec des questions sur le sujet donné.
         """
 
         # Paramétrage du quiz
@@ -646,7 +645,7 @@ class Chat:
                             icon=":material/info:",
                         )
 
-    def evaluate_quiz(self, quiz_data: list, user_answers: dict) -> tuple:
+    def evaluate_quiz(self, quiz_data : list, user_answers : dict) -> tuple:
         """
         Évalue les réponses du quiz et retourne le score final.
 
