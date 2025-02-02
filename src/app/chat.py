@@ -9,6 +9,7 @@ from src.app.components import stream_text, convert_to_json
 from src.pipelines import EnhancedLLMSecurityManager, PDFPipeline
 from src.llm.rag import RAG
 
+
 class Chat:
     """
     Classe pour gérer les interractions avec l'IA.
@@ -59,10 +60,7 @@ class Chat:
         if st.session_state["found_api_keys"] is True:
             # Initialisation du LLM
             if "LLM" not in st.session_state:
-                st.session_state["LLM"] = RAG(
-                    max_tokens=7000,
-                    top_n=3
-                )
+                st.session_state["LLM"] = RAG(max_tokens=7000, top_n=3)
         # Si les clés d'API ne sont pas trouvées
         else:
             with self.chat_container.chat_message("", avatar="⚠️"):
@@ -83,11 +81,11 @@ class Chat:
             provider="mistral",
             model="mistral-large-latest",
             temperature=0.7,
-            prompt_type="suggestions"
+            prompt_type="suggestions",
         )
 
         # Récupération des questions
-        questions = response["response"].split('\n')
+        questions = response["response"].split("\n")
         return [q.strip("- ").strip() for q in questions[:5]]
 
     def generate_chat_name(self, initial_message: str):
@@ -106,7 +104,7 @@ class Chat:
                 model="mistral-large-latest",
                 temperature=0.7,
                 prompt_type="chat_name",
-                message=initial_message
+                message=initial_message,
             )
 
             # Récupération du nom de la conversation
@@ -140,7 +138,9 @@ class Chat:
             st.session_state["internet_search_active"] = False
 
         # Affichage de l'historique de la conversation
-        for idx, message in enumerate(st.session_state["chats"][self.selected_chat]["messages"]):
+        for idx, message in enumerate(
+            st.session_state["chats"][self.selected_chat]["messages"]
+        ):
             # Affichage des messages de l'utilisateur
             if message["role"] == "User":
                 with self.chat_container.chat_message(message["role"], avatar="👤"):
@@ -160,7 +160,7 @@ class Chat:
                             f"🌡️ {metrics['gwp']:.7f} kgCO2eq",
                         ],
                         label_visibility="collapsed",
-                        key=idx
+                        key=idx,
                     )
 
             # Affichage des messages de sécurité
@@ -169,12 +169,15 @@ class Chat:
                     st.write(message["content"])
 
         # Si une question initiale est présente, l'envoyer automatiquement
-        if self.initial_question and not st.session_state["chats"][self.selected_chat]["messages"]:
+        if (
+            self.initial_question
+            and not st.session_state["chats"][self.selected_chat]["messages"]
+        ):
             self.handle_user_message(self.initial_question)
 
         # Si une demande d'explication de réponse de quiz est présente, l'envoyer automatiquement
-        if 'quiz_answer_explanation' in st.session_state:
-            message = st.session_state.pop('quiz_answer_explanation')
+        if "quiz_answer_explanation" in st.session_state:
+            message = st.session_state.pop("quiz_answer_explanation")
             self.handle_user_message(message)
 
         # Mise en page de l'interraction avec l'IA
@@ -186,13 +189,13 @@ class Chat:
                 "",
                 icon=":material/tune:",
                 disabled=not st.session_state.get("found_api_keys", False),
-                use_container_width=True
+                use_container_width=True,
             ):
                 self.settings_dialog()
             if st.session_state["modified_model_params"] is True:
                 st.toast(
                     "Paramètres de l'IA modifiés avec succès !",
-                    icon=":material/check_circle:"
+                    icon=":material/check_circle:",
                 )
                 st.session_state["modified_model_params"] = False
 
@@ -212,10 +215,10 @@ class Chat:
                 "",
                 icon=":material/attach_file:",
                 disabled=(
-                    not st.session_state.get("found_api_keys", False) or
-                    st.session_state.get("internet_search_active", False)
+                    not st.session_state.get("found_api_keys", False)
+                    or st.session_state.get("internet_search_active", False)
                 ),
-                use_container_width=True
+                use_container_width=True,
             ):
                 self.upload_files_dialog()
 
@@ -226,7 +229,11 @@ class Chat:
                 icon=":material/language:",
                 disabled=not st.session_state.get("found_api_keys", False),
                 use_container_width=True,
-                type="primary" if st.session_state["internet_search_active"] else "secondary"
+                type=(
+                    "primary"
+                    if st.session_state["internet_search_active"]
+                    else "secondary"
+                ),
             ):
                 if st.session_state["internet_search_active"] is True:
                     st.session_state["internet_search_active"] = False
@@ -240,10 +247,10 @@ class Chat:
                 "",
                 icon=":material/check_box:",
                 disabled=(
-                    not st.session_state.get("found_api_keys", False) or
-                    st.session_state["chats"][self.selected_chat]["messages"] == []
+                    not st.session_state.get("found_api_keys", False)
+                    or st.session_state["chats"][self.selected_chat]["messages"] == []
                 ),
-                use_container_width=True
+                use_container_width=True,
             ):
                 self.generate_quiz()
 
@@ -291,15 +298,19 @@ class Chat:
             # Préparation de l'affichage du message de l'IA
             with self.chat_container.chat_message("AI", avatar="✨"):
                 with st.spinner("Je réfléchis..."):
-                # Envoi du message et récupération de la réponse de l'IA
+                    # Envoi du message et récupération de la réponse de l'IA
                     response = st.session_state["LLM"](
                         provider=st.session_state["AI_provider"],
                         model=st.session_state["AI_model"],
                         temperature=st.session_state["AI_temperature"],
                         prompt_type=prompt_type,
                         message=message,
-                        message_history=st.session_state["chats"][self.selected_chat]["messages"],
-                        ressources=st.session_state["chats"][self.selected_chat]["document_ids"]
+                        message_history=st.session_state["chats"][self.selected_chat][
+                            "messages"
+                        ],
+                        ressources=st.session_state["chats"][self.selected_chat][
+                            "document_ids"
+                        ],
                     )
 
                 # Si l'IA a renvoyé le mot "Guardian"
@@ -327,7 +338,7 @@ class Chat:
                         f"⚡ {response['energy_usage']:.7f} kWh",
                         f"🌡️ {response['gwp']:.7f} kgCO2eq",
                     ],
-                    label_visibility="collapsed"
+                    label_visibility="collapsed",
                 )
 
             # Ajout de la réponse de l'IA à l'historique de la conversation
@@ -342,7 +353,7 @@ class Chat:
                         "gwp": response["gwp"],
                     },
                     "internet_search": st.session_state["internet_search_active"],
-                    "model_used": st.session_state["AI_model"]
+                    "model_used": st.session_state["AI_model"],
                 }
             )
         else:
@@ -360,7 +371,9 @@ class Chat:
 
         # Si c'est le premier message envoyé, alors génération du nom de la conversation
         if len(st.session_state["chats"][self.selected_chat]["messages"]) == 2:
-            self.generate_chat_name(st.session_state["chats"][self.selected_chat]["messages"][0]["content"])
+            self.generate_chat_name(
+                st.session_state["chats"][self.selected_chat]["messages"][0]["content"]
+            )
 
     @st.dialog("Paramètres de l'IA")
     def settings_dialog(self):
@@ -381,7 +394,7 @@ class Chat:
             help=(
                 "Chaque fournisseur propose des modèles avec des optimisations spécifiques, "
                 "des fonctionnalités uniques, ou des performances adaptées à certains cas d'usage."
-            )
+            ),
         )
 
         # Personnalisation de l'aide en fonction du fournisseur
@@ -432,10 +445,7 @@ class Chat:
             default_index = 0
 
         selected_model = st.selectbox(
-            label="Modèle",
-            options=models,
-            index=default_index,
-            help=models_help
+            label="Modèle", options=models, index=default_index, help=models_help
         )
 
         # Paramètrage de la température
@@ -450,7 +460,7 @@ class Chat:
                 "Une **température basse** (proche de 0) rend les réponses plus "
                 "**cohérentes et déterministes**, tandis qu'une **température élevée** "
                 "(proche de 100) favorise des réponses plus **créatives et variées**."
-            )
+            ),
         )
         selected_temperature /= 100.0
 
@@ -481,7 +491,7 @@ class Chat:
             "Ajouter les fichiers sélectionnés",
             icon=":material/upload_file:",
             disabled=not uploaded_files,
-            use_container_width=True
+            use_container_width=True,
         ):
             with st.status(
                 "**Ajout des fichiers en cours... Ne fermez pas la fenêtre !**",
@@ -496,7 +506,9 @@ class Chat:
                         text += page.extract_text()
                     document_ids = st.session_state["PDF_PIPELINE"].process_txt(text)
                     for document_id in document_ids:
-                        st.session_state["chats"][self.selected_chat]["document_ids"].append(document_id)
+                        st.session_state["chats"][self.selected_chat][
+                            "document_ids"
+                        ].append(document_id)
                     st.write(f"Traitement du fichier {file.name} terminé !")
                 status.update(
                     label="**Les fichiers ont été ajoutés avec succès ! "
@@ -508,27 +520,23 @@ class Chat:
     @st.dialog("Quiz", width="large")
     def generate_quiz(self):
         """
-        Génère un quiz avec des questions sur le sujet donné, 
+        Génère un quiz avec des questions sur le sujet donné,
         sans recharger l'application à chaque interaction.
         """
 
         # Paramétrage du quiz
         with st.container(border=True):
             nb_questions = st.slider(
-                "Nombre de questions",
-                min_value=1,
-                max_value=10,
-                value=5,
-                step=1
+                "Nombre de questions", min_value=1, max_value=10, value=5, step=1
             )
             if st.button("Créer un quiz", use_container_width=True):
                 # Réinitialisation des données du quiz
-                st.session_state['quiz_data'] = None
-                st.session_state['quiz_answers'] = {}
-                st.session_state['quiz_submitted'] = False
-                st.session_state['quiz_score'] = 0
-                st.session_state['quiz_total'] = 0
-                st.session_state['quiz_results'] = []
+                st.session_state["quiz_data"] = None
+                st.session_state["quiz_answers"] = {}
+                st.session_state["quiz_submitted"] = False
+                st.session_state["quiz_score"] = 0
+                st.session_state["quiz_total"] = 0
+                st.session_state["quiz_results"] = []
 
                 # Génération des questions du quiz
                 with st.spinner("Création du quiz..."):
@@ -537,61 +545,68 @@ class Chat:
                         model="mistral-large-latest",
                         temperature=0.7,
                         prompt_type="quizz",
-                        message_history=st.session_state["chats"].get(self.selected_chat, {}).get("messages", []),
-                        nb_questions=nb_questions
+                        message_history=st.session_state["chats"]
+                        .get(self.selected_chat, {})
+                        .get("messages", []),
+                        nb_questions=nb_questions,
                     )
 
                     # Conversion des données du quiz
-                    try :
-                        st.session_state['quiz_data'] = convert_to_json(response["response"])
-                        st.session_state['quiz_answers'] = {}
-                        st.session_state['quiz_submitted'] = False
+                    try:
+                        st.session_state["quiz_data"] = convert_to_json(
+                            response["response"]
+                        )
+                        st.session_state["quiz_answers"] = {}
+                        st.session_state["quiz_submitted"] = False
                     except Exception:
                         st.error(
                             "Une erreur est survenue lors de la création du quiz. "
                             "Veuillez réessayer."
                         )
 
-        if 'quiz_data' in st.session_state and st.session_state['quiz_data'] is not None:
+        if (
+            "quiz_data" in st.session_state
+            and st.session_state["quiz_data"] is not None
+        ):
             quiz_col, result_col = st.columns([3, 2])
 
             with quiz_col:
                 with st.form(key="quiz_form"):
                     # Affichage des questions du quiz
-                    for idx, question_data in enumerate(st.session_state['quiz_data']):
+                    for idx, question_data in enumerate(st.session_state["quiz_data"]):
                         st.subheader(f"Question {idx + 1}")
                         st.write(question_data["question"])
 
                         options = question_data["options"]
-                        st.session_state['quiz_answers'][idx] = st.radio(
+                        st.session_state["quiz_answers"][idx] = st.radio(
                             "Choisissez une réponse :",
                             options=options,
                             index=0,
-                            key=f"question_{idx}"
+                            key=f"question_{idx}",
                         )
 
                     # Bouton de validation des réponses
                     if st.form_submit_button(
                         "Valider les réponses",
-                        disabled=st.session_state['quiz_submitted'],
-                        use_container_width=True
+                        disabled=st.session_state["quiz_submitted"],
+                        use_container_width=True,
                     ):
                         score, total, results = self.evaluate_quiz(
-                            st.session_state['quiz_data'],
-                            st.session_state['quiz_answers']
+                            st.session_state["quiz_data"],
+                            st.session_state["quiz_answers"],
                         )
-                        st.session_state['quiz_score'] = score
-                        st.session_state['quiz_total'] = total
-                        st.session_state['quiz_results'] = results
-                        st.session_state['quiz_submitted'] = True
+                        st.session_state["quiz_score"] = score
+                        st.session_state["quiz_total"] = total
+                        st.session_state["quiz_results"] = results
+                        st.session_state["quiz_submitted"] = True
                         st.rerun(scope="fragment")
 
             # Affichage des résultats du quiz
             with result_col:
                 with st.container(border=True):
                     st.subheader("Résultats")
-                    if st.session_state.get('quiz_submitted'):
-                        for idx, res in enumerate(st.session_state['quiz_results']):
+                    if st.session_state.get("quiz_submitted"):
+                        for idx, res in enumerate(st.session_state["quiz_results"]):
                             if res["correct"]:
                                 st.success(
                                     f"✅ {res['question']}\n\n"
@@ -606,30 +621,32 @@ class Chat:
                             if st.button(
                                 "Expliquer la réponse",
                                 key=f"explain_{idx}",
-                                use_container_width=True
+                                use_container_width=True,
                             ):
-                                st.session_state['quiz_answer_explanation'] = (
-                                    f"Pourquoi la bonne réponse à la question **{res['question']}**\n"
+                                st.session_state["quiz_answer_explanation"] = (
+                                    f"Pourquoi la bonne réponse à la "
+                                    f"question **{res['question']}**\n"
                                     f"est : **{res['correct_answer']}**\n"
-                                    
                                 )
-                                st.session_state['close_quiz_dialog'] = True
+                                st.session_state["close_quiz_dialog"] = True
                                 st.rerun()
                         st.info(
                             f"🎯 **Score final : {st.session_state['quiz_score']} "
                             f"/ {st.session_state['quiz_total']}**"
                         )
 
-                        if st.session_state['quiz_score'] == st.session_state['quiz_total']:
+                        if (
+                            st.session_state["quiz_score"]
+                            == st.session_state["quiz_total"]
+                        ):
                             st.balloons()
                     else:
                         st.info(
                             "Veuillez valider vos réponses pour afficher les résultats.",
-                            icon=":material/info:"
+                            icon=":material/info:",
                         )
 
-   
-    def evaluate_quiz(self, quiz_data : list, user_answers : dict) -> tuple:
+    def evaluate_quiz(self, quiz_data: list, user_answers: dict) -> tuple:
         """
         Évalue les réponses du quiz et retourne le score final.
 
@@ -656,11 +673,13 @@ class Chat:
                 score += 1
 
             # Ajout des résultats
-            results.append({
-                "question": question_data["question"],
-                "user_answer": user_answer if user_answer else "Aucune réponse",
-                "correct_answer": correct_answer,
-                "correct": is_correct
-            })
+            results.append(
+                {
+                    "question": question_data["question"],
+                    "user_answer": user_answer if user_answer else "Aucune réponse",
+                    "correct_answer": correct_answer,
+                    "correct": is_correct,
+                }
+            )
 
         return score, total, results
