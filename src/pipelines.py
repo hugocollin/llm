@@ -16,8 +16,10 @@ from sentence_transformers import SentenceTransformer
 from src.security.securite import LLMSecurityManager
 from src.ml.promptClassifier import PromptClassifier
 
+
 # Ajout du répertoire parent au chemin de recherche des modules
 sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
+
 
 class EnhancedLLMSecurityManager(LLMSecurityManager):
     """
@@ -171,6 +173,6 @@ class PDFPipeline:
         discussion_id = str(uuid.uuid4())
         chunks = self.split_into_chunks(text)
         self.store_in_database(discussion_id, chunks)
-        print(f"[INFO] Le document a été ajouté avec succès à la base de données")
+        print("[INFO] Le document a été ajouté avec succès à la base de données")
 
         return [discussion_id]

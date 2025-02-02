@@ -27,13 +27,13 @@ st.markdown(
 )
 
 # Affichage de la barre latérale
-selected_chat = show_sidebar()
+SELECTED_CHAT = show_sidebar()
 
 # Stockage du chat sélectionné
-if selected_chat:
-    st.session_state["selected_chat"] = selected_chat
-elif "selected_chat" not in st.session_state and selected_chat:
-    st.session_state["selected_chat"] = selected_chat
+if SELECTED_CHAT:
+    st.session_state["selected_chat"] = SELECTED_CHAT
+elif "selected_chat" not in st.session_state and SELECTED_CHAT:
+    st.session_state["selected_chat"] = SELECTED_CHAT
 
 # Affichage du chat sélectionné
 if (
