@@ -315,7 +315,7 @@ class Chat:
                     )
 
                 # Si l'IA a renvoyé le mot "Guardian"
-                if response["response"].strip() == "Guardian":
+                if response["response"].strip(" .") == "Guardian":
                     # Affichage du message de sécurité
                     with self.chat_container.chat_message("Guardian", avatar="🛡️"):
                         st.write_stream(stream_text(security_message))

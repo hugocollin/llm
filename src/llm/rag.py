@@ -294,13 +294,14 @@ class RAG:
                 "Si une question concerne une matière scolaire ou un sujet éducatif, "
                 "réponds avec une réponse claire et détaillée. "
                 "Si une formule mathématique est incluse dans ta réponse, "
-                "entoure-la obligatoirement avec le symbole '$'. "
+                "entoure-la obligatoirement avec le symbole '$' pour qu'elle soit rendue en LaTeX. "
                 "Si un exemple de code est inclus, assure-toi qu'il est bien "
                 "formaté dans un bloc de code. "
                 "Si la demande concerne une explication de réponse d'une question d'un quiz, "
                 "réponds avec une explication détaillée. "
                 "Si le message de l'utilisateur n'a aucun lien avec l'école, l'éducation, "
-                "ou la culture générale, réponds uniquement et strictement par le mot 'Guardian'. "
+                "ou la culture générale, réponds uniquement et strictement par "
+                "le mot 'Guardian' et rien d'autre. "
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
@@ -331,13 +332,14 @@ class RAG:
                 "Si une question concerne une matière scolaire ou un sujet éducatif, "
                 "réponds avec une réponse claire et détaillée. "
                 "Si une formule mathématique est incluse dans ta réponse, "
-                "entoure-la obligatoirement avec le symbole '$'. "
+                "entoure-la obligatoirement avec le symbole '$' pour qu'elle soit rendue en LaTeX. "
                 "Si un exemple de code est inclus, assure-toi qu'il est bien "
                 "formaté dans un bloc de code. "
                 "Si la demande concerne une explication de réponse d'une question d'un quiz, "
                 "réponds avec une explication détaillée. "
                 "Si le message de l'utilisateur n'a aucun lien avec l'école, l'éducation, "
-                "ou la culture générale, réponds uniquement et strictement par le mot 'Guardian'. "
+                "ou la culture générale, réponds uniquement et strictement par "
+                "le mot 'Guardian' et rien d'autre. "
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
