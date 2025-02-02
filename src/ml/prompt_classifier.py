@@ -32,6 +32,10 @@ class PromptClassifier:
         Args:
             bert_model_name (str): Nom du modèle pré-entraîné BERT à utiliser.
         """
+        self.x_train_emb = None
+        self.y_train = None
+        self.x_test_emb = None
+        self.y_test = None
         self.tokenizer = BertTokenizer.from_pretrained(bert_model_name)
         self.bert_model = BertModel.from_pretrained(bert_model_name)
         self.estimators = {
