@@ -13,7 +13,7 @@ from ecologits import EcoLogits
 from numpy.typing import NDArray
 
 
-def measure_latency(func: callable) -> callable:
+def measure_latency(func : callable) -> callable:
     """
     Décorateur pour mesurer le temps d'exécution d'une fonction.
 
@@ -43,8 +43,8 @@ class RAG:
 
     def __init__(
         self,
-        max_tokens: int,
-        top_n: int,
+        max_tokens : int,
+        top_n : int,
     ):
         """
         Constructeur de la classe RAG.
@@ -59,7 +59,7 @@ class RAG:
         self.max_tokens = max_tokens
         EcoLogits.init(providers="litellm", electricity_mix_zone="FRA")
 
-    def get_cosim(self, a: NDArray[np.float32], b: NDArray[np.float32]) -> float:
+    def get_cosim(self, a : NDArray[np.float32], b : NDArray[np.float32]) -> float:
         """
         Calcule la similarité cosinus entre deux vecteurs.
 
@@ -74,9 +74,9 @@ class RAG:
 
     def get_top_similarity(
         self,
-        embedding_query: NDArray[np.float32],
-        embedding_chunks: NDArray[np.float32],
-        corpus: list[str],
+        embedding_query : NDArray[np.float32],
+        embedding_chunks : NDArray[np.float32],
+        corpus : list[str],
     ) -> list[str]:
         """
         Retourne les documents les plus similaires à la requête.
@@ -112,7 +112,7 @@ class RAG:
     #     connection.close()
     #     return {nom: embedding for nom, embedding in cours_data}
 
-    def get_documents_content(self, ressources: list[str]) -> str:
+    def get_documents_content(self, ressources : list[str]) -> str:
         """
         Récupère le contenu des documents à partir de la base de données
         en utilisant les id_conversation fournies.
@@ -137,7 +137,7 @@ class RAG:
                     contents.append(row[0])
         return "\n".join(contents)
 
-    def fetch_wikipedia_data(self, query: str) -> str:
+    def fetch_wikipedia_data(self, query : str) -> str:
         """
         Recherche des informations sur Wikipedia pour la requête donnée.
 
@@ -158,7 +158,7 @@ class RAG:
             return "Wikipedia n'a pas trouvé d'informations correspondant au message"
 
     def _get_price_query(
-        self, model: str, input_tokens: int, output_tokens: int
+        self, model : str, input_tokens : int, output_tokens : int
     ) -> float:
         """
         Calcule le coût d'une requête en fonction du modèle LLM utilisé.
@@ -185,7 +185,7 @@ class RAG:
         cost_output = (output_tokens / 1_000_000) * pricing[model]["output"]
         return cost_input + cost_output
 
-    def _get_energy_usage(self, response: litellm.ModelResponse) -> tuple[float, float]:
+    def _get_energy_usage(self, response : litellm.ModelResponse) -> tuple[float, float]:
         """
         Calcule l'empreinte carbone et la consommation d'énergie d'une requête.
 
@@ -203,11 +203,11 @@ class RAG:
 
     def build_prompt(
         self,
-        prompt_type: str,
-        message: str = None,
-        message_history: list[dict[str, str]] = None,
-        ressources: list[str] = None,
-        nb_questions: int = None,
+        prompt_type : str,
+        message : str = None,
+        message_history : list[dict[str, str]] = None,
+        ressources : list[str] = None,
+        nb_questions : int = None,
     ) -> list[dict[str, str]]:
         """
         Construit les prompts pour les différentes tâches.
@@ -379,10 +379,10 @@ class RAG:
 
     def call_model(
         self,
-        provider: str,
-        model: str,
-        temperature: float,
-        prompt_dict: list[dict[str, str]],
+        provider : str,
+        model : str,
+        temperature : float,
+        prompt_dict : list[dict[str, str]],
     ) -> str:
         """
         Appelle le modèle de langage pour générer une réponse.
@@ -415,10 +415,10 @@ class RAG:
     @measure_latency
     def _generate(
         self,
-        provider: str,
-        model: str,
-        temperature: float,
-        prompt_dict: list[dict[str, str]],
+        provider : str,
+        model : str,
+        temperature : float,
+        prompt_dict : list[dict[str, str]],
     ) -> litellm.ModelResponse:
         """
         Génère une réponse à partir des prompts donnés.
@@ -442,14 +442,14 @@ class RAG:
 
     def __call__(
         self,
-        provider: str,
-        model: str,
-        temperature: float,
-        prompt_type: str,
-        message: str = None,
-        message_history: list[dict[str, str]] = None,
-        ressources: list[str] = None,
-        nb_questions: int = None,
+        provider : str,
+        model : str,
+        temperature : float,
+        prompt_type : str,
+        message : str = None,
+        message_history : list[dict[str, str]] = None,
+        ressources : list[str] = None,
+        nb_questions : int = None,
     ) -> str:
         """
         Appelle le modèle de langage pour générer une réponse.
