@@ -9,6 +9,7 @@ import sqlite3
 import litellm
 import numpy as np
 import wikipedia
+from sentence_transformers import SentenceTransformer
 from ecologits import EcoLogits
 from numpy.typing import NDArray
 
@@ -59,17 +60,24 @@ class RAG:
         self.max_tokens = max_tokens
         EcoLogits.init(providers="litellm", electricity_mix_zone="FRA")
 
-    def get_cosim(self, a : NDArray[np.float32], b : NDArray[np.float32]) -> float:
+    def get_cosim(self, a : NDArray, b : NDArray) -> float:
         """
         Calcule la similarité cosinus entre deux vecteurs.
-
-        Args:
-            a (NDArray[np.float32]): Vecteur a.
-            b (NDArray[np.float32]): Vecteur b.
-
-        Returns:
-            float: Similarité cosinus entre les vecteurs a et b.
         """
+
+        # Convertion des vecteurs en float32 si nécessaire
+        if (
+            isinstance(a, (bytes, bytearray))
+            or (hasattr(a, "dtype") and a.dtype.kind in ['S', 'U'])
+        ):
+            a = np.frombuffer(a, dtype=np.float32)
+        if (
+            isinstance(b, (bytes, bytearray))
+            or (hasattr(b, "dtype") and b.dtype.kind in ['S', 'U'])
+        ):
+            b = np.frombuffer(b, dtype=np.float32)
+
+        # Calcul de la similarité cosinus
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
     def get_top_similarity(
@@ -98,19 +106,19 @@ class RAG:
         indices_of_max_values = np.argsort(cos_dist_list)[-self.top_n :][::-1]
         return [corpus[i] for i in indices_of_max_values]
 
-    # def get_cours_embeddings(self) -> dict[str, NDArray[np.float32]]:
-    #     """
-    #     Récupère les embeddings des cours à partir de la base de données.
+    def get_cours_embeddings(self) -> dict[str, NDArray[np.float32]]:
+        """
+        Récupère les embeddings des cours à partir de la base de données.
 
-    #     Returns:
-    #         dict[str, NDArray[np.float32]]: Dictionnaire des embeddings des cours
-    #     """
-    #     connection = sqlite3.connect('llm_database.db')
-    #     cursor = connection.cursor()
-    #     cursor.execute("SELECT nom_du_cours, embedding FROM cours")
-    #     cours_data = cursor.fetchall()
-    #     connection.close()
-    #     return {nom: embedding for nom, embedding in cours_data}
+        Returns:
+            dict[str, NDArray[np.float32]]: Dictionnaire des embeddings des cours
+        """
+        connection = sqlite3.connect('llm_database.db')
+        cursor = connection.cursor()
+        cursor.execute("SELECT nom_du_cours, embedding FROM cours")
+        cours_data = cursor.fetchall()
+        connection.close()
+        return {nom: embedding for nom, embedding in cours_data}
 
     def get_documents_content(self, ressources : list[str]) -> str:
         """
@@ -227,7 +235,7 @@ class RAG:
         context_prompt = ""
         history_prompt = ""
         message_prompt = ""
-        # courses_prompt = ""
+        courses_prompt = ""
         ressources_prompt = ""
 
         # Récupération de l'historique de la conversation
@@ -275,8 +283,21 @@ class RAG:
 
         # Construction du prompt pour la génération de réponses à des messages
         elif prompt_type == "chat":
-            # # Récupération des informations sur les cours
-            # courses = self.get_cours_embeddings()
+            # Récupération des informations sur les cours
+            courses = self.get_cours_embeddings()
+            course_names = list(courses.keys())
+            course_embeddings = np.array(list(courses.values()))
+
+            # Calcul de l'embedding du message de l'utilisateur
+            message_embeddings = self._generate_embedding(message)
+
+            # Sélection des cours les plus pertinents
+            best_courses = self.get_top_similarity(
+                message_embeddings,
+                course_embeddings,
+                course_names
+            )
+            best_courses_content = "\n".join(best_courses)
 
             # Récupération des informations des documents associés à la conversation
             if ressources:
@@ -305,10 +326,10 @@ class RAG:
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
-            # courses_prompt = (
-            #     "Pour répondre au message suivant, nous te fournissons "
-            #     f"les cours de l'Éducation nationale : {courses}"
-            # )
+            courses_prompt = (
+                "Pour répondre au message suivant, nous te fournissons "
+                f"les cours de l'Éducation nationale : {best_courses_content}"
+            )
             ressources_prompt = (
                 "Pour répondre au message suivant, l'utilisateur a fourni des ressources "
                 f"supplémentaires afin de te donner des informations sur le sujet : {documents}"
@@ -316,8 +337,21 @@ class RAG:
 
         # Construction du prompt pour la génération de réponses à des messages avec le mode internet
         elif prompt_type == "internet_chat":
-            # # Récupération des informations sur les cours
-            # courses = self.get_cours_embeddings()
+            # Récupération des informations sur les cours
+            courses = self.get_cours_embeddings()
+            course_names = list(courses.keys())
+            course_embeddings = np.array(list(courses.values()))
+
+            # Calcul de l'embedding du message de l'utilisateur
+            message_embeddings = self._generate_embedding(message)
+
+            # Sélection des cours les plus pertinents
+            best_courses = self.get_top_similarity(
+                message_embeddings,
+                course_embeddings,
+                course_names
+            )
+            best_courses_content = "\n".join(best_courses)
 
             # Récupération des informations sur Wikipedia
             wiki_summary = self.fetch_wikipedia_data(message)
@@ -343,10 +377,10 @@ class RAG:
             )
             history_prompt = message_history_formatted
             message_prompt = f"Voici le message envoyé par l'utilisateur : {message} "
-            # courses_prompt = (
-            #     "Pour répondre au message suivant, nous te fournissons "
-            #     f"les cours de l'Éducation nationale : {courses}"
-            # )
+            courses_prompt = (
+                "Pour répondre au message suivant, nous te fournissons "
+                f"les cours de l'Éducation nationale : {best_courses_content}"
+            )
             ressources_prompt = (
                 "Pour répondre au message suivant, nous te fournissons du contenu "
                 "provenant d'un recherche sur Wikipedia "
@@ -375,7 +409,7 @@ class RAG:
             {"role": "system", "content": context_prompt},
             {"role": "system", "content": history_prompt},
             {"role": "user", "content": message_prompt},
-            # {"role": "user", "content": courses_prompt},
+            {"role": "user", "content": courses_prompt},
             {"role": "user", "content": ressources_prompt},
         ]
 
@@ -441,6 +475,20 @@ class RAG:
             temperature=temperature,
         )
         return response
+
+    def _generate_embedding(self, text: str) -> NDArray[np.float32]:
+        """
+        Génère un embedding pour le texte donné.
+
+        Args:
+            text (str): Texte pour lequel générer l'embedding.
+
+        Returns:
+            NDArray[np.float32]: Embedding du texte.
+        """
+        model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+        embedding = model.encode(text)
+        return np.array(embedding, dtype=np.float32)
 
     def __call__(
         self,
