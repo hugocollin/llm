@@ -135,7 +135,7 @@ class ScrappingCourses:
                     f"de niveau '{niveau_ex}' ont été récupérés."
                 )
         else:
-            print("Erreur lors de la récupération de la page.")
+            print("[ERROR] Une problème est survenu lors de la récupération de la page.")
 
 
     def run(self):
