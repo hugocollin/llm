@@ -88,7 +88,9 @@ else:
                 # Génération de questions suggérées
                 if "suggested_questions" not in st.session_state:
                     chat_instance = Chat(selected_chat="suggestions")
-                    st.session_state["suggested_questions"] = chat_instance.get_suggested_questions()
+                    st.session_state["suggested_questions"] = (
+                        chat_instance.get_suggested_questions()
+                    )
 
                 # Suggestions de questions dynamiques
                 suggestions = st.pills(
