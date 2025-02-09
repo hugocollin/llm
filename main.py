@@ -73,32 +73,43 @@ else:
                 icon=":material/error:",
             )
         else:
-            # Titre
-            st.title("Comment puis-je vous aider ? 🤩")
+            if len(st.session_state["chats"]) < 5:
+                # Titre
+                st.title("Comment puis-je vous aider ? 🤩")
 
-            # Barre de saisie de question
-            question = st.chat_input("Écrivez votre message", key="new_chat_question")
+                # Barre de saisie de question
+                question = st.chat_input("Écrivez votre message", key="new_chat_question")
 
-            if question:
-                st.session_state["initial_question"] = question
-                create_new_chat()
-                st.rerun()
+                if question:
+                    st.session_state["initial_question"] = question
+                    create_new_chat()
+                    st.rerun()
 
-            # Génération de questions suggérées
-            if "suggested_questions" not in st.session_state:
-                chat_instance = Chat(selected_chat="suggestions")
-                st.session_state["suggested_questions"] = chat_instance.get_suggested_questions()
+                # Génération de questions suggérées
+                if "suggested_questions" not in st.session_state:
+                    chat_instance = Chat(selected_chat="suggestions")
+                    st.session_state["suggested_questions"] = chat_instance.get_suggested_questions()
 
-            # Suggestions de questions dynamiques
-            suggestions = st.pills(
-                label=(
-                    "Sinon voici quelques suggestions de questions que j'ai générées "
-                    "et que vous pouvez me poser :"
-                ),
-                options=st.session_state["suggested_questions"]
-            )
+                # Suggestions de questions dynamiques
+                suggestions = st.pills(
+                    label=(
+                        "Sinon voici quelques suggestions de questions que j'ai générées "
+                        "et que vous pouvez me poser :"
+                    ),
+                    options=st.session_state["suggested_questions"]
+                )
 
-            if suggestions:
-                st.session_state["initial_question"] = suggestions
-                create_new_chat()
-                st.rerun()
+                if suggestions:
+                    st.session_state["initial_question"] = suggestions
+                    create_new_chat()
+                    st.rerun()
+            else:
+                # Titre
+                st.title("Limite de conversations atteinte 🤯")
+
+                # Message d'information
+                st.info(
+                    "Nombre maximal de conversations atteint, "
+                    "supprimez-en une pour en commencer une nouvelle",
+                    icon=":material/feedback:",
+                )
